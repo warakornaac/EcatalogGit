@@ -10,7 +10,9 @@ namespace Ecatalog.Controllers
     {
         public ActionResult Index()
         {
+            var currentYear = DateTime.Now.Year;
             return View();
+            
         }
 
         public ActionResult About()
