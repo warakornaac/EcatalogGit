@@ -1,31 +1,132 @@
-﻿@{
-    ViewBag.Title = "Home Page";
+﻿@*@{
+        ViewBag.Title = "Home Page";
+    }*@
+@{
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRW Parts Pro — Smart Parts Finder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/Content/Site.css">
+</head>
+<body>
+    @Html.Partial("~/Views/Parts/_Header.cshtml")
 
-<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
-</div>
+    <!-- MOBILE OVERLAY -->
+    <div class="mob-overlay" id="mobOverlay"></div>
 
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
+    <!-- MOBILE HAMBURGER -->
+    <button class="mob-hamburger" id="mobHamburger" onclick="toggleMobSidebar()" aria-label="Toggle filter sidebar">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </button>
+
+    <!-- ═══ APP LAYOUT ═══ -->
+    <div class="app-layout">
+
+        <!-- ════ SIDEBAR ════ -->
+        @Html.Partial("~/Views/Parts/_Sidebar.cshtml")
+        <!-- ════ MAIN ════ -->
+        <main class="main-area" id="mainArea">
+            <div class="main-content">
+
+                <!-- Zone 1: Vehicle Summary + Clear Filter -->
+                <div class="hz col-12" id="rz1">
+                    <div class="rsh mb-2">
+                        <span class="rsh-title col-8">Selected Vehicle</span>
+                        <button class="clear-filter ms-auto" onclick="clearAllFilters()">
+                            <i class="bi bi-x-circle"></i> Clear Filter
+                        </button>
+                    </div>
+                    <div class="veh-pills" id="vehSummary">
+                        <div class="veh-empty">
+                            <i class="bi bi-car-front" style="font-size:1.1rem"></i>
+                            <span>Select vehicle attributes in the left panel to filter parts</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zone 2: Product Results -->
+                <div class="hz" id="rz2">
+                    <div class="rsh">
+                        <span class="rsh-title">Product Results</span>
+                        <span class="rcount" id="rcount">12 items</span>
+                        <select class="sort-select ms-auto" id="sortSelect" onchange="sortProducts(this.value)">
+                            <option value="carModel" selected>เรียงตาม: รุ่นรถ</option>
+                            <option value="part">เรียงตาม: Part</option>
+                            <option value="brand">เรียงตาม: ยี่ห้อสินค้า</option>
+                            <option value="price-asc">ราคา: น้อย → มาก</option>
+                            <option value="price-desc">ราคา: มาก → น้อย</option>
+                            <option value="name">ชื่อ: A-Z</option>
+                        </select>
+                    </div>
+
+                    <!-- Active Filter Chips -->
+                    <div class="active-filters" id="activeFilters"></div>
+
+                    <!-- Skeleton -->
+                    <div id="skelWrap" style="display:none">
+                        <div class="product-grid">
+                            <div class="skel skel-card"></div>
+                            <div class="skel skel-card"></div>
+                            <div class="skel skel-card"></div>
+                            <div class="skel skel-card"></div>
+                        </div>
+                    </div>
+
+                    <!-- Product Grid -->
+                    <div class="product-grid" id="pGrid"></div>
+
+                    <!-- Netflix-style grouped rows (active when a specific group is selected) -->
+                    <div class="nf-rows" id="nfRows" style="display:none;"></div>
+                </div>
+
+                <!-- §4 SPEC DRAWER removed from inline — see drawer below -->
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ═══ BOTTOM BAR ═══ -->
+    @Html.Partial("~/Views/Parts/_ProductGroup.cshtml")
+
+    <!-- ═══ Product Spec ═══ -->
+    @Html.Partial("~/Views/Parts/_ProductSpec.cshtml")
+
+    <!-- GUIDE -->
+    <div class="guide" id="guide">
+        <button class="guide-x" onclick="gEl('guide').style.display='none'"><i class="bi bi-x"></i></button>
+        <h6><i class="bi bi-stars"></i> Guided Search Flow</h6>
         <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
+            <strong>①</strong> Vehicle Filter<br>
+            <strong>②</strong> Search Parts (multi-mode)<br>
+            <strong>③</strong> Sidebar Filters → results update instantly<br>
+            <strong>④</strong> "See detail" → Spec popup<br>
+            <strong>Bottom Bar</strong> → Switch product groups
         </p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
     </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-    </div>
-</div>
+
+    <!-- ════════════════════════════════════════
+         CART PANEL
+    ════════════════════════════════════════ -->
+    @Html.Partial("~/Views/Parts/_Cart.cshtml")
+
+    <!-- ════════════════════════════════════════
+         ORDER SUMMARY MODAL
+    ════════════════════════════════════════ -->
+    @Html.Partial("~/Views/Parts/_OrderSummary.cshtml")
+
+    <!-- TOASTS -->
+    <div class="toasts" id="toastRack"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="@Url.Content("~/Scripts/truscripts.js")"></script>
+
+</body>
+</html>

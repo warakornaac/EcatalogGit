@@ -1,0 +1,142 @@
+﻿<!-- ═══ DESKTOP SPEC MODAL (≥992 px) ═══ -->
+<div class="spec-modal-backdrop" id="specModalBackdrop" onclick="closeSpecModal(event)">
+    <div class="spec-modal" role="dialog" aria-modal="true" aria-label="Product specification">
+        <div class="spec-modal-header">
+            <span style="font-size:13px;font-weight:600;color:var(--text-2)">Product Specification</span>
+            <button class="spec-modal-close" onclick="closeSpecModal()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="spec-modal-body" id="specModalContent"></div>
+    </div>
+</div>
+
+<!-- ═══ MOBILE SPEC DRAWER (PartHub-style, <992 px) ═══ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="spec-drawer" id="specDrawer">
+    <div class="dr-header">
+        <button class="dr-close" onclick="closeDrawer()"><i class="bi bi-x-lg"></i></button>
+        <div>
+            <div class="dr-title" id="drTitle">Product Specification</div>
+            <div class="dr-code-lbl" id="drCode">—</div>
+        </div>
+    </div>
+
+    <div class="dr-hero">
+        <img id="drImg" src="" alt="">
+        <div class="dr-meta">
+            <div class="dm-brand" id="drBrand">—</div>
+            <h3 id="drName">—</h3>
+            <div class="dm-code" id="drCode2">—</div>
+            <div class="dr-price" id="drPrice">$0.00</div>
+            <div class="dr-add-row">
+                <input type="number" class="dr-qty" id="drQty" value="1" min="1" max="99">
+                <button class="dr-add-btn" onclick="addCartFromDrawer(event)">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dr-tabs">
+        <button class="drtab active" onclick="switchDrTab(this,'desc')"><i class="bi bi-file-text"></i> Description</button>
+        <button class="drtab" onclick="switchDrTab(this,'spec')"><i class="bi bi-rulers"></i> Spec <span class="tbnum">8</span></button>
+        <button class="drtab" onclick="switchDrTab(this,'imgs')"><i class="bi bi-images"></i> Image</button>
+        <button class="drtab" onclick="switchDrTab(this,'oem')"><i class="bi bi-upc"></i> OEM <span class="tbnum">4</span></button>
+        <button class="drtab" onclick="switchDrTab(this,'comp')"><i class="bi bi-diagram-2"></i> Competitor</button>
+        <button class="drtab" onclick="switchDrTab(this,'veh')"><i class="bi bi-car-front"></i> Vehicle <span class="tbnum">6</span></button>
+    </div>
+
+    <div class="dr-content">
+        <div class="drpane active" id="dp-desc">
+            <p id="drDescFull" style="font-size:13.5px;line-height:1.8;color:var(--text-2);margin-bottom:14px">—</p>
+            <div class="row g-2">
+                <div class="col-6 col-sm-3">
+                    <div style="background:var(--surface-2);border-radius:var(--r);padding:10px;text-align:center;border:1px solid var(--border)">
+                        <div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Category</div>
+                        <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-top:3px" id="drCat">—</div>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <div style="background:var(--surface-2);border-radius:var(--r);padding:10px;text-align:center;border:1px solid var(--border)">
+                        <div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Warranty</div>
+                        <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-top:3px">24 Months</div>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <div style="background:var(--surface-2);border-radius:var(--r);padding:10px;text-align:center;border:1px solid var(--border)">
+                        <div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Origin</div>
+                        <div style="font-size:12.5px;font-weight:700;color:var(--text);margin-top:3px">Japan</div>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-3">
+                    <div style="background:var(--surface-2);border-radius:var(--r);padding:10px;text-align:center;border:1px solid var(--border)">
+                        <div style="font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Brand</div>
+                        <div style="font-size:12.5px;font-weight:700;color:var(--primary);margin-top:3px" id="drBrandCard">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="drpane" id="dp-spec">
+            <table class="spec-table">
+                <tr><td>Part Number</td><td id="drPN">—</td></tr>
+                <tr id="drBoRow" style="display:none"><td>สถานะสินค้า</td><td><span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:6px;padding:2px 9px"><i class="bi bi-hourglass-split"></i> จอง (Back Order)</span></td></tr>
+                <tr><td>Dimensions</td><td>148 × 64 × 18 mm</td></tr>
+                <tr><td>Weight</td><td>0.85 kg / set</td></tr>
+                <tr><td>Material</td><td>Ceramic Composite</td></tr>
+                <tr><td>Friction Coefficient</td><td>µ = 0.38–0.45</td></tr>
+                <tr><td>Max Temperature</td><td>450 °C</td></tr>
+                <tr><td>Noise Level</td><td>&lt; 70 dB</td></tr>
+                <tr><td>Certification</td><td>ECE R90, ISO 6312</td></tr>
+            </table>
+        </div>
+        <div class="drpane" id="dp-imgs">
+            <div class="img-grid">
+                <div class="img-ph"><i class="bi bi-camera"></i><span>Front View</span></div>
+                <div class="img-ph"><i class="bi bi-camera"></i><span>Side View</span></div>
+                <div class="img-ph"><i class="bi bi-diagram-3"></i><span>Exploded Diagram</span></div>
+                <div class="img-ph"><i class="bi bi-rulers"></i><span>Dimension Drawing</span></div>
+            </div>
+        </div>
+        <div class="drpane" id="dp-oem">
+            <p style="font-size:12px;color:var(--text-3);margin-bottom:10px">OEM cross-reference numbers:</p>
+            <div class="oem-chips">
+                <span class="oem-chip oem-a"><i class="bi bi-upc-scan"></i> 04465-06260</span>
+                <span class="oem-chip oem-a"><i class="bi bi-upc-scan"></i> 04465-0E010</span>
+                <span class="oem-chip oem-b"><i class="bi bi-upc-scan"></i> 45022-T2A-A01</span>
+                <span class="oem-chip oem-c"><i class="bi bi-upc-scan"></i> 3421-1160-469</span>
+            </div>
+        </div>
+        <div class="drpane" id="dp-comp">
+            <table class="spec-table">
+                <thead><tr style="border-bottom:1.5px solid var(--border)"><td style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text)">Brand</td><td style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text)">Part No.</td></tr></thead>
+                <tr><td>Brembo</td><td>P28 013</td></tr>
+                <tr><td>Bosch</td><td>BP747</td></tr>
+                <tr><td>ATE</td><td>13.0460-2741.2</td></tr>
+                <tr><td>Ferodo</td><td>FDB1172</td></tr>
+                <tr><td>Mintex</td><td>MDB2041</td></tr>
+            </table>
+        </div>
+        <div class="drpane" id="dp-veh">
+            <div class="veh-list">
+                <div class="veh-item"><i class="bi bi-car-front-fill"></i><div><strong>Toyota Camry</strong> XV70 2.5L 2018–2024 (FWD/AWD)</div></div>
+                <div class="veh-item"><i class="bi bi-car-front-fill"></i><div><strong>Toyota Avalon</strong> XX50 3.5L 2019–2022 (FWD)</div></div>
+                <div class="veh-item"><i class="bi bi-car-front-fill"></i><div><strong>Lexus ES350</strong> XZ10 3.5L 2019–2024 (FWD)</div></div>
+                <div class="veh-item"><i class="bi bi-car-front-fill"></i><div><strong>Toyota RAV4</strong> XA50 2.5L 2019–2024 (FWD/AWD)</div></div>
+                <div class="veh-item"><i class="bi bi-car-front-fill"></i><div><strong>Lexus NX300h</strong> AZ20 2.0L 2018–2022 (Hybrid)</div></div>
+                <div class="veh-item"><i class="bi bi-car-front-fill"></i><div><strong>Toyota Venza</strong> AV80 2.5L 2021–2024 (FWD)</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GUIDE -->
+@*<div class="guide" id="guide">
+    <button class="guide-x" onclick="gEl('guide').style.display='none'"><i class="bi bi-x"></i></button>
+    <h6><i class="bi bi-stars"></i> Guided Search Flow</h6>
+    <p>
+        <strong>①</strong> Vehicle Filter<br>
+        <strong>②</strong> Search Parts (multi-mode)<br>
+        <strong>③</strong> Sidebar Filters → results update instantly<br>
+        <strong>④</strong> "See detail" → Spec popup<br>
+        <strong>Bottom Bar</strong> → Switch product groups
+    </p>
+</div>*@

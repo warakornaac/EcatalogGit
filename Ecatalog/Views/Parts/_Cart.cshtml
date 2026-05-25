@@ -1,0 +1,22 @@
+﻿<!-- ════════════════════════════════════════
+     CART PANEL
+════════════════════════════════════════ -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-panel" id="cartPanel">
+    <div class="cp-header">
+        <button class="cp-close" onclick="closeCart()"><i class="bi bi-x-lg"></i></button>
+        <div class="cp-title">🛒 ตะกร้าสินค้า</div>
+        <div class="cp-count" id="cpCount">0 ชิ้น</div>
+    </div>
+    <div class="cp-body" id="cpBody">
+        <div class="cp-empty"><i class="bi bi-cart-x"></i><p>ยังไม่มีสินค้าในตะกร้า</p></div>
+    </div>
+    <div class="cp-footer">
+        <div class="cp-total-row">
+            <span class="cp-total-lbl">ยอดรวม</span>
+            <span class="cp-total-val" id="cpTotal">฿0.00</span>
+        </div>
+        <button class="cp-checkout" onclick="openOrderSummary()"><i class="bi bi-credit-card-2-front"></i> ดำเนินการชำระเงิน</button>
+        <button class="cp-clear" onclick="clearCart()"><i class="bi bi-trash3"></i> ล้างตะกร้าทั้งหมด</button>
+    </div>
+</div>

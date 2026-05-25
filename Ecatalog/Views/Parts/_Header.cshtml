@@ -1,0 +1,50 @@
+﻿<!-- ═══ HEADER ═══ -->
+<header class="site-header">
+    <div class="container-fluid px-3 d-flex align-items-center gap-3">
+        <div class="brand">
+            <div class="brand-icon">⚙️</div>
+            TRW <span style="color:#ffc300">Parts Pro</span>
+        </div>
+        <!-- Header search (synced with sidebar search) -->
+        <div class="h-search ms-2" id="hSearchWrap">
+            <i class="bi bi-search h-search-icon-left d-none d-sm-none" id="hSearchIconLeft"></i>
+            <input type="text" id="headerQ" placeholder="Search part number, name…" oninput="syncSearch('header');acInput(this)" onkeydown="acKeyNav(event)" autocomplete="off" aria-label="Search parts" aria-expanded="false" aria-autocomplete="list">
+            <i class="bi bi-search h-search-icon" id="hSearchIconRight"></i>
+            <button class="mob-search-btn d-none" id="mobSearchBtn" onclick="doMobSearch()" disabled title="Select a suggestion first">
+                <i class="bi bi-arrow-right-short" style="font-size:1.2rem"></i>
+            </button>
+            <!-- Autocomplete Dropdown -->
+            <div class="ac-dropdown" id="acDropdown" role="listbox"></div>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <span class="d-none d-md-inline text-white" style="opacity:.7;font-size:12.5px">
+                <i class="bi bi-person-circle me-1"></i>Account
+            </span>
+            <button class="cart-btn" id="cartBtn" onclick="openCart()">
+                <i class="bi bi-cart3"></i> Cart
+                <span class="cart-badge" id="cartCount">0</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══ BREADCRUMB ═══ -->
+<nav class="bc-bar">
+    <div class="container-fluid px-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <!-- <li class="breadcrumb-item"><a href="#" id="bc2">ระบบเบรก</a></li> -->
+            <li class="breadcrumb-item active" id="bc3">Parts Catalog</li>
+        </ol>
+    </div>
+</nav>
+
+<!-- MOBILE OVERLAY -->
+<div class="mob-overlay" id="mobOverlay"></div>
+
+<!-- MOBILE HAMBURGER -->
+<button class="mob-hamburger" id="mobHamburger" onclick="toggleMobSidebar()" aria-label="Toggle filter sidebar">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+</button>

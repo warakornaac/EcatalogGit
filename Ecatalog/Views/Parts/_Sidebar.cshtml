@@ -1,0 +1,1016 @@
+﻿<!-- ═══ APP LAYOUT ═══ -->
+@*<div class="app-layout">*@
+
+    <!-- ════ SIDEBAR ════ -->
+    <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
+        <div class="sidebar-inner mt-5 mb-5">
+
+            <!-- §1 Vehicle Filter -->
+            <div class="sec-hd" data-bs-toggle="collapse" data-bs-target="#vfBody" aria-expanded="true" onclick="activateSec(1)">
+                <span class="sec-title">Vehicle Filter</span>
+                <i class="bi bi-chevron-down sec-chevron"></i>
+            </div>
+            <div class="collapse show" id="vfBody">
+                <div class="filter-body mt-2">
+                    <div class="mb-2">
+                        <div class="flabel">Market Segment</div>
+                        <select class="fselect" id="vf-market" onchange="vfChange(this,'market')">
+                            <option value="">— Select Market —</option>
+                            <option>Passenger Car</option>
+                            <option>Commercial Vehicle</option>
+                            <option>Heavy Duty</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flabel">Vehicle Segment</div>
+                        <select class="fselect" id="vf-segment" onchange="vfChange(this,'segment')">
+                            <option value="">— Select Segment —</option>
+                            <option>Sedan</option>
+                            <option>SUV / Crossover</option>
+                            <option>Pickup Truck</option>
+                            <option>Hatchback</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flabel">Maker</div>
+                        <select class="fselect" id="vf-maker" onchange="vfChange(this,'maker')">
+                            <option value="">— Select Maker —</option>
+                            <option>Toyota</option>
+                            <option>Honda</option>
+                            <option>Ford</option>
+                            <option>BMW</option>
+                            <option>Mercedes-Benz</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flabel">Model Range</div>
+                        <select class="fselect" id="vf-range" onchange="vfChange(this,'range')">
+                            <option value="">— Select Range —</option>
+                            <option>Camry Series</option>
+                            <option>Hilux Series</option>
+                            <option>CR-V Series</option>
+                            <option>3 Series</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flabel">Model Body</div>
+                        <select class="fselect" id="vf-body" onchange="vfChange(this,'body')">
+                            <option value="">— Select Body —</option>
+                            <option>4 Door Sedan</option>
+                            <option>5 Door SUV</option>
+                            <option>Double Cab</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flabel">Engine</div>
+                        <select class="fselect" id="vf-engine" onchange="vfChange(this,'engine')">
+                            <option value="">— Select Engine —</option>
+                            <option>2.0L 4-Cyl Petrol</option>
+                            <option>2.5L 4-Cyl Hybrid</option>
+                            <option>3.0L 6-Cyl Diesel</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flabel">Year Range</div>
+                        <div class="yr-range">
+                            <input type="number" id="vf-yr-from" placeholder="From" min="1990" max="2025" onchange="activateSec(1)">
+                            <span>–</span>
+                            <input type="number" id="vf-yr-to" placeholder="To" min="1990" max="2025" onchange="activateSec(1)">
+                        </div>
+                    </div>
+                    <div class="mb-1">
+                        <div class="flabel">Drive System</div>
+                        <select class="fselect" id="vf-drive" onchange="vfChange(this,'drive')">
+                            <option value="">— Select Drive —</option>
+                            <option>FWD</option>
+                            <option>RWD</option>
+                            <option>4WD / AWD</option>
+                        </select>
+                    </div>
+                    <div class="ftags" id="vfTags"></div>
+                    <button class="search-btn" onclick="runSearch()">
+                        <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
+                    </button>
+                </div>
+            </div>
+
+            <div class="step-line"><div class="ln"></div></div>
+
+            <!-- §2 Search Panel -->
+            <div class="sec-hd" data-bs-toggle="collapse" data-bs-target="#spBody" aria-expanded="true" onclick="activateSec(2)">
+                <span class="sec-title">Part Search</span>
+                <i class="bi bi-chevron-down sec-chevron"></i>
+            </div>
+            <div class="collapse show" id="spBody">
+                <div class="filter-body">
+                    <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
+                    <!-- Multi-select search mode (click to toggle each) -->
+                    <div class="smode-group" id="smodeGroup">
+                        <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
+                            <i class="bi bi-card-text"></i> Description
+                        </label>
+                        <label class="smode-btn" data-mode="oe" onclick="toggleMode(this)">
+                            <i class="bi bi-upc-scan"></i> OE
+                        </label>
+                        <label class="smode-btn" data-mode="competitor" onclick="toggleMode(this)">
+                            <i class="bi bi-arrows-collapse"></i> Competitor
+                        </label>
+                    </div>
+                    <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
+                        <!-- Sidebar search input (synced with header) -->
+                        <input type="text" id="partQ" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+                        <i class="bi bi-search"></i>
+                        <!-- Sidebar Autocomplete Dropdown -->
+                        <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
+                    </div>
+                    <button class="search-btn" onclick="runSearch()">
+                        <i class="bi bi-lightning-charge-fill"></i> Search Parts
+                    </button>
+                </div>
+            </div>
+
+            <div class="step-line"><div class="ln"></div></div>
+
+            <!-- §3 Sidebar Filters -->
+            <div class="collapse show" id="sfBody">
+                <div class="filter-body">
+                    <!-- 3.1 Product Line -->
+                    <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
+                    <div class="chk-list" id="plList">
+                        <label class="chk-item" onclick="toggleChk(this,'pl','ผ้าเบรก')">
+                            <div class="chk-box"></div><span class="chk-label">ผ้าเบรก</span><span class="chk-count">12</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'pl','กระบอกเบรก')">
+                            <div class="chk-box"></div><span class="chk-label">กระบอกเบรก</span><span class="chk-count">8</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'pl','จานเบรก')">
+                            <div class="chk-box"></div><span class="chk-label">จานเบรก</span><span class="chk-count">7</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'pl','โช้คอัพ')">
+                            <div class="chk-box"></div><span class="chk-label">โช้คอัพ</span><span class="chk-count">6</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'pl','กรองน้ำมันเครื่อง')">
+                            <div class="chk-box"></div><span class="chk-label">กรองน้ำมันเครื่อง</span><span class="chk-count">5</span>
+                        </label>
+                        <!-- hidden items (shown after "see more") -->
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','แบตเตอรี่')">
+                            <div class="chk-box"></div><span class="chk-label">แบตเตอรี่</span><span class="chk-count">5</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','น้ำมันเครื่อง')">
+                            <div class="chk-box"></div><span class="chk-label">น้ำมันเครื่อง</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กรองอากาศ')">
+                            <div class="chk-box"></div><span class="chk-label">กรองอากาศ</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กรองดีเซล')">
+                            <div class="chk-box"></div><span class="chk-label">กรองดีเซล</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ใบปัดน้ำฝน HYBRID')">
+                            <div class="chk-box"></div><span class="chk-label">ใบปัดน้ำฝน HYBRID</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','หัวเทียน')">
+                            <div class="chk-box"></div><span class="chk-label">หัวเทียน</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','คอยล์จุดระเบิด')">
+                            <div class="chk-box"></div><span class="chk-label">คอยล์จุดระเบิด</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ไดสตาร์ท')">
+                            <div class="chk-box"></div><span class="chk-label">ไดสตาร์ท</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ไดชาร์จ')">
+                            <div class="chk-box"></div><span class="chk-label">ไดชาร์จ</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ใบปัดน้ำฝน MULTI CLIP')">
+                            <div class="chk-box"></div><span class="chk-label">ใบปัดน้ำฝน MULTI CLIP</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ใบปัดน้ำฝนโครงเหล็ก LIP')">
+                            <div class="chk-box"></div><span class="chk-label">ใบปัดน้ำฝนโครงเหล็ก LIP</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กรองเบนซิน')">
+                            <div class="chk-box"></div><span class="chk-label">กรองเบนซิน</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กรองแอร์')">
+                            <div class="chk-box"></div><span class="chk-label">กรองแอร์</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','สปริงโช้คอัพ')">
+                            <div class="chk-box"></div><span class="chk-label">สปริงโช้คอัพ</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','น้ำมันเบรก')">
+                            <div class="chk-box"></div><span class="chk-label">น้ำมันเบรก</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','หลอด LED')">
+                            <div class="chk-box"></div><span class="chk-label">หลอด LED</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','หลอด HALOGEN')">
+                            <div class="chk-box"></div><span class="chk-label">หลอด HALOGEN</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ลูกหมากปีกนก')">
+                            <div class="chk-box"></div><span class="chk-label">ลูกหมากปีกนก</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ลูกหมากคันชัก')">
+                            <div class="chk-box"></div><span class="chk-label">ลูกหมากคันชัก</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','สายพานราวลิ้น')">
+                            <div class="chk-box"></div><span class="chk-label">สายพานราวลิ้น</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ปั๊มน้ำ')">
+                            <div class="chk-box"></div><span class="chk-label">ปั๊มน้ำ</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','หม้อน้ำ')">
+                            <div class="chk-box"></div><span class="chk-label">หม้อน้ำ</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ซีลรถยนต์')">
+                            <div class="chk-box"></div><span class="chk-label">ซีลรถยนต์</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ลูกปืนล้อ')">
+                            <div class="chk-box"></div><span class="chk-label">ลูกปืนล้อ</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','หัวฉีดคอมมอนเรล')">
+                            <div class="chk-box"></div><span class="chk-label">หัวฉีดคอมมอนเรล</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','แผ่นคลัทช์')">
+                            <div class="chk-box"></div><span class="chk-label">แผ่นคลัทช์</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กรองเกียร์')">
+                            <div class="chk-box"></div><span class="chk-label">กรองเกียร์</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กรองไฮดรอลิค')">
+                            <div class="chk-box"></div><span class="chk-label">กรองไฮดรอลิค</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ยางเบ้าโช้คอัพ')">
+                            <div class="chk-box"></div><span class="chk-label">ยางเบ้าโช้คอัพ</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ยางใบปัด REFILL')">
+                            <div class="chk-box"></div><span class="chk-label">ยางใบปัด REFILL</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','จารบี')">
+                            <div class="chk-box"></div><span class="chk-label">จารบี</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','น้ำมันเกียร์')">
+                            <div class="chk-box"></div><span class="chk-label">น้ำมันเกียร์</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ปะเก็นฝา')">
+                            <div class="chk-box"></div><span class="chk-label">ปะเก็นฝา</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ปะเก็นชุด')">
+                            <div class="chk-box"></div><span class="chk-label">ปะเก็นชุด</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ลูกสูบและสลัก')">
+                            <div class="chk-box"></div><span class="chk-label">ลูกสูบและสลัก</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','แหวนลูกสูบ')">
+                            <div class="chk-box"></div><span class="chk-label">แหวนลูกสูบ</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','บูชปีกนก')">
+                            <div class="chk-box"></div><span class="chk-label">บูชปีกนก</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','แร็คพวงมาลัยและชุดซ่อม')">
+                            <div class="chk-box"></div><span class="chk-label">แร็คพวงมาลัย</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','สายพานร่อง PK')">
+                            <div class="chk-box"></div><span class="chk-label">สายพานร่อง PK</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ลูกรอกสายพาน')">
+                            <div class="chk-box"></div><span class="chk-label">ลูกรอกสายพาน</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','พัดลม')">
+                            <div class="chk-box"></div><span class="chk-label">พัดลม</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','น้ำยาหม้อน้ำ')">
+                            <div class="chk-box"></div><span class="chk-label">น้ำยาหม้อน้ำ</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','คอมแอร์ น้ำยาแอร์ น้ำมันแอร์')">
+                            <div class="chk-box"></div><span class="chk-label">คอมแอร์ / น้ำยาแอร์</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ตู้แอร์')">
+                            <div class="chk-box"></div><span class="chk-label">ตู้แอร์</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','แผงแอร์')">
+                            <div class="chk-box"></div><span class="chk-label">แผงแอร์</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ลูกปืนเม็ดกลม')">
+                            <div class="chk-box"></div><span class="chk-label">ลูกปืนเม็ดกลม</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ปั๊มคอมมอนเรล')">
+                            <div class="chk-box"></div><span class="chk-label">ปั๊มคอมมอนเรล</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ท่อน้ำ')">
+                            <div class="chk-box"></div><span class="chk-label">ท่อน้ำ</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ท่อน้ำมัน')">
+                            <div class="chk-box"></div><span class="chk-label">ท่อน้ำมัน</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','หวีคลัทช์')">
+                            <div class="chk-box"></div><span class="chk-label">หวีคลัทช์</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','ยางรองแท่นเครื่อง')">
+                            <div class="chk-box"></div><span class="chk-label">ยางรองแท่นเครื่อง</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','เซนเซอร์ ABS')">
+                            <div class="chk-box"></div><span class="chk-label">เซนเซอร์ ABS</span><span class="chk-count">2</span>
+                        </label>
+                        <label class="chk-item pl-extra" style="display:none" onclick="toggleChk(this,'pl','กล่องสมองกล ECU')">
+                            <div class="chk-box"></div><span class="chk-label">กล่องสมองกล ECU</span><span class="chk-count">2</span>
+                        </label>
+                    </div>
+                    <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
+                        <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
+                    </button>
+
+                    <!-- 3.2 Fitting -->
+                    <div class="flabel mt-3">Fitting</div>
+                    <div class="fit-grid" id="fitGrid">
+                        <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'ซ้าย')">ซ้าย</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'ขวา')">ขวา</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'บน')">บน</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
+                    </div>
+
+                    <!-- 3.3 Brand -->
+                    <div class="flabel mt-3">Brand</div>
+                    <div class="chk-list" id="brList">
+                        <label class="chk-item" onclick="toggleChk(this,'br','TRW')">
+                            <div class="chk-box"></div><span class="chk-label">TRW</span><span class="chk-count">9</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'br','Bosch')">
+                            <div class="chk-box"></div><span class="chk-label">Bosch</span><span class="chk-count">7</span>
+                        </label>
+                        <!-- hidden brands -->
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','DENSO')">
+                            <div class="chk-box"></div><span class="chk-label">DENSO</span><span class="chk-count">6</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'br','Kashiyama')">
+                            <div class="chk-box"></div><span class="chk-label">Kashiyama</span><span class="chk-count">6</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'br','Nissin')">
+                            <div class="chk-box"></div><span class="chk-label">Nissin</span><span class="chk-count">5</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','Girling')">
+                            <div class="chk-box"></div><span class="chk-label">Girling</span><span class="chk-count">5</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','NGK')">
+                            <div class="chk-box"></div><span class="chk-label">NGK</span><span class="chk-count">5</span>
+                        </label>
+                        <label class="chk-item" onclick="toggleChk(this,'br','Valeo')">
+                            <div class="chk-box"></div><span class="chk-label">Valeo</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','SKF')">
+                            <div class="chk-box"></div><span class="chk-label">SKF</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','Road House')">
+                            <div class="chk-box"></div><span class="chk-label">Road House</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','Gates')">
+                            <div class="chk-box"></div><span class="chk-label">Gates</span><span class="chk-count">4</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','ATE')">
+                            <div class="chk-box"></div><span class="chk-label">ATE</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','Mando')">
+                            <div class="chk-box"></div><span class="chk-label">Mando</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','Champion')">
+                            <div class="chk-box"></div><span class="chk-label">Champion</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','Dayco')">
+                            <div class="chk-box"></div><span class="chk-label">Dayco</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','NSK')">
+                            <div class="chk-box"></div><span class="chk-label">NSK</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','LOCTITE')">
+                            <div class="chk-box"></div><span class="chk-label">LOCTITE</span><span class="chk-count">3</span>
+                        </label>
+                        <label class="chk-item br-extra" style="display:none" onclick="toggleChk(this,'br','STP')">
+                            <div class="chk-box"></div><span class="chk-label">STP</span><span class="chk-count">3</span>
+                        </label>
+                    </div>
+                    <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
+                        <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- ════ MAIN ════ -->
+    <!--<main class="main-area" id="mainArea">
+        <div class="main-content">-->
+
+            <!-- Zone 1: Vehicle Summary + Clear Filter -->
+            <!--<div class="hz col-12" id="rz1">
+                <div class="rsh mb-2">
+                    <span class="rsh-title col-8">Selected Vehicle</span>
+                    <button class="clear-filter ms-auto" onclick="clearAllFilters()">
+                        <i class="bi bi-x-circle"></i> Clear Filter
+                    </button>
+                </div>
+                <div class="veh-pills" id="vehSummary">
+                    <div class="veh-empty">
+                        <i class="bi bi-car-front" style="font-size:1.1rem"></i>
+                        <span>Select vehicle attributes in the left panel to filter parts</span>
+                    </div>
+                </div>
+            </div>-->
+
+            <!-- Zone 2: Product Results -->
+            <!--<div class="hz" id="rz2">
+                <div class="rsh">
+                    <span class="rsh-title">Product Results</span>
+                    <span class="rcount" id="rcount">12 items</span>
+                    <select class="sort-select ms-auto" id="sortSelect" onchange="sortProducts(this.value)">
+                        <option value="carModel" selected>เรียงตาม: รุ่นรถ</option>
+                        <option value="part">เรียงตาม: Part</option>
+                        <option value="brand">เรียงตาม: ยี่ห้อสินค้า</option>
+                        <option value="price-asc">ราคา: น้อย → มาก</option>
+                        <option value="price-desc">ราคา: มาก → น้อย</option>
+                        <option value="name">ชื่อ: A-Z</option>
+                    </select>
+                </div>-->
+
+                <!-- Active Filter Chips -->
+                <!--<div class="active-filters" id="activeFilters"></div>-->
+
+                <!-- Skeleton -->
+                <!--<div id="skelWrap" style="display:none">
+                    <div class="product-grid">
+                        <div class="skel skel-card"></div>
+                        <div class="skel skel-card"></div>
+                        <div class="skel skel-card"></div>
+                        <div class="skel skel-card"></div>
+                    </div>
+                </div>-->
+
+                <!-- Product Grid -->
+                <!--<div class="product-grid" id="pGrid"></div>-->
+
+                <!-- Netflix-style grouped rows (active when a specific group is selected) -->
+                <!--<div class="nf-rows" id="nfRows" style="display:none;"></div>
+            </div>-->
+
+            <!-- §4 SPEC DRAWER removed from inline — see drawer below -->
+
+        <!--</div>
+    </main>-->
+@*</div>*@
+
+
+<!-- ════ SIDEBAR ════ -->
+<!--<aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
+    <div class="sidebar-inner mt-5 mb-5">-->
+<!-- §1 Vehicle Filter -->
+<!--<div class="sec-hd" onclick="toggleSection('vfBody', 1)">
+    <span class="sec-title">Vehicle Filter</span>
+    <i class="bi bi-chevron-down sec-chevron"></i>
+</div>
+<div class="collapse show" id="vfBody">
+    <div class="filter-body mt-2">
+        <div class="mb-2">
+            <div class="flabel">Market Segment</div>
+            <select name="market" id="market-select" class="fselect" data-live-search="true" onchange="vfChange(this,'market')">
+                <option style="max-width:30px" value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Vehicle Segment</div>
+            <select name="vehicle" id="vehicle-select" class="fselect" data-live-search="true" onchange="vfChange(this,'vehicle')">
+                <option style="max-width:30px" value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Maker</div>
+            <select name="maker" id="maker-select" class="fselect" data-live-search="true" onchange="vfChange(this,'maker')">
+                <option style="max-width:30px" value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Model Range</div>
+            <select name="modelrange" id="range-select" class="fselect" data-live-search="true" onchange="vfChange(this,'modelrange')">
+                <option value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Model Body</div>
+            <select name="model" id="model-select" class="fselect" data-live-search="true" onchange="vfChange(this,'model')">
+                <option value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Engine</div>
+            <select name="body" id="body-select" class="fselect" data-live-search="true" onchange="vfChange(this,'body')">
+                <option value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Year Range</div>
+            <div class="yr-range">
+                <input type="number" id="vf-yr-from" placeholder="From" min="1990" max="2025" onchange="activateSec(1)">
+                <span>–</span>
+                <input type="number" id="vf-yr-to" placeholder="To" min="1990" max="2025" onchange="activateSec(1)">
+            </div>
+        </div>
+        <div class="mb-1">
+            <div class="flabel">Drive System</div>
+            <select name="engine" id="engine-select" class="fselect" data-live-search="true" onchange="vfChange(this,'engine')">
+                <option value="ALL">ALL</option>
+            </select>
+        </div>
+        <div class="ftags" id="vfTags"></div>
+        <button class="search-btn" onclick="runSearch()">
+            <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
+        </button>
+    </div>
+</div>
+
+<div class="step-line"><div class="ln"></div></div>-->
+<!-- §2 Search Panel -->
+<!--<div class="sec-hd" onclick="toggleSection('spBody', 2)">
+    <span class="sec-title">Part Search</span>
+    <i class="bi bi-chevron-down sec-chevron"></i>
+</div>
+<div class="collapse show" id="spBody">
+    <div class="filter-body">
+        <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
+        <div class="smode-group" id="smodeGroup">
+            <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
+                <i class="bi bi-card-text"></i> Description
+            </label>
+            <label class="smode-btn" data-mode="oe" onclick="toggleMode(this)">
+                <i class="bi bi-upc-scan"></i> OE
+            </label>
+            <label class="smode-btn" data-mode="competitor" onclick="toggleMode(this)">
+                <i class="bi bi-arrows-collapse"></i> Competitor
+            </label>
+        </div>
+        <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
+            <input type="text" id="partQ" placeholder="Type part name or code…"
+                   oninput="syncSearch('sidebar');acInputSidebar(this)"
+                   onkeydown="acKeyNavSidebar(event)"
+                   autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+            <i class="bi bi-search"></i>
+            <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
+        </div>
+        <button class="search-btn" onclick="runSearch()">
+            <i class="bi bi-lightning-charge-fill"></i> Search Parts
+        </button>
+    </div>
+</div>
+
+<div class="step-line"><div class="ln"></div></div>-->
+<!-- §3 Sidebar Filters -->
+<!--<div class="collapse show" id="sfBody">
+            <div class="filter-body">
+                <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
+                <div class="chk-list" id="plList">
+                    <label class="chk-item" onclick="toggleChk(this,'pl','ผ้าเบรก')">
+                        <div class="chk-box"></div><span class="chk-label">ผ้าเบรก</span><span class="chk-count">12</span>
+                    </label>
+                    <label class="chk-item" onclick="toggleChk(this,'pl','กระบอกเบรก')">
+                        <div class="chk-box"></div><span class="chk-label">กระบอกเบรก</span><span class="chk-count">8</span>
+                    </label>
+                    <label class="chk-item" onclick="toggleChk(this,'pl','จานเบรก')">
+                        <div class="chk-box"></div><span class="chk-label">จานเบรก</span><span class="chk-count">7</span>
+                    </label>
+                </div>
+
+                <div class="flabel mt-3">Fitting</div>
+                <div class="fit-grid" id="fitGrid">
+                    <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
+                    <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
+                    <div class="fit-chip" onclick="toggleFit(this,'ซ้าย')">ซ้าย</div>
+                    <div class="fit-chip" onclick="toggleFit(this,'ขวา')">ขวา</div>
+                    <div class="fit-chip" onclick="toggleFit(this,'บน')">บน</div>
+                    <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
+                </div>
+
+                <div class="flabel mt-3">Brand</div>
+                <div class="chk-list" id="brList">
+                    <label class="chk-item" onclick="toggleChk(this,'br','TRW')">
+                        <div class="chk-box"></div><span class="chk-label">TRW</span><span class="chk-count">9</span>
+                    </label>
+                    <label class="chk-item" onclick="toggleChk(this,'br','Kashiyama')">
+                        <div class="chk-box"></div><span class="chk-label">Kashiyama</span><span class="chk-count">6</span>
+                    </label>
+                    <label class="chk-item" onclick="toggleChk(this,'br','Nissin')">
+                        <div class="chk-box"></div><span class="chk-label">Nissin</span><span class="chk-count">5</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</aside>-->
+@*<script>
+    $(document).ready(function () {
+
+        // ════════════════════════════════
+        // EVENT BINDINGS — ทั้งหมดอยู่ใน ready
+        // ════════════════════════════════
+
+        // Market / Vehicle → reload ทุกอย่างใหม่
+        $('#market-select, #vehicle-select').on('change', function () {
+            MakerLoader();
+            clearModelrange();
+            clearModel();
+            clearBody();
+            clearEngine();
+        });
+
+        // Maker → โหลด Range ใหม่
+        $('#maker-select').on('change', function () {
+            clearModelrange();
+            clearModel();
+            clearBody();
+            clearEngine();
+            modelRangeLoader();
+        });
+
+        // Range → โหลด Model ใหม่
+        $('#range-select').on('change', function () {
+            clearModel();
+            clearBody();
+            clearEngine();
+            modelLoader();
+        });
+
+        // Model → โหลด Body ใหม่
+        $('#model-select').on('change', function () {
+            clearBody();
+            clearEngine();
+            bodyLoader();
+        });
+
+        // Body → โหลด Engine ใหม่
+        $('#body-select').on('change', function () {
+            clearEngine();
+            engineLoader();
+        });
+
+
+        // ════════════════════════════════
+        // INITIAL LOAD
+        // ════════════════════════════════
+        MarketSegLoader();
+        VehicleSegLoader();
+        MakerLoader();
+        modelRangeLoader();
+        modelLoader();
+        bodyLoader();
+        engineLoader();
+
+        $.fn.dataTable.ext.errMode = 'none';
+    });
+
+    // ════════════════════════════════
+    // CLEAR HELPERS
+    // ════════════════════════════════
+    function clearALL() {
+        MakerLoader();
+        modelRangeLoader();
+        modelLoader();
+        bodyLoader();
+        engineLoader();
+    }
+
+    function clearModelrange() {
+        $('#range-select').html('<option value="ALL" selected>ALL</option><option value="">No ModelRange</option>');
+    }
+    function clearModel() {
+        $('#model-select').html('<option value="ALL" selected>ALL</option>');
+    }
+    function clearBody() {
+        $('#body-select').html('<option value="ALL" selected>ALL</option>');
+    }
+    function clearEngine() {
+        $('#engine-select').html('<option value="ALL" selected>ALL</option>');
+    }
+
+    // ════════════════════════════════
+    // LOADERS
+    // ════════════════════════════════
+    function MarketSegLoader() {
+        console.log('MarketSegLoader called'); // ← ดูว่า function ถูกเรียกมั้ย
+        $.ajax({
+            url: '@Url.Action("GetVIO_MarketSeg", "TruAutoparts")',
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                console.log('MarketSeg response:', data); // ← ดูว่า API ตอบอะไร
+                if (data.respone === true) {
+                    var opt = '<option value="ALL" selected>ALL</option>';
+                    data.result.forEach(function (item) {
+                        opt += '<option value="' + item.ID + '">' + item.MarketSegment + '</option>';
+                    });
+                    $('#market-select').html(opt);
+                    console.log('market-select element:', $('#market-select').length); // ← ดูว่าเจอ element มั้ย
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('MarketSegLoader FAILED:', xhr.status, status, err);
+                console.error('Response:', xhr.responseText); // ← ดู error จาก server
+            }
+        });
+    }
+
+    function VehicleSegLoader() {
+        $.ajax({
+            url: '@Url.Action("GetVIO_VehicleSegment", "TruAutoparts")',
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                if (data.respone === true) {
+                    var opt = '<option value="ALL" selected>ALL</option>';
+                    data.result.forEach(function (item) {
+                        opt += '<option value="' + item.ID + '">' + item.VehicleSegment + '</option>';
+                    });
+                    $('#vehicle-select').html(opt);
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('VehicleSegLoader error:', status, err);
+            }
+        });
+    }
+
+    function MakerLoader() {
+        var market  = $('#market-select').val();
+        var vehicle = $('#vehicle-select').val();
+        $.ajax({
+            url: '@Url.Action("GetVIO_Maker", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: { MarketSegID: market, VehicleSegID: vehicle },
+            beforeSend: function () {
+                $('#maker-select').html('<option value="ALL" selected>ALL</option>');
+            },
+            success: function (data) {
+                if (data.respone == true && data.result.length > 0) {
+                    var opt = '<option value="ALL" selected>ALL</option>';
+                    data.result.forEach(function (item) {
+                        opt += '<option value="' + item.ID + '">' + item.Maker + '</option>';
+                    });
+                    $('#maker-select').html(opt);
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('MakerLoader error:', status, err);
+            }
+        });
+    }
+
+    function modelRangeLoader() {
+        var makerId = $('#maker-select').val();
+        $.ajax({
+            url: '@Url.Action("GetVIO_ModelRange", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: { MakerID: makerId },
+            beforeSend: function () { clearModelrange(); },
+            success: function (data) {
+                if (data.respone === true) {
+                    var opt = '<option value="ALL" selected>ALL</option><option value="">No ModelRange</option>';
+                    data.result.forEach(function (item) {
+                        opt += '<option data-maker="' + item.Maker_ID + '" value="' + item.ID + '">' + item.ModelRange + '</option>';
+                    });
+                    $('#range-select').html(opt);
+                } else {
+                    clearModelrange();
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('modelRangeLoader error:', status, err);
+            }
+        });
+    }
+
+    function modelLoader() {
+        var marketId = $('#market-select').val();
+        var makerId  = $('#maker-select').val();
+        var rangeId  = $('#range-select').val();
+        $.ajax({
+            url: '@Url.Action("GetVIO_Model", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: { MarketSegID: marketId, MakerID: makerId, ModelRangID: rangeId },
+            beforeSend: function () { clearModel(); },
+            success: function (data) {
+                if (data.respone === true) {
+                    var opt = '<option value="ALL" selected>ALL</option>';
+                    data.result.forEach(function (item) {
+                        opt += '<option value="' + item.ID + '">' + item.Model + '</option>';
+                    });
+                    $('#model-select').html(opt);
+                } else {
+                    clearModel();
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('modelLoader error:', status, err);
+            }
+        });
+    }
+
+    function bodyLoader() {
+        var marketId     = $('#market-select').val();
+        var vehicleId    = $('#vehicle-select').val();
+        var makerId      = $('#maker-select').val();
+        var modelRangeId = $('#range-select').val();
+        var modelId      = $('#model-select').val();
+        $.ajax({
+            url: '@Url.Action("GetVIO_Body", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: { marketSeg: marketId, vehicleSeg: vehicleId, makerID: makerId, modelID: modelId, modelRangeID: modelRangeId },
+            beforeSend: function () { clearBody(); },
+            success: function (data) {
+                if (data.respone === true) {
+                    var opt = '<option value="ALL" selected>ALL</option>';
+                    data.result.forEach(function (item) {
+                        opt += '<option value="' + item.ID + '">' + item.Body + '</option>';
+                    });
+                    $('#body-select').html(opt);
+                } else {
+                    clearBody();
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('bodyLoader error:', status, err);
+            }
+        });
+    }
+
+    function engineLoader() {
+        var makerId      = $('#maker-select').val();
+        var modelRangeId = $('#range-select').val();
+        var modelId      = $('#model-select').val();
+        var bodyId       = $('#body-select').val();
+        $.ajax({
+            url: '@Url.Action("GETVIO_Engine", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: { makerID: makerId, modelRangeID: modelRangeId, modelID: modelId, bodyID: bodyId },
+            beforeSend: function () { clearEngine(); },
+            success: function (data) {
+                if (data.respone === true) {
+                    var opt = '<option value="ALL" selected>ALL</option>';
+                    data.result.forEach(function (engine) {
+                        opt += '<option value="' + engine.ID + '">' + engine.EngineType + '</option>';
+                    });
+                    $('#engine-select').html(opt);
+                } else {
+                    clearEngine();
+                }
+            },
+            error: function (xhr, status, err) {
+                console.error('engineLoader error:', status, err);
+            }
+        });
+    }
+
+    // ════════════════════════════════
+    // TABLE LOADERS
+    // ════════════════════════════════
+    function LoadVIOData() {
+        $.ajax({
+            url: '@Url.Action("GetVIOData", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: {},
+            beforeSend: function () {
+                $('#table-vio tbody').html('<tr><td class="text-center" colspan="16"><i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i> Loading...</td></tr>');
+            },
+            success: function (data) {
+                renderVIOTable(data);
+            },
+            error: function (xhr, status, err) {
+                console.error('LoadVIOData error:', status, err);
+            }
+        });
+    }
+
+    function SearchVIOData() {
+        var market  = $('#market-select').val();
+        var vehicle = $('#vehicle-select').val();
+        var maker   = $('#maker-select').val();
+        var range   = $('#range-select').val();
+        var model   = $('#model-select').val();
+        var body    = $('#body-select').val();
+        var engine  = $('#engine-select').val();
+
+        $.ajax({
+            url: '@Url.Action("GetVIOData", "UpLoadDataVIO")',
+            type: 'POST',
+            dataType: 'json',
+            data: { marketID: market, vehicleID: vehicle, maker: maker, rangID: range, modelID: model, bodyID: body, engineID: engine },
+            beforeSend: function () {
+                Swal.fire({
+                    title: 'Searching...',
+                    text: 'Please wait while we processing on the product.',
+                    allowOutsideClick: false,
+                    didOpen: function () { Swal.showLoading(); }
+                });
+                $('#table-vio tbody').html('<tr><td class="text-center" colspan="16"><i class="fa fa-circle-o-notch fa-spin" style="font-size:24px"></i> Loading...</td></tr>');
+            },
+            success: function (data) {
+                Swal.close();
+                renderVIOTable(data);
+            },
+            error: function (xhr, status, err) {
+                Swal.close();
+                console.error('SearchVIOData error:', status, err);
+            }
+        });
+    }
+
+    // ── shared table renderer ──
+    function renderVIOTable(data) {
+        var html = '';
+        $('#table-vio tbody').html('');
+
+        if ($.fn.DataTable.isDataTable('#table-vio')) {
+            $('#table-vio').DataTable().clear().destroy();
+        }
+
+        if (data.respone === true && data.result.length > 0) {
+            $('#item-count').text(data.result.length + ' Item');
+            data.result.forEach(function (item) {
+                html += '<tr>' +
+                    '<td class="text-center">' + item.KType + '</td>' +
+                    '<td class="text-center">' + item.MarketSegment + '</td>' +
+                    '<td class="text-center">' + item.VehicleSegment + '</td>' +
+                    '<td class="text-center">' + item.Maker + '</td>' +
+                    '<td class="text-center">' + item.ModelRange + '</td>' +
+                    '<td class="text-center">' + item.Model + '</td>' +
+                    '<td class="text-center">' + item.Body + '</td>' +
+                    '<td class="text-center">' + item.BodyType + '</td>' +
+                    '<td class="text-center">' + item.DriveType + '</td>' +
+                    '<td class="text-center">' + item.EngineType + '</td>' +
+                    '<td class="text-center">' + item.Strokes + '</td>' +
+                    '<td class="text-center">' + item.FuelType + '</td>' +
+                    '<td class="text-center">' + item.YearFrom + '</td>' +
+                    '<td class="text-center">' + item.YearTo + '</td>' +
+                    '<td class="text-center">' + item.ThailandVIO + '</td>' +
+                    '<td class="text-center">' + item.TruType + '</td>' +
+                    '</tr>';
+            });
+            $('#table-vio tbody').html(html);
+        } else {
+            $('#item-count').text('0 Item');
+            $('#table-vio tbody').html('<tr><td colspan="16" class="text-center">No Data</td></tr>');
+        }
+
+        $('#table-vio').dataTable({
+            paging: true,
+            pageLength: 20,
+            lengthChange: false,
+            searching: false,
+            ordering: false,
+            language: {
+                info: "แสดง _START_ ถึง _END_ จากทั้งหมด _TOTAL_ ",
+                infoEmpty: "ไม่มีข้อมูลให้แสดง"
+            }
+        });
+        }
+
+        function toggleSection(bodyId, secNo) {
+            activateSec(secNo);
+            const target = document.getElementById(bodyId);
+            if (!target) return;
+            const bsCollapse =
+                bootstrap.Collapse.getOrCreateInstance(target);
+            if (target.classList.contains('show')) {
+                bsCollapse.hide();
+            } else {
+                bsCollapse.show();
+            }
+        }
+
+        $.ajax({
+            url: '@Url.Action("GetCatProductGroupline", "DataCenter")',
+            data: {
+                com: _var,
+                progroup: "",
+                brand: "",
+                cuscod: cuscod
+            },
+            type: "POST",
+            dataType: "JSON",
+            success: function (data) {
+                //console.log(data)
+                var select = $("#productline");
+                select.children().remove();
+                select.prepend($("<option>").val("").text("ประเภทสินค้า(Product Line)"));
+                $(data).each(function (index, item) {
+                    select.append($("<option custyp='" + item.ProductGroup + "'>").val(item.ProductLine).text(item.ProductLine));
+                });
+                $("#productline").selectpicker('refresh');
+                $(".selectpicker #productline").selectpicker({
+                    noneSelectedText: 'Product Line All' // by this default 'Nothing selected' -->will change to Please Select
+                });
+            }
+        });
+
+    </script>*@

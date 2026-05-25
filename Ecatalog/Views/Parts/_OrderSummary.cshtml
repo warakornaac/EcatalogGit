@@ -1,0 +1,138 @@
+﻿<!-- ════════════════════════════════════════
+     ORDER SUMMARY MODAL
+════════════════════════════════════════ -->
+<div class="os-overlay" id="osOverlay" onclick="osOverlayClick(event)">
+    <div class="os-modal" id="osModal">
+
+        <!-- Close -->
+        <button class="os-close" onclick="closeOrderSummary()" title="ปิด">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+        <!-- LEFT: Order Summary -->
+        <div class="os-left">
+            <div class="os-section-title">
+                <i class="bi bi-receipt" style="color:#9b0008;font-size:1rem"></i>
+                Order Summary
+                <span class="os-section-badge" id="osItemBadge">0 items</span>
+            </div>
+
+            <div class="os-product-list" id="osProductList"></div>
+
+            <div class="os-counts">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-2);font-weight:500">
+                    <input type="checkbox" id="osSelectAll" checked onchange="osToggleSelectAll(this)" style="width:15px;height:15px;accent-color:#fd152f;cursor:pointer">
+                    เลือกทั้งหมด
+                </label>
+                <div style="margin-left:auto;display:flex;gap:14px">
+                    <div class="os-count-lbl">เบอร์สินค้า : <span id="osSkuCount">0</span></div>
+                    <div class="os-count-lbl">จำนวน : <span id="osQtyCount">0</span></div>
+                </div>
+            </div>
+
+            <div class="os-financial">
+                <div class="os-fin-row">
+                    <span>ส่วนลดเงินสด % / Cash Discount</span>
+                    <span class="os-fin-val green" id="osDiscount">−0.00</span>
+                </div>
+                <div class="os-fin-row">
+                    <span>จำนวนเงินก่อนภาษี / Net</span>
+                    <span class="os-fin-val" id="osNet">0.00</span>
+                </div>
+                <div class="os-fin-row">
+                    <span>ภาษี 7% / Vat</span>
+                    <span class="os-fin-val" id="osVat">0.00</span>
+                </div>
+                <div class="os-fin-total-row">
+                    <span class="os-fin-total-lbl">ยอดเงิน / Total</span>
+                    <span class="os-fin-total-val" id="osTotal">฿0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Shipping & Payment -->
+        <div class="os-right">
+
+            <div>
+                <div class="os-field-label">Comment By Order</div>
+                <textarea class="os-textarea" placeholder="เพิ่มหมายเหตุสำหรับคำสั่งนี้..."></textarea>
+            </div>
+
+            <div>
+                <div class="os-field-label">เครดิต / Credit Term</div>
+                <select class="os-select">
+                    <option>ชำระปกติ(เครดิต)</option>
+                    <option>เงินสด</option>
+                    <option>โอน</option>
+                </select>
+            </div>
+
+            <div>
+                <div class="os-shipping-hdr">
+                    <div class="os-field-label" style="margin-bottom:0">ที่อยู่ในการจัดส่ง / ใบกำกับภาษี</div>
+                    <button class="os-change-btn" id="osChangAddrBtn" onclick="osToggleAddrPicker()">
+                        <i class="bi bi-house-door"></i> เปลี่ยนที่อยู่ในการจัดส่ง (<a id="totalAddr"></a>)
+                    </button>
+                </div>
+                <div class="os-addr-display" id="osAddrDisplay">
+                    <strong>ร้าน:เอ แอนด์ เอ ออโตโมทีฟ เซลส์ จำกัด</strong><br>
+                    (รหัสร้าน:110A0107)<br>
+                    ที่อยู่จัดส่งสินค้า 54-56 ถ.พะเนียง แขวงวัดโสมนัส
+                    เขตป้อมปราบศัตรูพ่าย กรุงเทพมหานคร 10100
+                </div>
+            </div>
+
+            <div id="osAddrPicker" style="display:none;flex-direction:column;gap:7px;flex:1;min-height:0">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="os-addr-search-wrap flex-grow-1">
+                        <i class="bi bi-search os-addr-search-icon"></i>
+                        <input class="os-addr-search"
+                               type="text"
+                               placeholder="ค้นหาที่อยู่..."
+                               oninput="osFilterAddr(this.value)">
+                    </div>
+                    <button class="os-change-btn"
+                            style="border-color:#fd152f;"
+                            onclick="osUseInvoiceAddr()">
+                        ส่งตามที่อยู่ในใบกำกับภาษี
+                    </button>
+                </div>
+                <div class="os-addr-list" id="osAddrList">
+                    <div class="os-addr-item selected" onclick="osSelectAddr(this)">
+                        <div class="os-addr-name">ร้าน:เอ แอนด์ เอ ออโตโมทีฟ เซลส์ จำกัด (รหัสร้าน:110A0107) <span style="font-size:9px;background:#fd152f;color:#fff;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle">ที่อยู่หลัก</span></div>
+                        <div>ที่อยู่จัดส่งสินค้า 54-56 ถ.พะเนียง แขวงวัดโสมนัส เขตป้อมปราบศัตรูพ่าย กรุงเทพมหานคร 10100</div>
+                        <div class="os-addr-phone">—</div>
+                    </div>
+                    <div class="os-addr-item" onclick="osSelectAddr(this)">
+                        <div class="os-addr-name">อู่สามชัยยนต์</div>
+                        <div>101/1-2 ซอยโชคชัยร่วมมิตร แขวงจอมพล เขตจตุจักร กรุงเทพมหานคร</div>
+                        <div class="os-addr-phone">0-2277-2150, 0-2277-5382</div>
+                    </div>
+                    <div class="os-addr-item" onclick="osSelectAddr(this)">
+                        <div class="os-addr-name">นวมินทร์การาจ</div>
+                        <div>19/41 ซอยนวมินทร์ 103 ถ.นวมินทร์ แขวงคลองกุ่ม เขตบึงกุ่ม กรุงเทพมหานคร</div>
+                        <div class="os-addr-phone">02-9497223-5</div>
+                    </div>
+                    <div class="os-addr-item" onclick="osSelectAddr(this)">
+                        <div class="os-addr-name">สุริยะยนต์ ออโต้ บอดี้</div>
+                        <div>2824-2826 ถ.กรุงเทพฯ-นนทบุรี แขวงบางซื่อ เขตบางซื่อ กรุงเทพมหานคร</div>
+                        <div class="os-addr-phone">0-2585-3408, 0-2912-1136</div>
+                    </div>
+                    <div class="os-addr-item" onclick="osSelectAddr(this)">
+                        <div class="os-addr-name">ศูนย์บริการ Toyota พระราม 2</div>
+                        <div>88/8 ถ.พระราม 2 แขวงแสมดำ เขตบางขุนเทียน กรุงเทพมหานคร</div>
+                        <div class="os-addr-phone">0-2415-0070</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="os-checkout-btn" id="osCheckoutBtn" onclick="osCheckout()">
+                <i class="bi bi-credit-card-2-front me-2"></i> CHECKOUT
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<!-- TOASTS -->
+@*<div class="toasts" id="toastRack"></div>*@
