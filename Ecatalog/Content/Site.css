@@ -3414,3 +3414,11 @@ body {
         transform: translateX(20px)
     }
 }
+
+.dr-add-btn.bo-btn {
+    background: #fe6d00;
+}
+
+    .dr-add-btn.bo-btn:hover {
+        background: #d45c00;
+    }

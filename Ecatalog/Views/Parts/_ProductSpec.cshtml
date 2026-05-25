@@ -29,7 +29,7 @@
             <div class="dr-price" id="drPrice">$0.00</div>
             <div class="dr-add-row">
                 <input type="number" class="dr-qty" id="drQty" value="1" min="1" max="99">
-                <button class="dr-add-btn" onclick="addCartFromDrawer(event)">
+                <button class="dr-add-btn" id="drAddBtn" onclick="addCartFromDrawer(event)">
                     <i class="bi bi-cart-plus"></i> Add to Cart
                 </button>
             </div>
@@ -128,15 +128,11 @@
     </div>
 </div>
 
-<!-- GUIDE -->
-@*<div class="guide" id="guide">
-    <button class="guide-x" onclick="gEl('guide').style.display='none'"><i class="bi bi-x"></i></button>
-    <h6><i class="bi bi-stars"></i> Guided Search Flow</h6>
-    <p>
-        <strong>①</strong> Vehicle Filter<br>
-        <strong>②</strong> Search Parts (multi-mode)<br>
-        <strong>③</strong> Sidebar Filters → results update instantly<br>
-        <strong>④</strong> "See detail" → Spec popup<br>
-        <strong>Bottom Bar</strong> → Switch product groups
-    </p>
-</div>*@
+@*<script>
+const drAddBtn = gEl("drAddBtn");
+if (drAddBtn) {
+    const isBO = (p.stock ?? 99) === 0;
+    drAddBtn.className = "dr-add-btn" + (isBO ? " bo-btn" : "");
+    drAddBtn.innerHTML = `<i class="bi ${isBO ? " bi-hourglass-split" : "bi-cart-plus" }"></i> ${isBO ? "จอง (BO)" : "Add to Cart"}`;
+    }
+</script>*@

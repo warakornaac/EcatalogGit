@@ -312,6 +312,7 @@ function selectGroup(id){
 ════════════════════════════════ */
 let activeProduct = null;
 
+
 function selCard(id) {
   document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
   gEl('pc-'+id)?.classList.add('active-card');
@@ -433,7 +434,13 @@ function openDrawer(id, e) {
     gEl('drPN').textContent       = p.code;
     // BO status row in mobile drawer spec tab
     const drBoRow = gEl('drBoRow');
-    if (drBoRow) drBoRow.style.display = (p.stock??99)===0 ? '' : 'none';
+      if (drBoRow) drBoRow.style.display = (p.stock ?? 99) === 0 ? '' : 'none';
+      const drAddBtn = gEl('drAddBtn');
+      if (drAddBtn) {
+          const isBO = (p.stock ?? 99) === 0;
+          drAddBtn.className = 'dr-add-btn' + (isBO ? ' bo-btn' : '');
+          drAddBtn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+      }
     gEl('drawerOverlay').classList.add('open');
     gEl('specDrawer').classList.add('open');
     document.body.style.overflow  = 'hidden';
