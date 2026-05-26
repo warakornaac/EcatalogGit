@@ -220,13 +220,11 @@ namespace Ecatalog.Controllers
         //    return View("Login");
         //}
 
-        //[HttpPost]
-        //public ActionResult Logout()
-        //{
-        //    Session.Clear();
-        //    Session.Abandon();
-        //    FormsAuthentication.SignOut();
-        //    return Json(new { status = "success" });
-        //}
+        public ActionResult Logout()
+        {
+            Session.Clear();
+            Session.Abandon();
+            return RedirectToAction("Login", "Login");
+        }
     }
 }

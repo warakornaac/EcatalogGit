@@ -1434,3 +1434,33 @@ function osCheckout() {
     toast('✅ สั่งซื้อสำเร็จแล้ว!');
   }, 2000);
 }
+
+function setupDropdown(triggerId, dropdownId) {
+    const trigger = document.getElementById(triggerId);
+    const dropdown = document.getElementById(dropdownId);
+    let open = trigger.classList.contains('open');
+
+    function toggle(e) {
+        e.stopPropagation();
+        open = !open;
+        trigger.classList.toggle('open', open);
+        dropdown.classList.toggle('open', open);
+        trigger.setAttribute('aria-expanded', open);
+    }
+
+    trigger.addEventListener('click', toggle);
+    trigger.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); }
+    });
+
+    document.addEventListener('click', () => {
+        if (open) {
+            open = false;
+            trigger.classList.remove('open');
+            dropdown.classList.remove('open');
+            trigger.setAttribute('aria-expanded', false);
+        }
+    });
+}
+
+setupDropdown('trigger1', 'dropdown1');

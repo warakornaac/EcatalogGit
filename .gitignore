@@ -58,3 +58,4 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+/Ecatalog/Images/AACTAC185x70.jpg
