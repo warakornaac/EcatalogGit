@@ -76,7 +76,6 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 120px;
     position: relative;
     overflow: hidden;
 }
@@ -106,6 +105,7 @@ body {
 .left-content {
     position: relative;
     z-index: 1;
+    padding-left: 180px;
 }
 
 .left-tagline {
@@ -171,18 +171,18 @@ body {
 }
 
 .login-card {
-    background: #ffffff;
+/*    background: #ffffff;
     border-radius: 30px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid var(--border);*/
     padding: 2.8rem 2.5rem;
     width: 100%;
     max-width: 420px;
-    box-shadow: 0 4px 32px rgba(44,26,26,.07);
+/*    box-shadow: 0 4px 32px rgba(44,26,26,.07);*/
 }
 
 .card-top {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 40px;
 }
 
 .card-logo {
