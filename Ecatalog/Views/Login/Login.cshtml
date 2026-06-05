@@ -42,12 +42,12 @@
                     <p class="card-sub">TRW Parts Pro — Smart Parts Finder</p>
                 </div>
 
-                <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+                <form id="loginForm">
                     <div class="form-group" id="fgUser">
                         <label class="form-label" for="username">ชื่อผู้ใช้ / รหัสพนักงาน</label>
                         <div class="input-wrap">
                             <i class="bi bi-person input-icon"></i>
-                            <input class="form-input" type="text" id="username" placeholder="กรอกชื่อผู้ใช้หรือรหัสพนักงาน" autocomplete="username">
+                            <input class="form-input" type="text" id="txtUsername" value="pentest1" placeholder="กรอกชื่อผู้ใช้หรือรหัสพนักงาน" autocomplete="username">
                         </div>
                         <p class="form-error" id="errUser">กรุณากรอกชื่อผู้ใช้</p>
                     </div>
@@ -56,7 +56,7 @@
                         <label class="form-label" for="password">รหัสผ่าน</label>
                         <div class="input-wrap">
                             <i class="bi bi-lock input-icon"></i>
-                            <input class="form-input" type="password" id="password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+                            <input class="form-input" type="text" id="txtPassword" value="Eixitsder#4545" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
                             <button type="button" class="eye-btn" onclick="togglePwd()" id="eyeBtn" aria-label="แสดง/ซ่อนรหัสผ่าน">
                                 <i class="bi bi-eye" id="eyeIcon"></i>
                             </button>
@@ -71,7 +71,7 @@
                       <a href="#" class="forgot">ลืมรหัสผ่าน?</a>
                     </div> -->
 
-                    <button type="submit" class="btn-login" id="loginBtn">
+                    <button type="button" class="btn-login" onclick="AuthenUser();">
                         <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
                     </button>
                 </form>
@@ -81,54 +81,86 @@
                 <button class="btn-guest" onclick="handleGuest()">
                   <i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม
                 </button> -->
-
                 @*<div class="card-footer">
-                    มีปัญหาในการเข้าสู่ระบบ? <a href="#">ติดต่อผู้ดูแลระบบ</a>
-                </div>*@
+                        มีปัญหาในการเข้าสู่ระบบ? <a href="#">ติดต่อผู้ดูแลระบบ</a>
+                    </div>*@
 
             </div>
 
         </div>
     </div>
-
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
 
-    document.getElementById("loginBtn").onclick = function () {
+    @*document.getElementById("loginBtn").onclick = function () {
         window.location.href = '@Url.Action("Index","Home")';
-    };
-        function togglePwd() {
-            const inp = document.getElementById('password');
-            const ico = document.getElementById('eyeIcon');
-            if (inp.type === 'password') { inp.type = 'text'; ico.className = 'bi bi-eye-slash'; }
-            else { inp.type = 'password'; ico.className = 'bi bi-eye'; }
-        }
+    };*@
+        //function togglePwd() {
+        //    const inp = document.getElementById('password');
+        //    const ico = document.getElementById('eyeIcon');
+        //    if (inp.type === 'password') { inp.type = 'text'; ico.className = 'bi bi-eye-slash'; }
+        //    else { inp.type = 'password'; ico.className = 'bi bi-eye'; }
+        //}
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            const fg1 = document.getElementById('fgUser');
-            const fg2 = document.getElementById('fgPass');
-            let ok = true;
-            fg1.classList.remove('has-error');
-            fg2.classList.remove('has-error');
-            if (!u) { fg1.classList.add('has-error'); ok = false; }
-            if (!p) { fg2.classList.add('has-error'); ok = false; }
-            if (!ok) return;
-            const btn = document.getElementById('loginBtn');
-            btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังเข้าสู่ระบบ...';
-            btn.disabled = true;
-            setTimeout(() => {
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> เข้าสู่ระบบสำเร็จ';
-                btn.style.background = '#1a9e52';
-            }, 1400);
-        }
+        //function handleLogin(e) {
+        //    e.preventDefault();
+        //    const u = document.getElementById('username').value.trim();
+        //    const p = document.getElementById('password').value.trim();
+        //    const fg1 = document.getElementById('fgUser');
+        //    const fg2 = document.getElementById('fgPass');
+        //    let ok = true;
+        //    fg1.classList.remove('has-error');
+        //    fg2.classList.remove('has-error');
+        //    if (!u) { fg1.classList.add('has-error'); ok = false; }
+        //    if (!p) { fg2.classList.add('has-error'); ok = false; }
+        //    if (!ok) return;
+        //    const btn = document.getElementById('loginBtn');
+        //    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังเข้าสู่ระบบ...';
+        //    btn.disabled = true;
+        //    setTimeout(() => {
+        //        btn.innerHTML = '<i class="bi bi-check-lg"></i> เข้าสู่ระบบสำเร็จ';
+        //        btn.style.background = '#1a9e52';
+        //    }, 1400);
+        //}
 
-        function handleGuest() {
-            const btn = event.currentTarget;
-            btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังโหลด...';
-            setTimeout(() => { btn.innerHTML = '<i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม'; }, 1200);
-        }
+        //function handleGuest() {
+        //    const btn = event.currentTarget;
+        //    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังโหลด...';
+        //    setTimeout(() => { btn.innerHTML = '<i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม'; }, 1200);
+        //}
+        //Btn login
+        async function AuthenUser() {
+        //let Username = $("#txtUsername").val() || "";
+        //let Password = $("#txtPassword").val() || "";
+            let Username = document.getElementById("txtUsername").value || "";
+            let Password = document.getElementById("txtPassword").value || "";
+            try {
+                let response = await fetch('@Url.Action("AuthenUser","Login")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Username: Username,
+                        Password: Password
+                    })
+                });
+                let res = await response.json();
+                if (res.IsSuccess) {
+
+                    console.log(res.Data);
+                    alert("Login Success " + res.Data[0].username);
+                    window.location.href = '@Url.Action("Index","Home")';
+                } else {
+                    alert(res.Message);
+                }
+
+            } catch (e) {
+                console.log(e);
+                alert("System Error Login Fail");
+            }
+    }
+
     </script>
 </body>
 </html>

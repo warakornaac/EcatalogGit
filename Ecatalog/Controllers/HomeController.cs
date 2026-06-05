@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Ecatalog.Library;
 
 namespace Ecatalog.Controllers
 {
@@ -10,7 +11,14 @@ namespace Ecatalog.Controllers
     {
         public ActionResult Index()
         {
+            if (!Utils.IsLogin) {
+                return RedirectToAction(
+                    "Index",
+                    "Login");
+            }
             var currentYear = DateTime.Now.Year;
+            ViewBag.UserType = Utils.SessionUserType;
+
             return View();
             
         }

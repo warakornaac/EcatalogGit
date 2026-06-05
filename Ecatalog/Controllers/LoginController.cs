@@ -4,10 +4,13 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
-using System.DirectoryServices;
+using Ecatalog.Models;
+using Ecatalog.Library;
+
 
 namespace Ecatalog.Controllers
 {
@@ -15,12 +18,68 @@ namespace Ecatalog.Controllers
     {
         // GET: Login
         [HttpGet]
-        public ActionResult Login()
-        {
+        public ActionResult Login() {
             //if (this.Session["UserType"] == null)
             //    this.Session["UserType"] = "";
 
             return View();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> AuthenUser(string Username, string Password) {
+            try {
+                var result = await Utils.CallApiAsyncMemory<
+                        AuthenApiResponseModel>(
+                        "UserAuthenEcatalog",
+                        "GET",
+                        new {
+                            Username = Username,
+                            Password = Password
+                        },
+                        false,
+                        10);
+
+                if (result.IsSuccess &&
+                    result.Data != null &&
+                    result.Data.result != null &&
+                    result.Data.result.Count > 0) {
+                    var user =
+                        result.Data.result.FirstOrDefault();
+
+                    // SESSION
+                    Session["username"] = Username;
+                    Session["email"] = user.email;
+                    Session["UserType"] = user.userType;
+                    Session["slmcode"] = user.slmcode;
+                    Session["cuscode"] = user.cuscode;
+                    Session["userType"] = user.userType;
+                    Session["isActive"] = user.isActive;
+
+                    //Session["CurrentUser"] = new UserSessionModel {
+                    //    verify = user.verify,
+                    //    username = Username,
+                    //    email = user.email,
+                    //    slmcode = user.slmcode,
+                    //    cuscode = user.cuscode,
+                    //    userType = user.userType,
+                    //    isActive = user.isActive
+                    //};
+                }
+
+                return Json(new {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) {
+                return Json(new {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
         }
 
         //[HttpPost]
@@ -220,8 +279,7 @@ namespace Ecatalog.Controllers
         //    return View("Login");
         //}
 
-        public ActionResult Logout()
-        {
+        public ActionResult Logout() {
             Session.Clear();
             Session.Abandon();
             return RedirectToAction("Login", "Login");
