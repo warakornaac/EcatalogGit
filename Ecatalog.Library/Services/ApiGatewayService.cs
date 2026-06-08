@@ -24,8 +24,7 @@ namespace Ecatalog.Library.Services
         static ApiGatewayService() {
             client = new HttpClient();
 
-            client.Timeout =
-                TimeSpan.FromSeconds(60);
+            client.Timeout = TimeSpan.FromSeconds(60);
         }
 
         public ApiGatewayService() {
