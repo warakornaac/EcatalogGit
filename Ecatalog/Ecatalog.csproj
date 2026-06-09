@@ -168,6 +168,7 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\MasterController.cs" />
     <Compile Include="Controllers\MemoryCacheManageController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -212,12 +213,19 @@
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Login\Login.cshtml" />
+    <Content Include="Views\Parts\_Cart.cshtml" />
+    <Content Include="Views\Parts\_Header.cshtml" />
+    <Content Include="Views\Parts\_OrderSummary.cshtml" />
+    <Content Include="Views\Parts\_ProductGroup.cshtml" />
+    <Content Include="Views\Parts\_ProductSpec.cshtml" />
+    <Content Include="Views\Parts\_Sidebar.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Images\" />
     <Folder Include="Models\" />
     <Folder Include="Views\Include\" />
+    <Folder Include="Views\Master\" />
     <Folder Include="Views\MemoryCacheManage\" />
   </ItemGroup>
   <ItemGroup>
