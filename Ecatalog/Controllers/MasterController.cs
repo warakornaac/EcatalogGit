@@ -52,7 +52,8 @@ namespace Ecatalog.Controllers
         }
         public async Task<ActionResult> GetModelRange(string marketSegmentId, string segmentId, string makerId) {
             try {
-                var result = await Utils.CallApiAsyncMemory<ModelRangeFilterModel>(
+                var result = await Utils.CallApiAsyncMemory<
+                    ModelRangeFilterModel>(
                     "Ecatalog/GetModelRange",
                     "GET",
                     new {
@@ -71,6 +72,36 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex) {
+                return Json(new {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }  
+        public async Task<ActionResult> GetBody(string marketSegmentId, string segmentId, string makerId, string rangeId) {
+            try {
+                var result = await Utils.CallApiAsyncMemory<
+                    ModelBodyFilterModel>(
+                    "Ecatalog/GetBody",
+                    "GET",
+                    new {
+                        marketSegmentId,
+                        segmentId,
+                        makerId,
+                        rangeId
+                    },
+                    true,
+                    10);
+
+                return Json(new {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            } catch (Exception ex) {
                 return Json(new {
                     IsSuccess = false,
                     Message = ex.Message

@@ -16,48 +16,35 @@
                     <div class="flabel">Market Segment</div>
                     <select class="fselect" id="marketsegId" onchange="loadModelRange()">
                         <option value="">— Select Market —</option>
-                        <option value="1">EUROPE</option>
-                        <option value="2">EV</optionvalue="">
-                        <option value="3">JAPAN</option>
                     </select>
                 </div>
                 <div class="mb-2">
                     <div class="flabel">Vehicle Segment</div>
                     <select class="fselect" id="segmentId" onchange="loadModelRange()">
                         <option value="">— Select Segment —</option>
-                        <option value="1">Passenger Car</option>
-                        <option value="2">Pick-up & Van</option>
-                        <option value="3">Light commercial vehicles</option>
                     </select>
                 </div>
                 <div class="mb-2">
                     <div class="flabel">Maker</div>
                     <select class="fselect" id="makerId" onchange="loadModelRange()">
                         <option value="">— Select Maker —</option>
-                        <option value="T05">Toyota</option>
-                        <option value="H04">Honda</option>
-                        <option value="F05">Ford</option>
-                        <option value="B04">BMW</option>
                     </select>
                 </div>
                 <div class="mb-2">
                     <div class="flabel">Model Range</div>
-                    <select class="fselect" id="rangeId">
+                    <select class="fselect" id="rangeId" onchange="loadBody()">
                         <option value="">— Select Range —</option>
                     </select>
                 </div>
                 <div class="mb-2">
                     <div class="flabel">Model Body</div>
-                    <select class="fselect" id="vf-body" onchange="vfChange(this,'body')">
+                    <select class="fselect" id="bodyId" onchange="">
                         <option value="">— Select Body —</option>
-                        <option>4 Door Sedan</option>
-                        <option>5 Door SUV</option>
-                        <option>Double Cab</option>
                     </select>
                 </div>
                 <div class="mb-2">
                     <div class="flabel">Engine</div>
-                    <select class="fselect" id="vf-engine" onchange="vfChange(this,'engine')">
+                    <select class="fselect" id="vf-engine" onchange="">
                         <option value="">— Select Engine —</option>
                         <option>2.0L 4-Cyl Petrol</option>
                         <option>2.5L 4-Cyl Hybrid</option>
@@ -1000,56 +987,163 @@
         });
 
     </script>*@
+@*<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>*@
+
 <script>
-async function loadModelRange() {
 
-    try {
+    $(document).ready(async function () {
+        //get
+        await Promise.all([
+            loadMasterMarketDefault(1),
+            loadMasterMarketDefault(2),
+            loadMasterMarketDefault(3)
+        ]);
 
-        const marketSegmentId = $("#marketsegId").val();
-        const segmentId = $("#segmentId").val();
-        const makerId = $("#makerId").val();
-
-        // ถ้ายังเลือกไม่ครบ 3 ค่า
-        if (!marketsegId || !segmentId || !makerId) {
-            $("#rangeId").empty().append('<option value="">— Select Range —</option>');
-            return;
+    });
+    //get master
+    async function loadMasterMarketDefault(moduleId) {
+        let selectId = "marketsegId";
+        let selectDefaultText = "Select Marker";
+        //set moduleId
+        if (moduleId == 2) {
+            selectId = "segmentId";
+            selectDefaultText = "Select Segment";
+        } else if (moduleId == 3) {
+            selectId = "makerId";
+            selectDefaultText = "Select Marker";
         }
 
-        const params = new URLSearchParams({
-            marketSegmentId,
-            segmentId,
-            makerId
-        });
-
-        const response = await fetch(`@Url.Action("GetModelRange", "Master")?${params}`,{
-                method: 'GET'
+        try {
+            const params = new URLSearchParams({
+                moduleId: moduleId
             });
+            const response = await fetch(
+                `@Url.Action("GetMarketCar", "Master")?${params}`,
+                {
+                    method: 'GET'
+                });
 
-        const result = await response.json();
-        let ddl = $("#rangeId");
-        ddl.empty();
-        ddl.append('<option value="">— Select Range —</option>');
-
-        if (result.IsSuccess && result.Data) {
-
-            result.Data.forEach(item => {
-
-                ddl.append(`
-                    <option value="${item.Id}">
-                        ${item.Model}
-                    </option>
-                `);
-
-            });
+            const result = await response.json();
+            const ddl = $("#" + selectId);
+            ddl.empty();
+            ddl.append('<option value="">— ' + selectDefaultText + ' —</option>');
+            if (result.IsSuccess && result.Data) {
+                result.Data.forEach(item => {
+                    ddl.append(`
+                        <option value="${item.Id}">
+                            ${item.Name}
+                        </option>
+                    `);
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Load Market Segment Failed");
         }
-
     }
-    catch (error) {
+    //get rang
+    async function loadModelRange() {
+        try {
 
-        console.error(error);
+            $("#bodyId").empty().append('<option value="">— Select Range —</option>');
 
-        alert("Load Model Range Failed");
+            const marketSegmentId = $("#marketsegId").val();
+            const segmentId = $("#segmentId").val();
+            const makerId = $("#makerId").val();
 
+            // ถ้ายังเลือกไม่ครบ 3 ค่า
+            if (!marketsegId || !segmentId || !makerId) {
+                $("#rangeId").empty().append('<option value="">— Select Range —</option>');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                marketSegmentId,
+                segmentId,
+                makerId
+            });
+
+            const response = await fetch(`@Url.Action("GetModelRange", "Master")?${params}`,{
+                    method: 'GET'
+                });
+
+            const result = await response.json();
+            let ddl = $("#rangeId");
+            ddl.empty();
+            ddl.append('<option value="">— Select Range —</option>');
+
+            if (result.IsSuccess && result.Data) {
+
+                result.Data.forEach(item => {
+
+                    ddl.append(`
+                        <option value="${item.Id}">
+                            ${item.Model}
+                        </option>
+                    `);
+
+                });
+            }
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            alert("Load Model Range Failed");
+
+        }
     }
-}
+    //get body
+    async function loadBody() {
+        try {
+            const marketSegmentId = $("#marketsegId").val();
+            const segmentId = $("#segmentId").val();
+            const makerId = $("#makerId").val();
+            const rangeId = $("#rangeId").val();
+
+            // ถ้ายังเลือกไม่ครบ 4 ค่า
+            if (!marketsegId || !segmentId || !makerId || !rangeId) {
+                $("#bodyId").empty().append('<option value="">— Select Range —</option>');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                marketSegmentId,
+                segmentId,
+                makerId,
+                rangeId
+            });
+
+            const response = await fetch(`@Url.Action("GetBody", "Master")?${params}`,{
+                    method: 'GET'
+                });
+
+            const result = await response.json();
+            let ddl = $("#bodyId");
+            ddl.empty();
+            ddl.append('<option value="">— Select Body —</option>');
+
+            if (result.IsSuccess && result.Data) {
+
+                result.Data.forEach(item => {
+
+                    ddl.append(`
+                        <option value="${item.Id}">
+                            ${item.body}
+                        </option>
+                    `);
+
+                });
+            }
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            alert("Load Body ailed");
+
+        }
+    }
 </script>
