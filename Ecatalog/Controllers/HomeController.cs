@@ -18,7 +18,8 @@ namespace Ecatalog.Controllers
             }
             var currentYear = DateTime.Now.Year;
             ViewBag.UserType = Utils.SessionUserType;
-
+            ViewBag.Email = Utils.SessionEmail;
+            ViewBag.Account = Utils.SessionUsername;
             return View();
             
         }
