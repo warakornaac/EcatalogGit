@@ -11,14 +11,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRW Parts Pro — Smart Parts Finder</title>
+
     <link href="~/Content/bootstrap.min.css" rel="stylesheet">
     <link href="~/Content/fonts.css" rel="stylesheet">
     <link href="~/Content/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
     <link rel="stylesheet" href="~/Content/Site.css">
 </head>
 <body>
     @Html.Partial("~/Views/Parts/_Header.cshtml")
-
     <!-- MOBILE OVERLAY -->
     <div class="mob-overlay" id="mobOverlay"></div>
 
@@ -130,6 +132,5 @@
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
     <script src="~/Scripts/bootstrap.bundle.min.js"></script>
     <script src="@Url.Content("~/Scripts/truscripts.js")"></script>
-
 </body>
 </html>

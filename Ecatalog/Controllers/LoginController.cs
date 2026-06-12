@@ -19,8 +19,6 @@ namespace Ecatalog.Controllers
         // GET: Login
         [HttpGet]
         public ActionResult Login() {
-            //if (this.Session["UserType"] == null)
-            //    this.Session["UserType"] = "";
 
             return View();
         }
