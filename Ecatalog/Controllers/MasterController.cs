@@ -25,7 +25,7 @@ namespace Ecatalog.Controllers
                         new {
                             moduleId = moduleId
                         },
-                        false,
+                        true,
                         10);
 
                 if (result.IsSuccess &&
@@ -102,6 +102,39 @@ namespace Ecatalog.Controllers
 
                 JsonRequestBehavior.AllowGet);
             } catch (Exception ex) {
+                return Json(new {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        public async Task<ActionResult> GetEngine(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId) {
+            try {
+                var result = await Utils.CallApiAsyncMemory<
+                    ModelEngineFilterModel>(
+                    "Ecatalog/GetEngine",
+                    "GET",
+                    new {
+                        marketSegmentId,
+                        segmentId,
+                        makerId,
+                        rangeId,
+                        bodyId
+                    },
+                    true,
+                    10);
+
+                return Json(new {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) {
                 return Json(new {
                     IsSuccess = false,
                     Message = ex.Message

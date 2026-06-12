@@ -1464,3 +1464,14 @@ function setupDropdown(triggerId, dropdownId) {
 }
 
 setupDropdown('trigger1', 'dropdown1');
+
+async function ajaxCallApiService(url, params) {
+
+    const response = await fetch(
+        `${url}?${new URLSearchParams(params)}`,
+        {
+            method: 'GET'
+        });
+
+    return await response.json();
+}

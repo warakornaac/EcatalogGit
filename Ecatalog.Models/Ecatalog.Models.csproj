@@ -47,7 +47,9 @@
     <Compile Include="AuthenApiResponseModel.cs" />
     <Compile Include="MarketCarFilterModel.cs" />
     <Compile Include="ModelBodyFilterModel.cs" />
+    <Compile Include="ModelEngineFilterModel.cs" />
     <Compile Include="ModelRangeFilterModel.cs" />
+    <Compile Include="ProductSearchVioModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserSessionModel.cs" />
   </ItemGroup>
