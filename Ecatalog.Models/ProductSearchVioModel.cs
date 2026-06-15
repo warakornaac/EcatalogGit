@@ -23,5 +23,6 @@ namespace Ecatalog.Models
         public string price { get; set; }
         public string productGroup { get; set; }
         public string productLine { get; set; }
+        public string imagePath { get; set; }
     }
 }

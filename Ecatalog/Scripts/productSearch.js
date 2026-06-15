@@ -14,10 +14,11 @@ async function loadSearchProductVio() {
         const yearFrom = $("#yearFrom").val() || "";
         const yearTo = $("#yearTo").val() || "";
         const driveType = $("#driveId").val() || "";
+        const imagePath = $("#imagePath").val() || "";
 
         const result = await ajaxCallApiService(
             API_URLS.getProductBySearchVio,
-            { marketSegmentId, segmentId, makerId, rangeId, bodyId, engineId, yearFrom, yearTo, driveType });
+            { marketSegmentId, segmentId, makerId, rangeId, bodyId, engineId, yearFrom, yearTo, driveType, imagePath });
 
         if (result.IsSuccess) {
             $("#cacheStatus").html(
@@ -74,10 +75,14 @@ function renderProductGrid(products) {
 
         grid.append(`
             <div class="product-card">
-                ${p.imageUrl
-                ? `<img src="${p.imageUrl}" alt="${p.stkcodeDescription || ''}" style="width:100%;height:140px;object-fit:cover">`
-                : `<div style="width:100%;height:140px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-3);font-size:32px"><i class="bi bi-image"></i></div>`
-                }
+                <img src="${p.imagePath || ''}"
+                     alt="${p.stkcodeDescription || ''}"
+                     style="width:100%;height:140px;object-fit:cover"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+                >
+                <div style="display:none;width:100%;height:140px;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-3);font-size:32px">
+                    <i class="bi bi-image"></i>
+                </div>
                 <div class="pc-brand">${p.brand || '—'}</div>
                 <h6 class="pc-name">${p.stkcodeDescription || '—'}</h6>
                 <div class="pc-code">${p.stkcode || '—'}</div>
@@ -122,10 +127,14 @@ function buildSpecBodyHtml(p) {
 
     return `
         <div class="dr-hero">
-            ${p.imageUrl
-            ? `<img src="${p.imageUrl}" alt="${p.stkcodeDescription || ''}" style="width:100%;height:100%;object-fit:cover">`
-            : `<div style="width:100%;min-height:120px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-3);font-size:40px;border-radius:8px"><i class="bi bi-image"></i></div>`
-            }
+            <img src="${p.imagePath || ''}"
+                 alt="${p.stkcodeDescription || ''}"
+                 style="width:100%;height:140px;object-fit:cover"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+            >
+            <div style="display:none;width:100%;height:140px;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-3);font-size:32px">
+                <i class="bi bi-image"></i>
+            </div>
             <div class="dr-meta">
                 <div class="dm-brand">${p.brand || '—'}</div>
                 <h3>${p.stkcodeDescription || '—'}</h3>
@@ -160,59 +169,36 @@ function addCartFromModal(e) {
 
 // ----- Mobile drawer -----
 function openSpecDrawer(p) {
-    const isBO = (p.stock ?? 99) === 0;
+    const qty = parseInt(p.qtyReady) || 0;
+    const isBO = qty === 0;
+    const price = parseFloat(p.price) || 0;
 
-    $("#drTitle").text(p.partName ?? "Product Specification");
-    $("#drCode, #drCode2").text(p.partNumber ?? "—");
-    if (p.imageUrl) {
-        $("#drImg").attr("src", p.imageUrl).attr("alt", p.partName ?? "").show();
+    $("#drTitle").text(p.stkcodeDescription || "Product Specification");
+    $("#drCode, #drCode2").text(p.stkcode || "—");
+
+    // ÃÙ»ÀÒ¾ — ãªé imagePath ¨Ò¡ API
+    if (p.imagePath) {
+        $("#drImg").attr("src", p.imagePath).attr("alt", p.stkcodeDescription || "").show();
         $("#drImgPh").hide();
     } else {
         $("#drImg").hide();
         $("#drImgPh").show();
     }
-    $("#drBrand, #drBrandCard").text(p.brand ?? "—");
-    $("#drName").text(p.partName ?? "—");
-    $("#drPrice").text("$" + (p.price ?? 0).toFixed(2));
-    $("#drDescFull").text(p.description ?? "—");
-    $("#drCat").text(p.category ?? "—");
-    $("#drPN").text(p.partNumber ?? "—");
+
+    $("#drBrand, #drBrandCard").text(p.brand || "—");
+    $("#drName").text(p.stkcodeDescription || "—");
+    $("#drPrice").text("ß" + price.toFixed(2));   // á¡é $ ? ß
+    $("#drDescFull").text(p.stkcodeDescription || "—");
+    $("#drCat").text(p.productGroupNameMain || p.productGroup || "—");
+    $("#drPN").text(p.stkcode || "—");
     $("#drQty").val(1);
 
-    // Back order row
     $("#drBoRow").toggle(isBO);
 
-    // Add-to-cart button state
     const addBtn = $("#drAddBtn");
     addBtn.toggleClass("bo-btn", isBO);
     addBtn.html(`<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? '¨Í§ (BO)' : 'Add to Cart'}`);
 
-    // OEM tab
-    const oemWrap = $("#dp-oem .oem-chips");
-    oemWrap.empty();
-    (p.oemNumbers || []).forEach(oem => {
-        oemWrap.append(`<span class="oem-chip"><i class="bi bi-upc-scan"></i> ${oem}</span>`);
-    });
-
-    // Competitor tab
-    const compTable = $("#dp-comp table");
-    compTable.find("tr").not(":first").remove();
-    (p.competitors || []).forEach(c => {
-        compTable.append(`<tr><td>${c.brand}</td><td>${c.partNumber}</td></tr>`);
-    });
-
-    // Vehicle fitment tab
-    const vehList = $("#dp-veh .veh-list");
-    vehList.empty();
-    (p.vehicles || []).forEach(v => {
-        vehList.append(`
-            <div class="veh-item"><i class="bi bi-car-front-fill"></i>
-                <div><strong>${v.maker} ${v.model}</strong> ${v.engine ?? ''} ${v.yearFrom}–${v.yearTo} (${v.drive ?? ''})</div>
-            </div>
-        `);
-    });
-
-    // reset to first tab
     $(".drtab").removeClass("active").first().addClass("active");
     $(".drpane").removeClass("active");
     $("#dp-desc").addClass("active");

@@ -15,7 +15,7 @@ namespace Ecatalog.Controllers
     public class ProductController : Controller
     {
         // GET: Product
-        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType) {
+        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath) {
             try {
                 var result = await Utils.CallApiAsyncMemory<
                     ProductSearchVioModel>(
@@ -30,7 +30,8 @@ namespace Ecatalog.Controllers
                         engineId,
                         yearFrom,
                         yearTo,
-                        driveType
+                        driveType,
+                        imagePath
                     },
                     true,
                     30);

@@ -147,7 +147,7 @@ function mapApiResponseToProducts(groups) {
                 line: item.productLine || 'อื่นๆ',
                 fit: [], // API ยังไม่มีข้อมูลตำแหน่ง (หน้า/หลัง/ซ้าย/ขวา)
                 carModel: [item.makerName, item.modelName].filter(Boolean).join(' ') || 'Universal',
-                img: item.imageUrl || '/Content/images/no-image.png'
+                img: item.imagePath || item.imageUrl || ''
             });
         });
     });
