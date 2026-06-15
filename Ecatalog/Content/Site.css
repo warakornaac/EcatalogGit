@@ -3608,3 +3608,19 @@ body {
         padding: 2px 7px;
         border-radius: 999px;
     }
+
+.spec-modal-backdrop {
+    display: none;
+}
+
+    .spec-modal-backdrop.show {
+        display: flex;
+    }
+
+.drawer-overlay, .spec-drawer {
+    display: none;
+}
+
+    .drawer-overlay.show, .spec-drawer.show {
+        display: block;
+    }
