@@ -46,14 +46,11 @@
     <Compile Include="ApiResponseModel.cs" />
     <Compile Include="AuthenApiResponseModel.cs" />
     <Compile Include="MarketCarFilterModel.cs" />
-<<<<<<< HEAD
     <Compile Include="ModelRangeFilterModel.cs" />
-=======
     <Compile Include="ModelBodyFilterModel.cs" />
     <Compile Include="ModelEngineFilterModel.cs" />
     <Compile Include="ModelRangeFilterModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />
->>>>>>> 75686e58aa0782cee50f2804d2ecb54e8f5cc71b
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserSessionModel.cs" />
   </ItemGroup>

@@ -16,7 +16,7 @@
     <link href="~/Content/fonts.css" rel="stylesheet">
     <link href="~/Content/bootstrap-icons.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
+    <link rel="stylesheet" href="~/Content/bootstrap-icons.css">
     <link rel="stylesheet" href="~/Content/Site.css">
 </head>
 <body>
@@ -132,5 +132,11 @@
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
     <script src="~/Scripts/bootstrap.bundle.min.js"></script>
     <script src="@Url.Content("~/Scripts/truscripts.js")"></script>
+    <script src="@Url.Content("~/Scripts/productSearch.js")"></script>
+    <script>
+    const API_URLS = {
+        getProductBySearchVio: '@Url.Action("GetProductBySearchVio", "Product")'
+    };
+    </script>
 </body>
 </html>
