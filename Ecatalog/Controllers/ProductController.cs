@@ -15,13 +15,16 @@ namespace Ecatalog.Controllers
     public class ProductController : Controller
     {
         // GET: Product
-        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath) {
-            try {
+        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath)
+        {
+            try
+            {
                 var result = await Utils.CallApiAsyncMemory<
                     ProductSearchVioModel>(
                     "Ecatalog/GetProductBySearchVio",
                     "GET",
-                    new {
+                    new
+                    {
                         marketSegmentId,
                         segmentId,
                         makerId,
@@ -64,13 +67,15 @@ namespace Ecatalog.Controllers
                }*/
                 var groupData = result.Data?.result?
                     .GroupBy(x => x.productGroup)
-                    .Select(g => new {
+                    .Select(g => new
+                    {
                         productGroupNameMain = g.Key,
                         productList = g.ToList()
                     })
                     .ToList();
 
-                return Json(new {
+                return Json(new
+                {
                     IsSuccess = result.IsSuccess,
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
@@ -79,8 +84,10 @@ namespace Ecatalog.Controllers
 
                 JsonRequestBehavior.AllowGet);
             }
-            catch (Exception ex) {
-                return Json(new {
+            catch (Exception ex)
+            {
+                return Json(new
+                {
                     IsSuccess = false,
                     Message = ex.Message
                 },
@@ -88,33 +95,287 @@ namespace Ecatalog.Controllers
             }
         }
         //get count by tab
-        public async Task<ActionResult> GetTabItemCountProduct(string stkcode) {
-            try {
+        public async Task<ActionResult> GetTabItemCountProduct(string stkcode)
+        {
+            try
+            {
                 var result = await Utils.CallApiAsyncMemory<
                     ProductTabItemCountModel>(
                     "Ecatalog/GetTabItemCountProduct",
                     "GET",
-                    new {
+                    new
+                    {
                         stkcode
                     },
                     true,
                     30);
-                return Json(new {
+                return Json(new
+                {
                     IsSuccess = result.IsSuccess,
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
+                    
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
                     Data = result.Data?.result
                 },
 
                 JsonRequestBehavior.AllowGet);
             }
-            catch (Exception ex) {
-                return Json(new {
+            catch (Exception ex)
+            {
+                return Json(new
+                {
                     IsSuccess = false,
                     Message = ex.Message
                 },
                 JsonRequestBehavior.AllowGet);
             }
         }
+        //get tab Description
+        public async Task<ActionResult> GetTabDescription(string stkcode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabDescriptionModel>(
+                    "Ecatalog/GetTabDescription",
+                    "GET",
+                    new
+                    {
+                        stkcode
+                    },
+                    true,
+                    30);
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        // get tab Specification
+        public async Task<ActionResult> GetTabSpec(string stkcode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabSpecModel>(
+                    "Ecatalog/GetTabSpec",
+                    "GET",
+                    new
+                    {
+                        stkcode
+                    },
+                    true,
+                    30);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        // get tab Images
+        public async Task<ActionResult> GetTabImage(string stkcode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabImageModel>(
+                    "Ecatalog/GetTabImage",
+                    "GET",
+                    new
+                    {
+                        stkcode
+                    },
+                    true,
+                    30);
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        // get tab Oem
+        public async Task<ActionResult> GetTabOem(string stkcode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabOemModel>(
+                    "Ecatalog/GetTabOem",
+                    "GET",
+                    new
+                    {
+                        stkcode
+                    },
+                    true,
+                    30);
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        // get Competitor
+        public async Task<ActionResult> GetTabCompetitor(string stkcode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabCompetitorModel>(
+                    "Ecatalog/GetTabCompetitor",
+                    "GET",
+                    new
+                    {
+                        stkcode
+                    },
+                    true,
+                    30);
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        // get tab linkage
+        public async Task<ActionResult> GetTabLinkage(string stkcode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabLinkageModel>(
+                    "Ecatalog/GetTabLinkage",
+                    "GET",
+                    new
+                    {
+                        stkcode
+                    },
+                    true,
+                    30);
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+
     }
 }
