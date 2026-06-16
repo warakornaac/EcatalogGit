@@ -1,7 +1,7 @@
 ﻿/* ════════════════════════════════
    DATA
 ════════════════════════════════ */
-const PRODUCTS = [
+let PRODUCTS = [
   /* ── ระบบเบรก ── */
   {id:1, code:'TRW-BP2041', name:'Ceramic Brake Pad Set – Front Axle',       price:48.90, stock:24,  cat:'ระบบเบรก', brand:'TRW',       line:'ผ้าเบรก',      fit:['หน้า'],          carModel:'Toyota Camry XV70',       img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
   {id:2, code:'NIS-BC-001', name:'Brake Caliper – Front Left',                price:72.00, stock:8,   cat:'ระบบเบรก', brand:'Nissin',    line:'กระบอกเบรก',   fit:['หน้า','ซ้าย'],   carModel:'Honda Civic FE 1.5T',     img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
@@ -89,40 +89,42 @@ const PRODUCTS = [
   {id:216,code:'UNI-TIR-002',  name:'TPMS Tyre Valve Stem Cap Set (4 pcs)',          price:5.00,  stock:3,   cat:'Universal', brand:'Bosch',   line:'ยางและล้อ',             fit:[], carModel:'Universal',  img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
 ];
 
-const GROUPS = [
-  {id:'สินค้าทุกประเภท',icon:'bi-grid-3x3-gap',label:'สินค้าทุกประเภท',isClear:true},
-  {id:'Universal',icon:'bi-stars',label:'Universal'},
-  {id:'กรอง',icon:'bi-funnel',label:'กรอง'},
-  {id:'โช้คอัพ',icon:'bi-arrow-down-up',label:'โช้คอัพ'},
-  {id:'แบตเตอรี่',icon:'bi-battery-charging',label:'แบตเตอรี่'},
-  {id:'ใบปัดน้ำฝน',icon:'bi-water',label:'ใบปัดน้ำฝน'},
-  {id:'ระบบคลัทช์',icon:'bi-gear',label:'ระบบคลัทช์'},
-  {id:'ระบบช่วงล่างและบังคับเลี้ยว',icon:'bi-arrows-move',label:'ระบบช่วงล่างฯ'},
-  {id:'ระบบเบรก',icon:'bi-stop-circle',label:'ระบบเบรก'},
-  {id:'ระบบเบรกลม',icon:'bi-wind',label:'ระบบเบรกลม'},
-  {id:'ระบบสายพานส่งกำลัง',icon:'bi-infinity',label:'สายพานส่งกำลัง'},
-  {id:'ระบบแอร์',icon:'bi-snow',label:'ระบบแอร์'},
-  {id:'ระบายความร้อน',icon:'bi-thermometer-high',label:'ระบายความร้อน'},
-  {id:'สินค้ากลุ่มไฟฟ้า',icon:'bi-lightning',label:'สินค้ากลุ่มไฟฟ้า'},
-  {id:'สินค้ากลุ่มELECTRONIC',icon:'bi-cpu',label:'ELECTRONIC'},
-  {id:'ระบบเครื่องยนต์',icon:'bi-gear-wide-connected',label:'ระบบเครื่องยนต์'},
-  {id:'ปั๊มและหัวฉีดดีเซล',icon:'bi-droplet',label:'ปั๊ม/หัวฉีดดีเซล'},
-  {id:'ลูกปืน',icon:'bi-circle',label:'ลูกปืน'},
-  {id:'ซีล',icon:'bi-shield',label:'ซีล'},
-  {id:'ท่อ',icon:'bi-arrows-expand',label:'ท่อ'},
-  {id:'ของเหลว จารบีและอื่นๆ',icon:'bi-droplet-half',label:'ของเหลว/จารบี'},
-  {id:'คาร์แคร์',icon:'bi-car-front',label:'คาร์แคร์'},
-  {id:'หลอดไฟ',icon:'bi-lightbulb',label:'หลอดไฟ'},
-  {id:'ระบบเพลา',icon:'bi-arrow-left-right',label:'ระบบเพลา'},
-  {id:'ระบบกันการสั่นสะเทือน',icon:'bi-activity',label:'กันสั่นสะเทือน'},
-  {id:'ระบบเกียร์ธรรมดา',icon:'bi-gear-wide',label:'เกียร์ธรรมดา'},
-  {id:'ตัวถัง',icon:'bi-box',label:'ตัวถัง'},
-  {id:'เครื่องมือ และเครื่องเช็คหัวฉีด',icon:'bi-tools',label:'เครื่องมือ'},
-  {id:'เครื่องเสียงรถยนต์',icon:'bi-speaker',label:'เครื่องเสียง'},
-  {id:'น้ำยาต่างๆ',icon:'bi-flask',label:'น้ำยาต่างๆ'},
-  {id:'อื่นๆ',icon:'bi-three-dots',label:'อื่นๆ'},
-];
+// const GROUPS = [
+//   {id:'สินค้าทุกประเภท',icon:'bi-grid-3x3-gap',label:'สินค้าทุกประเภท',isClear:true},
+//   {id:'Universal',icon:'bi-stars',label:'Universal'},
+//   {id:'กรอง',icon:'bi-funnel',label:'กรอง'},
+//   {id:'โช้คอัพ',icon:'bi-arrow-down-up',label:'โช้คอัพ'},
+//   {id:'แบตเตอรี่',icon:'bi-battery-charging',label:'แบตเตอรี่'},
+//   {id:'ใบปัดน้ำฝน',icon:'bi-water',label:'ใบปัดน้ำฝน'},
+//   {id:'ระบบคลัทช์',icon:'bi-gear',label:'ระบบคลัทช์'},
+//   {id:'ระบบช่วงล่างและบังคับเลี้ยว',icon:'bi-arrows-move',label:'ระบบช่วงล่างฯ'},
+//   {id:'ระบบเบรก',icon:'bi-stop-circle',label:'ระบบเบรก'},
+//   {id:'ระบบเบรกลม',icon:'bi-wind',label:'ระบบเบรกลม'},
+//   {id:'ระบบสายพานส่งกำลัง',icon:'bi-infinity',label:'สายพานส่งกำลัง'},
+//   {id:'ระบบแอร์',icon:'bi-snow',label:'ระบบแอร์'},
+//   {id:'ระบายความร้อน',icon:'bi-thermometer-high',label:'ระบายความร้อน'},
+//   {id:'สินค้ากลุ่มไฟฟ้า',icon:'bi-lightning',label:'สินค้ากลุ่มไฟฟ้า'},
+//   {id:'สินค้ากลุ่มELECTRONIC',icon:'bi-cpu',label:'ELECTRONIC'},
+//   {id:'ระบบเครื่องยนต์',icon:'bi-gear-wide-connected',label:'ระบบเครื่องยนต์'},
+//   {id:'ปั๊มและหัวฉีดดีเซล',icon:'bi-droplet',label:'ปั๊ม/หัวฉีดดีเซล'},
+//   {id:'ลูกปืน',icon:'bi-circle',label:'ลูกปืน'},
+//   {id:'ซีล',icon:'bi-shield',label:'ซีล'},
+//   {id:'ท่อ',icon:'bi-arrows-expand',label:'ท่อ'},
+//   {id:'ของเหลว จารบีและอื่นๆ',icon:'bi-droplet-half',label:'ของเหลว/จารบี'},
+//   {id:'คาร์แคร์',icon:'bi-car-front',label:'คาร์แคร์'},
+//   {id:'หลอดไฟ',icon:'bi-lightbulb',label:'หลอดไฟ'},
+//   {id:'ระบบเพลา',icon:'bi-arrow-left-right',label:'ระบบเพลา'},
+//   {id:'ระบบกันการสั่นสะเทือน',icon:'bi-activity',label:'กันสั่นสะเทือน'},
+//   {id:'ระบบเกียร์ธรรมดา',icon:'bi-gear-wide',label:'เกียร์ธรรมดา'},
+//   {id:'ตัวถัง',icon:'bi-box',label:'ตัวถัง'},
+//   {id:'เครื่องมือ และเครื่องเช็คหัวฉีด',icon:'bi-tools',label:'เครื่องมือ'},
+//   {id:'เครื่องเสียงรถยนต์',icon:'bi-speaker',label:'เครื่องเสียง'},
+//   {id:'น้ำยาต่างๆ',icon:'bi-flask',label:'น้ำยาต่างๆ'},
+//   {id:'อื่นๆ',icon:'bi-three-dots',label:'อื่นๆ'},
+// ];
 
+let GROUPS = [];
+//let LINEFILTER = [];
 /* ════════════════════════════════
    STATE
 ════════════════════════════════ */
@@ -131,10 +133,15 @@ let cartCnt = 0;
 let vfData = {};
 let chkState = {pl:{}, br:{}};
 let fitState = new Set();
-let activeGroup = 'ระบบเบรก';
+let activeGroup = '0';
+window.selectedGroupId = '0';
 let currentSort = 'carModel';
 let activeModes = new Set(['description']); // multi-select search modes
 let activeGroups = [];
+const currentAllowed = {
+    pl: [],
+    br: []  
+};
 
 /* ════════════════════════════════
    HELPERS
@@ -151,7 +158,7 @@ document.getElementById('totalAddr').innerText =
    INIT
 ════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-  renderBB();
+  //renderBB();
   renderProducts(PRODUCTS);
   setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
 });
@@ -279,7 +286,7 @@ function applySorting(list) {
 ════════════════════════════════ */
 function renderBB(){
   gEl('bbScroll').innerHTML=GROUPS.map(g=>`
-    <div class="bb-item ${g.id===activeGroup?'active':''} ${g.id==='Universal'?'bb-universal':''}" onclick="selectGroup('${g.id}')">
+    <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
       <i class="bi ${g.icon}"></i>
       <span class="bb-label">${g.label}</span>
     </div>`).join('');
@@ -287,7 +294,8 @@ function renderBB(){
 function scrollBB(dx){ gEl('bbScroll').scrollBy({left:dx,behavior:'smooth'}); }
 
 function selectGroup(id){
-  activeGroup=id;
+    activeGroup = id;
+    window.selectedGroupId = id;
   document.querySelectorAll('.bb-item').forEach((b,i)=>{
     b.classList.toggle('active', GROUPS[i].id===id);
   });
@@ -1411,14 +1419,72 @@ function osCloseAddrPicker() {
 /* ════════════════════════════════
    SEE MORE / SEE LESS (pl & br)
 ════════════════════════════════ */
+// function toggleSeeMore(type) {
+//   const btn     = gEl(type + 'SeeMore');
+//   const extras  = document.querySelectorAll('.' + type + '-extra');
+//   const isOpen  = btn.classList.toggle('expanded');
+//   extras.forEach(el => { el.style.display = isOpen ? '' : 'none'; });
+//   btn.innerHTML = isOpen
+//     ? '<i class="bi bi-chevron-up" id="' + type + 'SeeMoreIcon"></i> ดูน้อยลง'
+//     : '<i class="bi bi-chevron-down" id="' + type + 'SeeMoreIcon"></i> ดูเพิ่มเติม';
+// }
+// function toggleSeeMore(type) {
+//     const btn = gEl(type + 'SeeMore');
+//     const isOpen = btn.classList.toggle('expanded');
+
+//     document.querySelectorAll('.' + type + '-extra').forEach(function (el) {
+//         if (isOpen) {
+//             const id = el.getAttribute('data-id');
+//             const allowed = currentAllowed[type] || [];
+//             const show = allowed.length === 0 || allowed.includes(id);
+//             el.style.display = show ? '' : 'none';
+//         } else {
+//             el.style.display = 'none';
+//         }
+//     });
+
+//     btn.innerHTML = isOpen
+//         ? '<i class="bi bi-chevron-up"></i> ดูน้อยลง'
+//         : '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+// }
 function toggleSeeMore(type) {
-  const btn     = gEl(type + 'SeeMore');
-  const extras  = document.querySelectorAll('.' + type + '-extra');
-  const isOpen  = btn.classList.toggle('expanded');
-  extras.forEach(el => { el.style.display = isOpen ? '' : 'none'; });
-  btn.innerHTML = isOpen
-    ? '<i class="bi bi-chevron-up" id="' + type + 'SeeMoreIcon"></i> ดูน้อยลง'
-    : '<i class="bi bi-chevron-down" id="' + type + 'SeeMoreIcon"></i> ดูเพิ่มเติม';
+    const btn = gEl(type + 'SeeMore');
+    const isOpen = btn.classList.toggle('expanded');
+
+    if (type === 'pl') {
+        if (isOpen) {
+            const allowed = currentAllowed.pl || [];
+            document.querySelectorAll('.pl-extra').forEach(function (el) {
+                const id = el.getAttribute('data-id');
+                const show = allowed.length === 0 || allowed.includes(id);
+                el.style.display = show ? '' : 'none';
+            });
+        } else {
+            const SHOW_LIMIT = 5;
+            const allowed = currentAllowed.pl || [];
+            let visibleCount = 0;
+
+            $("#plList .chk-item").each(function () {
+                const id = $(this).attr('data-id');
+                const inFilter = allowed.length === 0 || allowed.includes(id);
+                if (!inFilter) return;
+
+                visibleCount++;
+                if (visibleCount > SHOW_LIMIT) {
+                    $(this).hide();
+                }
+            });
+        }
+    } else {
+
+        document.querySelectorAll('.' + type + '-extra').forEach(function (el) {
+            el.style.display = isOpen ? '' : 'none';
+        });
+    }
+
+    btn.innerHTML = isOpen
+        ? '<i class="bi bi-chevron-up"></i> ดูน้อยลง'
+        : '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
 }
 
 function osCheckout() {
@@ -1475,3 +1541,217 @@ async function ajaxCallApiService(url, params) {
 
     return await response.json();
 }
+
+
+/* ════════════════════════════════
+   LOADING FILTER SELECTOR
+════════════════════════════════ */
+$(document).ready(function () {
+    GetProductGroup();
+    GetBrandS();
+    GetProductionLine();
+});
+//----------- BrandS ----------------//
+function GetBrandS() {
+    $.ajax({
+        url: '/Master/GetBrands',
+        method: 'GET',
+        success: function (result) {
+            if (result.IsSuccess) {
+                RenderBrands(result.Data || []);
+            } else {
+                console.error("API Error:", result.Message);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(error);
+        }
+    });
+}
+function RenderBrands(brands) {
+    const $container = $("#brList");
+    $container.empty();
+
+    if (!brands || brands.length === 0) {
+        $container.append('<span class="chk-empty">ไม่มีข้อมูล</span>');
+        return;
+    }
+
+    const SHOW_LIMIT = 5;
+
+    $.each(brands, function (index, brand) {
+        const isExtra = index >= SHOW_LIMIT;
+        const $label = $('<label>')
+            .addClass('chk-item')
+            .attr('data-id', brand.id)
+            .toggleClass('br-extra', isExtra)
+            .css('display', isExtra ? 'none' : '')
+            .attr('onclick', `toggleChk(this,'br','${brand.name}'); `);
+
+        $label.append(
+            $('<div>').addClass('chk-box'),
+            $('<span>').addClass('chk-label').text(brand.name),
+            $('<span>').addClass('chk-count').text(brand.count ?? 0)
+        );
+
+        $container.append($label);
+    });
+}
+
+
+
+
+//----------- ProductGroup ----------------//
+const FIXED_GROUPS = [
+    { id: '0', icon: 'bi-grid-3x3-gap', label: 'สินค้าทุกประเภท', isClear: true },
+    { id: '99', icon: 'bi-stars', label: 'Universal' },
+];
+
+
+
+function GetProductGroup() {
+    $.ajax({
+        url: '/Master/GeProductGroups',
+        method: 'GET',
+        success: function (result) {
+            if (result.IsSuccess) {
+                const apiGroups = (result.Data || []).map(function (g) {
+                    return {
+                        id: g.prodgrpid,
+                        icon: 'bi-tag',
+                        label: g.prodgrpname
+                    };
+                });
+
+                GROUPS = [...FIXED_GROUPS, ...apiGroups];
+                renderBB();
+            } else {
+                console.error("API Error:", result.Message);
+                renderBB();
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(error);
+            renderBB();
+        }
+    });
+}
+
+//----------- ProductLine ----------------//
+function GetProductionLine() {
+    $.ajax({
+        url: '/Master/GeProductLines',
+        method: 'GET',
+        success: function (result) {
+            if (result.IsSuccess) {
+                //PRODUCTS = result.Data || [];
+                RenderProductionLines(result.Data || []);
+            } else {
+                console.error("API Error:", result.Message);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(error);
+        }
+    });
+}
+function RenderProductionLines(lines) {
+    const $container = $("#plList");
+    $container.empty();
+
+    if (!lines || lines.length === 0) {
+        $container.append('<span class="chk-empty">ไม่มีข้อมูล</span>');
+        return;
+    }
+
+    const SHOW_LIMIT = 5; // แสดงก่อน 5 รายการ
+
+    $.each(lines, function (index, line) {
+        const isExtra = index >= SHOW_LIMIT;
+        //console.log(line);
+        const $label = $('<label>')
+            .addClass('chk-item')
+            .attr('data-id', line.prodlineid)
+            .attr('data-name', line.prodlinename)
+            .toggleClass('pl-extra', isExtra)
+            .css('display', isExtra ? 'none' : '')
+            .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}'); ClickedMatchData();`);
+
+        $label.append(
+            $('<div>').addClass('chk-box'),
+            $('<span>').addClass('chk-label').text(line.prodlinename),
+            $('<span>').addClass('chk-count').text(line.count ?? 0)
+        );
+
+        $container.append($label);
+    });
+
+
+}
+function ClickedMatchData() {
+    const grpId = window.selectedGroupId || null;
+
+    const plIds = Object.keys(chkState.pl);
+    const brNames = Object.keys(chkState.br);
+
+    console.log("Group:", grpId);
+    console.log("PL:", plIds);
+    console.log("Brand:", brNames);
+
+    $.ajax({
+        url: '/Master/GetMatchProductionGroup',
+        method: 'GET',
+        data: { prodgrpid: grpId },      
+        success: function (result) {
+            if (result.IsSuccess) {
+                console.log("AllowedIds:", result.Data);
+                const allowedIds = (result.Data || []).map(x => x.prodlineid.toString());
+                FilterProductionLines(allowedIds);
+
+            } else {
+                console.error("API Error:", result.Message);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error(error);
+        }
+    });
+}
+
+// function FilterProductionLines(allowedIds) {
+//     currentAllowed.pl = allowedIds;
+
+//     $("#plList .chk-item").each(function () {
+//         const id = $(this).attr('data-id');
+//         const show = allowedIds.length === 0 || allowedIds.includes(id);
+//         $(this).toggle(show);
+//     });
+// }
+function FilterProductionLines(allowedIds) {
+    currentAllowed.pl = allowedIds;
+
+    const SHOW_LIMIT = 5;
+    let visibleCount = 0;
+
+    $("#plList .chk-item").each(function () {
+        const id = $(this).attr('data-id');
+        const allowed = allowedIds.length === 0 || allowedIds.includes(id);
+
+        if (!allowed) {
+            $(this).hide();
+        } else {
+            visibleCount++;
+            if (visibleCount <= SHOW_LIMIT) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        }
+    });
+    const btn = gEl('plSeeMore');
+    if (btn) {
+        btn.classList.remove('expanded');
+        btn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+    }
+}
+
