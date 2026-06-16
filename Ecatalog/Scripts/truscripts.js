@@ -2,132 +2,42 @@
    DATA
    PRODUCTS ถูกเติมจาก loadSearchProductVio()
 ════════════════════════════════ */
+let PRODUCTS = [];
 
-let PRODUCTS = [
-  /* ── ระบบเบรก ── */
-  {id:1, code:'TRW-BP2041', name:'Ceramic Brake Pad Set – Front Axle',       price:48.90, stock:24,  cat:'ระบบเบรก', brand:'TRW',       line:'ผ้าเบรก',      fit:['หน้า'],          carModel:'Toyota Camry XV70',       img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
-  {id:2, code:'NIS-BC-001', name:'Brake Caliper – Front Left',                price:72.00, stock:8,   cat:'ระบบเบรก', brand:'Nissin',    line:'กระบอกเบรก',   fit:['หน้า','ซ้าย'],   carModel:'Honda Civic FE 1.5T',     img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
-  {id:3, code:'KAS-DR-022', name:'Disc Rotor – Rear Vented',                  price:55.50, stock:0,   cat:'ระบบเบรก', brand:'Kashiyama', line:'จานเบรก',      fit:['หลัง'],          carModel:'Mazda 3 BP 2.0',          img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:4, code:'TRW-BP2042', name:'Brake Pad Set – Rear Axle Premium',         price:41.00, stock:36,  cat:'ระบบเบรก', brand:'TRW',       line:'ผ้าเบรก',      fit:['หลัง'],          carModel:'Isuzu D-Max 4WD',         img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  {id:5, code:'NIS-BC-002', name:'Brake Caliper – Front Right',               price:72.00, stock:5,   cat:'ระบบเบรก', brand:'Nissin',    line:'กระบอกเบรก',   fit:['หน้า','ขวา'],    carModel:'Honda Accord CV 2.0T',    img:'https://alliedautoonline.com.au/cdn/shop/files/BC012_1.jpg?v=1718163340'},
-  {id:6, code:'KAS-DR-023', name:'Disc Rotor – Front Slotted',                price:68.00, stock:12,  cat:'ระบบเบรก', brand:'Kashiyama', line:'จานเบรก',      fit:['หน้า'],          carModel:'Toyota Fortuner AN160',   img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS638WcKE4rlA3pZNxntDRGTzFT-T2bXaq_5w&s'},
-  {id:7, code:'TRW-BC-030', name:'Wheel Cylinder – Rear',                     price:38.40, stock:3,   cat:'ระบบเบรก', brand:'TRW',       line:'กระบอกเบรก',   fit:['หลัง'],          carModel:'Mitsubishi Triton MR',    img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  {id:8, code:'NIS-BP-010', name:'Brake Pad Set – EV Series',                 price:52.00, stock:18,  cat:'ระบบเบรก', brand:'Nissin',    line:'ผ้าเบรก',      fit:['หน้า'],          carModel:'BYD Atto 3',              img:'https://www.brembostore.com/cdn/shop/files/BEYOND_EV_Front_Disc_Brake_Pad_Set_-_P09028E_03.jpg?v=1777203537&width=1600'},
-  {id:9, code:'KAS-BP-011', name:'Brake Pad Organic – Economy',               price:28.00, stock:42,  cat:'ระบบเบรก', brand:'Kashiyama', line:'ผ้าเบรก',      fit:['หน้า','หลัง'],   carModel:'Nissan Navara D23',       img:'https://cdn.cougparts.com/dc/15549/1600816375_h.jpg'},
-  {id:10,code:'TRW-DR-044', name:'Disc Rotor – Plain Standard',               price:45.00, stock:0,   cat:'ระบบเบรก', brand:'TRW',       line:'จานเบรก',      fit:['หน้า'],          carModel:'Toyota Hilux Revo GR',    img:'https://ic.truckid.com/centric/brake-parts/front-c-tek-standard-brake-rotor_0.jpg'},
-  {id:11,code:'NIS-BC-003', name:'Brake Caliper – Rear LH',                   price:65.00, stock:7,   cat:'ระบบเบรก', brand:'Nissin',    line:'กระบอกเบรก',   fit:['หลัง','ซ้าย'],   carModel:'Suzuki Swift AZ',         img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr2kRJ_SIsHR9Zb7wnZS5LJdLPxmPH8rHaFA&s'},
-  {id:12,code:'KAS-DR-024', name:'Disc Rotor – Rear Solid',                   price:38.00, stock:20,  cat:'ระบบเบรก', brand:'Kashiyama', line:'จานเบรก',      fit:['หลัง'],          carModel:'Ford Ranger T6 2.0BI',    img:'https://cdn11.bigcommerce.com/s-qlnoawu4ao/images/stencil/1280x1280/products/1954/10284/IMG_4265__82483.1687457728.jpg?c=2'},
-  {id:13,code:'BSC-BP-310', name:'Brake Pad Semi-Metallic – Track Sport',     price:89.00, stock:4,   cat:'ระบบเบรก', brand:'Bosch',     line:'ผ้าเบรก',      fit:['หน้า'],          carModel:'Subaru Outback BS',       img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  {id:14,code:'VAL-DR-055', name:'Disc Rotor – Cross-Drilled Performance',    price:92.00, stock:9,   cat:'ระบบเบรก', brand:'Valeo',     line:'จานเบรก',      fit:['หน้า'],          carModel:'Mazda CX-5 KF 2.5T',     img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:15,code:'TRW-FL-010', name:'Brake Fluid DOT4 – High Performance 500ml', price:18.50, stock:60,  cat:'ระบบเบรก', brand:'TRW',       line:'น้ำมันเบรก',   fit:[],                carModel:'Toyota Yaris ATIV',       img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  /* ── โช้คอัพ ── */
-  {id:20,code:'KYB-SA-201', name:'KYB Excel-G Shock Absorber Front',          price:125.00,stock:14,  cat:'โช้คอัพ',  brand:'KYB',       line:'โช้คอัพหน้า',  fit:['หน้า'],          carModel:'Toyota Fortuner AN160',   img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
-  {id:21,code:'KYB-SA-202', name:'KYB Gas-A-Just Shock Absorber Rear',        price:110.00,stock:2,   cat:'โช้คอัพ',  brand:'KYB',       line:'โช้คอัพหลัง',  fit:['หลัง'],          carModel:'Isuzu D-Max 4WD',         img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
-  {id:22,code:'MON-SA-310', name:'Monroe OESpectrum Strut Front',              price:145.00,stock:11,  cat:'โช้คอัพ',  brand:'Monroe',    line:'โช้คอัพหน้า',  fit:['หน้า'],          carModel:'Honda Civic FE 1.5T',     img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:23,code:'MON-SA-311', name:'Monroe Reflex Shock Rear',                  price:98.00, stock:0,   cat:'โช้คอัพ',  brand:'Monroe',    line:'โช้คอัพหลัง',  fit:['หลัง'],          carModel:'Mazda 3 BP 2.0',          img:'https://ic.truckid.com/centric/brake-parts/front-c-tek-standard-brake-rotor_0.jpg'},
-  {id:24,code:'TRW-SA-405', name:'TRW Premium Strut Assembly Front',          price:188.00,stock:6,   cat:'โช้คอัพ',  brand:'TRW',       line:'โช้คอัพหน้า',  fit:['หน้า'],          carModel:'Ford Ranger T6 2.0BI',    img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  /* ── ใบปัดน้ำฝน ── */
-  {id:30,code:'BSC-WB-028', name:'Bosch Aerotwin Wiper Blade 28"',            price:22.00, stock:33,  cat:'ใบปัดน้ำฝน',brand:'Bosch',    line:'ใบปัด Flat',   fit:[],                carModel:'Toyota Camry XV70',       img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS638WcKE4rlA3pZNxntDRGTzFT-T2bXaq_5w&s'},
-  {id:31,code:'BSC-WB-026', name:'Bosch Aerotwin Wiper Blade 26"',            price:20.00, stock:28,  cat:'ใบปัดน้ำฝน',brand:'Bosch',    line:'ใบปัด Flat',   fit:[],                carModel:'Honda Accord CV 2.0T',    img:'https://cdn.cougparts.com/dc/15549/1600816375_h.jpg'},
-  {id:32,code:'VAL-WB-700', name:'Valeo First Wiper Blade Frameless 700mm',   price:18.50, stock:3,   cat:'ใบปัดน้ำฝน',brand:'Valeo',    line:'ใบปัด Flat',   fit:[],                carModel:'Mazda CX-5 KF 2.5T',     img:'https://alliedautoonline.com.au/cdn/shop/files/BC012_1.jpg?v=1718163340'},
-  {id:33,code:'DEN-WB-600', name:'Denso Wiper Blade Beam 600mm',              price:16.00, stock:17,  cat:'ใบปัดน้ำฝน',brand:'DENSO',    line:'ใบปัด Beam',   fit:[],                carModel:'Suzuki Swift AZ',         img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  /* ── แบตเตอรี่ ── */
-  {id:40,code:'GS-BAT-60',  name:'GS Yuasa Premium Battery 60Ah MF',          price:210.00,stock:5,   cat:'แบตเตอรี่', brand:'Bosch',    line:'แบตเตอรี่ MF', fit:[],                carModel:'Toyota Hilux Revo GR',    img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
-  {id:41,code:'BSC-BAT-70', name:'Bosch S4 Battery 70Ah – Silver Plus',       price:245.00,stock:0,   cat:'แบตเตอรี่', brand:'Bosch',    line:'แบตเตอรี่ MF', fit:[],                carModel:'Isuzu D-Max 4WD',         img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:42,code:'VRT-BAT-80', name:'Varta Blue Dynamic Battery 80Ah',           price:280.00,stock:8,   cat:'แบตเตอรี่', brand:'Valeo',    line:'แบตเตอรี่ AGM',fit:[],                carModel:'Ford Ranger T6 2.0BI',    img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  /* ── ระบบคลัทช์ ── */
-  {id:50,code:'VAL-CL-220', name:'Valeo Clutch Kit 3-Piece – 225mm',          price:185.00,stock:4,   cat:'ระบบคลัทช์',brand:'Valeo',    line:'ชุดคลัทช์',    fit:[],                carModel:'Mitsubishi Triton MR',    img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
-  {id:51,code:'LUK-CL-240', name:'LuK RepSet Clutch Kit 240mm',               price:220.00,stock:2,   cat:'ระบบคลัทช์',brand:'Valeo',    line:'ชุดคลัทช์',    fit:[],                carModel:'Ford Ranger T6 2.0BI',    img:'https://alliedautoonline.com.au/cdn/shop/files/BC012_1.jpg?v=1718163340'},
-  {id:52,code:'SAC-CL-200', name:'Sachs Clutch Disc 200mm – Economy',         price:88.00, stock:15,  cat:'ระบบคลัทช์',brand:'Bosch',    line:'แผ่นคลัทช์',   fit:[],                carModel:'Nissan Navara D23',       img:'https://cdn11.bigcommerce.com/s-qlnoawu4ao/images/stencil/1280x1280/products/1954/10284/IMG_4265__82483.1687457728.jpg?c=2'},
-  /* ── ระบบช่วงล่างและบังคับเลี้ยว ── */
-  {id:60,code:'TRW-TL-301', name:'Tie Rod End – Outer LH',                    price:32.00, stock:22,  cat:'ระบบช่วงล่างและบังคับเลี้ยว',brand:'TRW',line:'ลูกหมากกันสะเทือน',fit:['ซ้าย'],    carModel:'Toyota Fortuner AN160',   img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr2kRJ_SIsHR9Zb7wnZS5LJdLPxmPH8rHaFA&s'},
-  {id:61,code:'TRW-TL-302', name:'Tie Rod End – Outer RH',                    price:32.00, stock:22,  cat:'ระบบช่วงล่างและบังคับเลี้ยว',brand:'TRW',line:'ลูกหมากกันสะเทือน',fit:['ขวา'],    carModel:'Toyota Fortuner AN160',   img:'https://ic.truckid.com/centric/brake-parts/front-c-tek-standard-brake-rotor_0.jpg'},
-  {id:62,code:'MND-BJ-110', name:'Ball Joint – Lower Front',                  price:45.00, stock:3,   cat:'ระบบช่วงล่างและบังคับเลี้ยว',brand:'Mando',line:'ลูกหมากกันสะเทือน',fit:['หน้า','ล่าง'],carModel:'Mazda CX-5 KF 2.5T',  img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  {id:63,code:'TRW-SR-220', name:'Stabilizer Link Bar – Front',               price:28.50, stock:16,  cat:'ระบบช่วงล่างและบังคับเลี้ยว',brand:'TRW',line:'กันโคลง',       fit:['หน้า'],     carModel:'Honda Civic FE 1.5T',     img:'https://cdn.cougparts.com/dc/15549/1600816375_h.jpg'},
-  {id:64,code:'SKF-WB-220', name:'Wheel Hub Bearing Front',                   price:78.00, stock:0,   cat:'ระบบช่วงล่างและบังคับเลี้ยว',brand:'TRW',line:'ลูกปืนล้อ',     fit:['หน้า'],     carModel:'Subaru Outback BS',       img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  /* ── ระบบแอร์ ── */
-  {id:70,code:'DEN-AC-501', name:'Denso A/C Compressor – Sanden Style',       price:320.00,stock:2,   cat:'ระบบแอร์',  brand:'DENSO',    line:'คอมแอร์',      fit:[],                carModel:'Toyota Camry XV70',       img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
-  {id:71,code:'VAL-AC-401', name:'Valeo AC Condenser 600×380',                price:145.00,stock:7,   cat:'ระบบแอร์',  brand:'Valeo',    line:'แผงแอร์',      fit:[],                carModel:'Honda Accord CV 2.0T',    img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:72,code:'NRF-AC-220', name:'A/C Evaporator Core – Aluminum',            price:88.00, stock:0,   cat:'ระบบแอร์',  brand:'Valeo',    line:'ตู้แอร์',      fit:[],                carModel:'Mazda 3 BP 2.0',          img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS638WcKE4rlA3pZNxntDRGTzFT-T2bXaq_5w&s'},
-  /* ── ระบายความร้อน ── */
-  {id:80,code:'DEN-RD-301', name:'Denso Radiator – All-Aluminum OEM Spec',    price:280.00,stock:3,   cat:'ระบายความร้อน',brand:'DENSO',  line:'หม้อน้ำ',      fit:[],                carModel:'Toyota Hilux Revo GR',    img:'https://alliedautoonline.com.au/cdn/shop/files/BC012_1.jpg?v=1718163340'},
-  {id:81,code:'GAT-RD-H05', name:'Gates Radiator Hose Upper',                 price:18.00, stock:25,  cat:'ระบายความร้อน',brand:'Gates',  line:'ท่อน้ำ',       fit:['บน'],            carModel:'Mitsubishi Triton MR',    img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  {id:82,code:'GAT-RD-H06', name:'Gates Radiator Hose Lower',                 price:16.00, stock:25,  cat:'ระบายความร้อน',brand:'Gates',  line:'ท่อน้ำ',       fit:['ล่าง'],          carModel:'Nissan Navara D23',       img:'https://cdn11.bigcommerce.com/s-qlnoawu4ao/images/stencil/1280x1280/products/1954/10284/IMG_4265__82483.1687457728.jpg?c=2'},
-  {id:83,code:'BSC-TP-200', name:'Bosch Thermostat 80°C – Wax Element',       price:24.00, stock:4,   cat:'ระบายความร้อน',brand:'Bosch',  line:'เทอร์โมสตัท',  fit:[],                carModel:'Ford Ranger T6 2.0BI',    img:'https://ic.truckid.com/centric/brake-parts/front-c-tek-standard-brake-rotor_0.jpg'},
-  /* ── สายพานส่งกำลัง ── */
-  {id:90,code:'GAT-BL-K060', name:'Gates K-Drive Belt 6-Rib 1780mm',          price:38.00, stock:19,  cat:'ระบบสายพานส่งกำลัง',brand:'Gates',line:'สายพาน',      fit:[],                carModel:'Toyota Fortuner AN160',   img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr2kRJ_SIsHR9Zb7wnZS5LJdLPxmPH8rHaFA&s'},
-  {id:91,code:'DAY-BL-T205', name:'Dayco Timing Belt – OEM Matched',          price:55.00, stock:3,   cat:'ระบบสายพานส่งกำลัง',brand:'Dayco',line:'สายพานราวลิ้น',fit:[],               carModel:'Honda Civic FE 1.5T',     img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  {id:92,code:'GAT-TK-T220', name:'Gates Timing Belt Kit with Water Pump',    price:145.00,stock:6,   cat:'ระบบสายพานส่งกำลัง',brand:'Gates',line:'ชุดสายพานราวลิ้น',fit:[],            carModel:'Subaru Outback BS',       img:'https://cdn.cougparts.com/dc/15549/1600816375_h.jpg'},
-  /* ── หลอดไฟ ── */
-  {id:100,code:'BSC-BL-H4K',name:'Bosch Plus 90 Bulb H4 60/55W',              price:12.50, stock:50,  cat:'หลอดไฟ',   brand:'Bosch',    line:'หลอด HALOGEN', fit:[],                carModel:'Isuzu D-Max 4WD',         img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  {id:101,code:'PHI-LD-H7L',name:'Philips X-treme Vision H7 LED',             price:42.00, stock:4,   cat:'หลอดไฟ',   brand:'Bosch',    line:'หลอด LED',     fit:[],                carModel:'Mazda CX-5 KF 2.5T',     img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:102,code:'OSR-LD-D2S',name:'Osram Night Breaker Laser HID D2S',         price:98.00, stock:0,   cat:'หลอดไฟ',   brand:'Bosch',    line:'หลอด LED',     fit:[],                carModel:'Toyota Camry XV70',       img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS638WcKE4rlA3pZNxntDRGTzFT-T2bXaq_5w&s'},
-  /* ── ระบบเครื่องยนต์ ── */
-  {id:110,code:'NGK-SP-PFR7',name:'NGK Iridium Spark Plug PFR7S8EG',          price:18.00, stock:30,  cat:'ระบบเครื่องยนต์',brand:'NGK',  line:'หัวเทียน',     fit:[],                carModel:'Honda Accord CV 2.0T',    img:'https://alliedautoonline.com.au/cdn/shop/files/BC012_1.jpg?v=1718163340'},
-  {id:111,code:'DEN-SP-VK20',name:'Denso Iridium Tough Spark Plug VK20',      price:16.50, stock:44,  cat:'ระบบเครื่องยนต์',brand:'DENSO',line:'หัวเทียน',     fit:[],                carModel:'Toyota Hilux Revo GR',    img:'https://cdn11.bigcommerce.com/s-qlnoawu4ao/images/stencil/1280x1280/products/1954/10284/IMG_4265__82483.1687457728.jpg?c=2'},
-  {id:112,code:'BSC-AF-0986',name:'Bosch Air Filter Premium',                 price:22.00, stock:2,   cat:'ระบบเครื่องยนต์',brand:'Bosch',line:'ไส้กรองอากาศ', fit:[],               carModel:'Mitsubishi Triton MR',    img:'https://ic.truckid.com/centric/brake-parts/front-c-tek-standard-brake-rotor_0.jpg'},
-  {id:113,code:'BSC-OF-0986',name:'Bosch Oil Filter – Spin-On Type',          price:8.50,  stock:80,  cat:'ระบบเครื่องยนต์',brand:'Bosch',line:'ไส้กรองน้ำมัน',fit:[],               carModel:'Ford Ranger T6 2.0BI',    img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  {id:114,code:'DEN-FUF-101',name:'Denso Fuel Filter – High-Flow',            price:28.00, stock:13,  cat:'ระบบเครื่องยนต์',brand:'DENSO',line:'ไส้กรองน้ำมันเชื้อเพลิง',fit:[],      carModel:'Nissan Navara D23',       img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
-  /* ── ลูกปืน ── */
-  {id:120,code:'SKF-BRG-61', name:'SKF Deep Groove Ball Bearing 6205',        price:12.00, stock:38,  cat:'ลูกปืน',    brand:'TRW',      line:'ลูกปืนเม็ดกลม',fit:[],               carModel:'Suzuki Swift AZ',         img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
-  {id:121,code:'NSK-WH-401', name:'NSK Wheel Bearing Hub Unit Front',         price:72.00, stock:1,   cat:'ลูกปืน',    brand:'TRW',      line:'ลูกปืนล้อ',    fit:['หน้า'],          carModel:'BYD Atto 3',              img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  /* ── Universal ── */
-  {id:200,code:'UNI-OIL-5W30', name:'Castrol EDGE 5W-30 Fully Synthetic 4L',       price:98.00, stock:55,  cat:'Universal', brand:'Castrol',  line:'น้ำมันเครื่อง',      fit:[], carModel:'Universal',  img:'https://srisiamonline.com/pub/media/catalog/product/cache/964d5d8e83d07016bd3da81940f632de/5/5/55002141d.jpg'},
-  {id:201,code:'UNI-OIL-0W20', name:'Mobil 1 0W-20 Full Synthetic 4L',             price:115.00,stock:30,  cat:'Universal', brand:'Mobil',    line:'น้ำมันเครื่อง',      fit:[], carModel:'Universal',  img:'https://www.mobil.co.th/-/media/project/wep/mobil/mobil-th/0w-20---40/0w-20_og_1200x630.jpeg'},
-  {id:202,code:'UNI-OIL-10W40',name:'Shell Helix HX7 10W-40 Semi-Synthetic 4L',   price:72.00, stock:40,  cat:'Universal', brand:'Shell',    line:'น้ำมันเครื่อง',      fit:[], carModel:'Universal',  img:'https://www.shell.co.th/th_th/customer/fuels-and-lubricants/lubricants/helix-for-cars/helix-semi-synthetic/shell-helix-hx7-diesel-10w-40/_jcr_content/root/main/section/standalone_asset.shellimg.png/1715668311766/4l-helix-hx7-diesel-10w-40-high-white.png?imdensity=1&imwidth=301&impolicy=amidala-image'},
-  {id:203,code:'UNI-GRS-001',  name:'Molykote Multipurpose Grease 400g',            price:28.00, stock:60,  cat:'Universal', brand:'LOCTITE', line:'จารบีและสารหล่อลื่น', fit:[], carModel:'Universal',  img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
-  {id:204,code:'UNI-CLN-001',  name:'3M Brake Cleaner Aerosol 500ml',               price:16.50, stock:88,  cat:'Universal', brand:'3M',       line:'สเปรย์และน้ำยา',      fit:[], carModel:'Universal',  img:'https://filebroker-cdn.lazada.co.th/kf/S1acd703f20574a02aa83738f532b2361C.jpg'},
-  {id:205,code:'UNI-CLN-002',  name:'WD-40 Multi-Use Product 450ml',                price:12.00, stock:120, cat:'Universal', brand:'WD-40',   line:'สเปรย์และน้ำยา',      fit:[], carModel:'Universal',  img:'https://m.media-amazon.com/images/I/51+Xo5mEiCL.jpg'},
-  {id:206,code:'UNI-FUS-001',  name:'Bosch Blade Fuse Set 5A–30A (40 pcs)',         price:8.50,  stock:75,  cat:'Universal', brand:'Bosch',   line:'ฟิวส์และอุปกรณ์ไฟฟ้า', fit:[], carModel:'Universal', img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS638WcKE4rlA3pZNxntDRGTzFT-T2bXaq_5w&s'},
-  {id:207,code:'UNI-FUS-002',  name:'NGK Spark Plug Cap – Universal Resistor',      price:14.00, stock:22,  cat:'Universal', brand:'NGK',     line:'ฟิวส์และอุปกรณ์ไฟฟ้า', fit:[], carModel:'Universal', img:'https://alliedautoonline.com.au/cdn/shop/files/BC012_1.jpg?v=1718163340'},
-  {id:208,code:'UNI-TAPE-001', name:'Self-Amalgamating Insulation Tape 10m',        price:6.50,  stock:200, cat:'Universal', brand:'3M',       line:'ฟิวส์และอุปกรณ์ไฟฟ้า', fit:[], carModel:'Universal', img:'https://cdn.cougparts.com/dc/15549/1600816375_h.jpg'},
-  {id:209,code:'UNI-HOF-001',  name:'Gates Universal Fuel Hose 8mm × 1m',           price:9.00,  stock:50,  cat:'Universal', brand:'Gates',   line:'ท่อและสาย',            fit:[], carModel:'Universal',  img:'https://images.roverparts.com/1000/LR033303BREM-01.jpg'},
-  {id:210,code:'UNI-HOF-002',  name:'Dayco Radiator Overflow Hose 12mm × 1m',       price:7.50,  stock:45,  cat:'Universal', brand:'Dayco',   line:'ท่อและสาย',            fit:[], carModel:'Universal',  img:'https://s3-eu-west-1.amazonaws.com/static.bisonparts.co.uk/products/large/23902-1.JPG'},
-  {id:211,code:'UNI-PAD-001',  name:'LOCTITE Super Glue Ultra Gel 3g',               price:4.50,  stock:150, cat:'Universal', brand:'LOCTITE', line:'กาวและซีลแลนท์',       fit:[], carModel:'Universal',  img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr2kRJ_SIsHR9Zb7wnZS5LJdLPxmPH8rHaFA&s'},
-  {id:212,code:'UNI-SEL-001',  name:'Permatex RTV Silicone Gasket Maker 85g',        price:18.00, stock:35,  cat:'Universal', brand:'LOCTITE', line:'กาวและซีลแลนท์',       fit:[], carModel:'Universal',  img:'https://ic.truckid.com/centric/brake-parts/front-c-tek-standard-brake-rotor_0.jpg'},
-  {id:213,code:'UNI-CLN-003',  name:'Meguiar\'s Gold Class Car Wash Shampoo 1.89L', price:32.00, stock:18,  cat:'Universal', brand:'Meguiar', line:'คาร์แคร์',              fit:[], carModel:'Universal',  img:'https://cdn11.bigcommerce.com/s-qlnoawu4ao/images/stencil/1280x1280/products/1954/10284/IMG_4265__82483.1687457728.jpg?c=2'},
-  {id:214,code:'UNI-WAX-001',  name:'Turtle Wax ICE Spray Wax 473ml',               price:24.00, stock:0,   cat:'Universal', brand:'Meguiar', line:'คาร์แคร์',              fit:[], carModel:'Universal',  img:'https://m.media-amazon.com/images/I/91s1bdA-uHL.jpg'},
-  {id:215,code:'UNI-TIR-001',  name:'Tyreweld Emergency Tyre Sealant 400ml',         price:19.50, stock:44,  cat:'Universal', brand:'3M',       line:'ยางและล้อ',             fit:[], carModel:'Universal',  img:'https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcSRjsL1mWID3zaNBB0n9oj2BlwyL7816uhDRbOOWEiLdHyyV1fKyhYZ60h8uX8GtCSZWbNMhi0tBr6qipbKKMbcaU11dahkBMdcNqbSSiyH'},
-  {id:216,code:'UNI-TIR-002',  name:'TPMS Tyre Valve Stem Cap Set (4 pcs)',          price:5.00,  stock:3,   cat:'Universal', brand:'Bosch',   line:'ยางและล้อ',             fit:[], carModel:'Universal',  img:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXj-Tgy5m_H_fU8E3Zl5wAPWAgQHA-ideLjQ&s'},
+const GROUPS = [
+    { id: 'สินค้าทุกประเภท', icon: 'bi-grid-3x3-gap', label: 'สินค้าทุกประเภท', isClear: true },
+    { id: 'Universal', icon: 'bi-stars', label: 'Universal' },
+    { id: 'กรอง', icon: 'bi-funnel', label: 'กรอง' },
+    { id: 'โช้คอัพ', icon: 'bi-arrow-down-up', label: 'โช้คอัพ' },
+    { id: 'แบตเตอรี่', icon: 'bi-battery-charging', label: 'แบตเตอรี่' },
+    { id: 'ใบปัดน้ำฝน', icon: 'bi-water', label: 'ใบปัดน้ำฝน' },
+    { id: 'ระบบคลัทช์', icon: 'bi-gear', label: 'ระบบคลัทช์' },
+    { id: 'ระบบช่วงล่างและบังคับเลี้ยว', icon: 'bi-arrows-move', label: 'ระบบช่วงล่างฯ' },
+    { id: 'ระบบเบรก', icon: 'bi-stop-circle', label: 'ระบบเบรก' },
+    { id: 'ระบบเบรกลม', icon: 'bi-wind', label: 'ระบบเบรกลม' },
+    { id: 'ระบบสายพานส่งกำลัง', icon: 'bi-infinity', label: 'สายพานส่งกำลัง' },
+    { id: 'ระบบแอร์', icon: 'bi-snow', label: 'ระบบแอร์' },
+    { id: 'ระบายความร้อน', icon: 'bi-thermometer-high', label: 'ระบายความร้อน' },
+    { id: 'สินค้ากลุ่มไฟฟ้า', icon: 'bi-lightning', label: 'สินค้ากลุ่มไฟฟ้า' },
+    { id: 'สินค้ากลุ่มELECTRONIC', icon: 'bi-cpu', label: 'ELECTRONIC' },
+    { id: 'ระบบเครื่องยนต์', icon: 'bi-gear-wide-connected', label: 'ระบบเครื่องยนต์' },
+    { id: 'ปั๊มและหัวฉีดดีเซล', icon: 'bi-droplet', label: 'ปั๊ม/หัวฉีดดีเซล' },
+    { id: 'ลูกปืน', icon: 'bi-circle', label: 'ลูกปืน' },
+    { id: 'ซีล', icon: 'bi-shield', label: 'ซีล' },
+    { id: 'ท่อ', icon: 'bi-arrows-expand', label: 'ท่อ' },
+    { id: 'ของเหลว จารบีและอื่นๆ', icon: 'bi-droplet-half', label: 'ของเหลว/จารบี' },
+    { id: 'คาร์แคร์', icon: 'bi-car-front', label: 'คาร์แคร์' },
+    { id: 'หลอดไฟ', icon: 'bi-lightbulb', label: 'หลอดไฟ' },
+    { id: 'ระบบเพลา', icon: 'bi-arrow-left-right', label: 'ระบบเพลา' },
+    { id: 'ระบบกันการสั่นสะเทือน', icon: 'bi-activity', label: 'กันสั่นสะเทือน' },
+    { id: 'ระบบเกียร์ธรรมดา', icon: 'bi-gear-wide', label: 'เกียร์ธรรมดา' },
+    { id: 'ตัวถัง', icon: 'bi-box', label: 'ตัวถัง' },
+    { id: 'เครื่องมือ และเครื่องเช็คหัวฉีด', icon: 'bi-tools', label: 'เครื่องมือ' },
+    { id: 'เครื่องเสียงรถยนต์', icon: 'bi-speaker', label: 'เครื่องเสียง' },
+    { id: 'น้ำยาต่างๆ', icon: 'bi-flask', label: 'น้ำยาต่างๆ' },
+    { id: 'อื่นๆ', icon: 'bi-three-dots', label: 'อื่นๆ' },
 ];
 
-// const GROUPS = [
-//   {id:'สินค้าทุกประเภท',icon:'bi-grid-3x3-gap',label:'สินค้าทุกประเภท',isClear:true},
-//   {id:'Universal',icon:'bi-stars',label:'Universal'},
-//   {id:'กรอง',icon:'bi-funnel',label:'กรอง'},
-//   {id:'โช้คอัพ',icon:'bi-arrow-down-up',label:'โช้คอัพ'},
-//   {id:'แบตเตอรี่',icon:'bi-battery-charging',label:'แบตเตอรี่'},
-//   {id:'ใบปัดน้ำฝน',icon:'bi-water',label:'ใบปัดน้ำฝน'},
-//   {id:'ระบบคลัทช์',icon:'bi-gear',label:'ระบบคลัทช์'},
-//   {id:'ระบบช่วงล่างและบังคับเลี้ยว',icon:'bi-arrows-move',label:'ระบบช่วงล่างฯ'},
-//   {id:'ระบบเบรก',icon:'bi-stop-circle',label:'ระบบเบรก'},
-//   {id:'ระบบเบรกลม',icon:'bi-wind',label:'ระบบเบรกลม'},
-//   {id:'ระบบสายพานส่งกำลัง',icon:'bi-infinity',label:'สายพานส่งกำลัง'},
-//   {id:'ระบบแอร์',icon:'bi-snow',label:'ระบบแอร์'},
-//   {id:'ระบายความร้อน',icon:'bi-thermometer-high',label:'ระบายความร้อน'},
-//   {id:'สินค้ากลุ่มไฟฟ้า',icon:'bi-lightning',label:'สินค้ากลุ่มไฟฟ้า'},
-//   {id:'สินค้ากลุ่มELECTRONIC',icon:'bi-cpu',label:'ELECTRONIC'},
-//   {id:'ระบบเครื่องยนต์',icon:'bi-gear-wide-connected',label:'ระบบเครื่องยนต์'},
-//   {id:'ปั๊มและหัวฉีดดีเซล',icon:'bi-droplet',label:'ปั๊ม/หัวฉีดดีเซล'},
-//   {id:'ลูกปืน',icon:'bi-circle',label:'ลูกปืน'},
-//   {id:'ซีล',icon:'bi-shield',label:'ซีล'},
-//   {id:'ท่อ',icon:'bi-arrows-expand',label:'ท่อ'},
-//   {id:'ของเหลว จารบีและอื่นๆ',icon:'bi-droplet-half',label:'ของเหลว/จารบี'},
-//   {id:'คาร์แคร์',icon:'bi-car-front',label:'คาร์แคร์'},
-//   {id:'หลอดไฟ',icon:'bi-lightbulb',label:'หลอดไฟ'},
-//   {id:'ระบบเพลา',icon:'bi-arrow-left-right',label:'ระบบเพลา'},
-//   {id:'ระบบกันการสั่นสะเทือน',icon:'bi-activity',label:'กันสั่นสะเทือน'},
-//   {id:'ระบบเกียร์ธรรมดา',icon:'bi-gear-wide',label:'เกียร์ธรรมดา'},
-//   {id:'ตัวถัง',icon:'bi-box',label:'ตัวถัง'},
-//   {id:'เครื่องมือ และเครื่องเช็คหัวฉีด',icon:'bi-tools',label:'เครื่องมือ'},
-//   {id:'เครื่องเสียงรถยนต์',icon:'bi-speaker',label:'เครื่องเสียง'},
-//   {id:'น้ำยาต่างๆ',icon:'bi-flask',label:'น้ำยาต่างๆ'},
-//   {id:'อื่นๆ',icon:'bi-three-dots',label:'อื่นๆ'},
-// ];
-
-
-let GROUPS = [];
-//let LINEFILTER = [];
 /* ════════════════════════════════
    STATE
 ════════════════════════════════ */
@@ -136,9 +46,7 @@ let cartCnt = 0;
 let vfData = {};
 let chkState = { pl: {}, br: {} };
 let fitState = new Set();
-
-let activeGroup = '0';
-window.selectedGroupId = '0';
+let activeGroup = 'สินค้าทุกประเภท';
 let currentSort = 'carModel';
 let activeModes = new Set(['description']);
 let activeGroups = [];
@@ -308,10 +216,8 @@ function renderBB() {
 }
 function scrollBB(dx) { gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' }); }
 
-
 function selectGroup(id) {
     activeGroup = id;
-    window.selectedGroupId = id;
     document.querySelectorAll('.bb-item').forEach((b, i) => {
         b.classList.toggle('active', GROUPS[i].id === id);
     });
@@ -322,25 +228,11 @@ function selectGroup(id) {
     if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     const activeBB = document.querySelector('.bb-item.active');
     if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-}
-    function selectGroup(id) {
-        activeGroup = id;
-        document.querySelectorAll('.bb-item').forEach((b, i) => {
-            b.classList.toggle('active', GROUPS[i].id === id);
-        });
-        document.querySelectorAll('.pg-nav-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.gid === id);
-        });
-        // Scroll active into view
-        const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
-        if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        const activeBB = document.querySelector('.bb-item.active');
-        if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-        updateBreadcrumb(id, 'Parts Catalog');
-        showSkel();
-        setTimeout(() => { hideSkel(); applyAllFilters(); }, 500);
-    }
+    updateBreadcrumb(id, 'Parts Catalog');
+    showSkel();
+    setTimeout(() => { hideSkel(); applyAllFilters(); }, 500);
+}
 
 /* ════════════════════════════════
    §6 — PRODUCT DETAIL
@@ -390,7 +282,7 @@ function buildSpecHTML(p) {
         <div class="stab-pane" id="itab-comp-${p.id}"></div>
         <div class="stab-pane" id="itab-veh-${p.id}"></div>
     </div>`;
-    }
+}
 
 async function openDrawer(id, e) {
     if (e) e.stopPropagation();
@@ -453,25 +345,25 @@ async function openDrawer(id, e) {
     }
 }
 
-    /* ── Desktop modal close ── */
-    function closeSpecModal(e) {
-        if (e && e.target !== gEl('specModalBackdrop')) return;
-        gEl('specModalBackdrop').classList.remove('open');
-        document.body.style.overflow = '';
-        document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
-        gEl('rb4')?.classList.remove('active-badge');
-        updateBreadcrumb(activeGroup, 'Parts Catalog');
-    }
+/* ── Desktop modal close ── */
+function closeSpecModal(e) {
+    if (e && e.target !== gEl('specModalBackdrop')) return;
+    gEl('specModalBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
+    document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
+    gEl('rb4')?.classList.remove('active-badge');
+    updateBreadcrumb(activeGroup, 'Parts Catalog');
+}
 
-    /* ── Mobile drawer close ── */
-    function closeDrawer() {
-        gEl('drawerOverlay').classList.remove('open');
-        gEl('specDrawer').classList.remove('open');
-        document.body.style.overflow = '';
-        document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
-        gEl('rb4')?.classList.remove('active-badge');
-        updateBreadcrumb(activeGroup, 'Parts Catalog');
-    }
+/* ── Mobile drawer close ── */
+function closeDrawer() {
+    gEl('drawerOverlay').classList.remove('open');
+    gEl('specDrawer').classList.remove('open');
+    document.body.style.overflow = '';
+    document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
+    gEl('rb4')?.classList.remove('active-badge');
+    updateBreadcrumb(activeGroup, 'Parts Catalog');
+}
 
 /* ── Tab switching in MODAL ── */
 function switchTabIn(btn, tabId, pid) {
@@ -502,16 +394,16 @@ function switchDrTab(btn, tabId) {
     badge('rb4');
 }
 
-    /* ── Add to cart from drawer ── */
-    function addCartFromDrawer(e) {
-        if (e) e.stopPropagation();
-        if (!activeProduct) return;
-        const qty = parseInt(gEl('drQty')?.value) || 1;
-        const ex = cart.find(c => c.id === activeProduct.id);
-        if (ex) ex.qty += qty; else cart.push({ ...activeProduct, qty });
-        updateCart();
-        toast(`🛒 เพิ่ม "${activeProduct.name.substring(0, 30)}…"`);
-    }
+/* ── Add to cart from drawer ── */
+function addCartFromDrawer(e) {
+    if (e) e.stopPropagation();
+    if (!activeProduct) return;
+    const qty = parseInt(gEl('drQty')?.value) || 1;
+    const ex = cart.find(c => c.id === activeProduct.id);
+    if (ex) ex.qty += qty; else cart.push({ ...activeProduct, qty });
+    updateCart();
+    toast(`🛒 เพิ่ม "${activeProduct.name.substring(0, 30)}…"`);
+}
 
 /* ── Escape key ── */
 document.addEventListener('keydown', e => {
@@ -556,10 +448,10 @@ function groupByLine(list, forceByLine) {
     return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0], 'th'));
 }
 
-    function nfScroll(rowId, dir) {
-        const el = gEl(rowId);
-        if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
-    }
+function nfScroll(rowId, dir) {
+    const el = gEl(rowId);
+    if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
+}
 
 /* ════════════════════════════════
    RENDER PRODUCTS
@@ -570,12 +462,12 @@ function renderProducts(list) {
     const nfRows = gEl('nfRows');
     const hasFilter = Object.keys(chkState.pl).length || fitState.size || Object.keys(chkState.br).length;
 
-        gEl('rcount').textContent = sorted.length + ' items';
+    gEl('rcount').textContent = sorted.length + ' items';
 
-        const stockLabel = s =>
-            s === 0 ? `<span class="pstock out-stock"><i class="bi bi-exclamation-circle-fill"></i> หมดสต็อก</span>` :
-                s <= 5 ? `<span class="pstock low-stock"><i class="bi bi-exclamation-circle-fill"></i> เหลือ ${s}</span>` :
-                    `<span class="pstock in-stock"><i class="bi bi-check-circle-fill"></i> ${s} ชิ้น</span>`;
+    const stockLabel = s =>
+        s === 0 ? `<span class="pstock out-stock"><i class="bi bi-exclamation-circle-fill"></i> หมดสต็อก</span>` :
+            s <= 5 ? `<span class="pstock low-stock"><i class="bi bi-exclamation-circle-fill"></i> เหลือ ${s}</span>` :
+                `<span class="pstock in-stock"><i class="bi bi-check-circle-fill"></i> ${s} ชิ้น</span>`;
 
     const pcardHTML = p => `
         <div class="pcard ${hasFilter ? 'highlight-filter' : ''}" id="pc-${p.id}"
@@ -665,14 +557,14 @@ function renderProducts(list) {
     }).join('');
 }
 
-    /* ════════════════════════════════
-       APPLY ALL FILTERS
-    ════════════════════════════════ */
-    function applyAllFilters() {
-        const q = gEl('partQ').value.toLowerCase().trim();
-        const plK = Object.keys(chkState.pl);
-        const brK = Object.keys(chkState.br);
-        const fitK = [...fitState];
+/* ════════════════════════════════
+   APPLY ALL FILTERS
+════════════════════════════════ */
+function applyAllFilters() {
+    const q = gEl('partQ').value.toLowerCase().trim();
+    const plK = Object.keys(chkState.pl);
+    const brK = Object.keys(chkState.br);
+    const fitK = [...fitState];
 
     const list = PRODUCTS.filter(p => {
         if (activeGroup && activeGroup !== 'สินค้าทุกประเภท') {
@@ -691,29 +583,29 @@ function renderProducts(list) {
         return true;
     });
 
-        renderProducts(list);
-    }
+    renderProducts(list);
+}
 
-    /* ════════════════════════════════
-       ACTIVE FILTER CHIPS
-    ════════════════════════════════ */
-    function renderActiveChips() {
-        const chips = [];
-        Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
-        [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
-        Object.keys(chkState.br).forEach(v => chips.push({ t: 'br', v, cls: 'af-br' }));
-        gEl('activeFilters').innerHTML = chips.map(c =>
-            `<span class="af-chip ${c.cls}" onclick="removeChip('${c.t}','${c.v}')">${c.v} <i class="bi bi-x-circle"></i></span>`
-        ).join('');
-    }
+/* ════════════════════════════════
+   ACTIVE FILTER CHIPS
+════════════════════════════════ */
+function renderActiveChips() {
+    const chips = [];
+    Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
+    [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
+    Object.keys(chkState.br).forEach(v => chips.push({ t: 'br', v, cls: 'af-br' }));
+    gEl('activeFilters').innerHTML = chips.map(c =>
+        `<span class="af-chip ${c.cls}" onclick="removeChip('${c.t}','${c.v}')">${c.v} <i class="bi bi-x-circle"></i></span>`
+    ).join('');
+}
 
-    function removeChip(t, v) {
-        if (t === 'pl') { delete chkState.pl[v]; document.querySelectorAll('#plList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
-        else if (t === 'br') { delete chkState.br[v]; document.querySelectorAll('#brList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
-        else if (t === 'fi') { fitState.delete(v); document.querySelectorAll('.fit-chip').forEach(c => { if (c.textContent.trim() === v) c.classList.remove('active'); }); }
-        renderActiveChips();
-        applyAllFilters();
-    }
+function removeChip(t, v) {
+    if (t === 'pl') { delete chkState.pl[v]; document.querySelectorAll('#plList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
+    else if (t === 'br') { delete chkState.br[v]; document.querySelectorAll('#brList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
+    else if (t === 'fi') { fitState.delete(v); document.querySelectorAll('.fit-chip').forEach(c => { if (c.textContent.trim() === v) c.classList.remove('active'); }); }
+    renderActiveChips();
+    applyAllFilters();
+}
 
 /* ════════════════════════════════
    §1 — VEHICLE FILTER
@@ -753,18 +645,18 @@ function updateVehSummary() {
            </div>`;
 }
 
-    function renderVfTags() {
-        gEl('vfTags').innerHTML = Object.entries(vfData).slice(0, 3).map(([k, v]) =>
-            `<span class="ftag ftag-v" onclick="removeVfTag('${k}')">${v} <i class="bi bi-x-circle"></i></span>`
-        ).join('');
-    }
+function renderVfTags() {
+    gEl('vfTags').innerHTML = Object.entries(vfData).slice(0, 3).map(([k, v]) =>
+        `<span class="ftag ftag-v" onclick="removeVfTag('${k}')">${v} <i class="bi bi-x-circle"></i></span>`
+    ).join('');
+}
 
-    function removeVfTag(k) {
-        delete vfData[k];
-        renderVfTags();
-        updateVehSummary();
-        loadSearchProductVio();
-    }
+function removeVfTag(k) {
+    delete vfData[k];
+    renderVfTags();
+    updateVehSummary();
+    loadSearchProductVio();
+}
 
 /* ════════════════════════════════
    §2 — SEARCH
@@ -779,50 +671,50 @@ function runSearch() {
     }, 500);
 }
 
-    /* ════════════════════════════════
-       §3 — CHECKBOX FILTERS
-    ════════════════════════════════ */
-    function toggleChk(label, type, val) {
-        label.classList.toggle('checked');
-        if (label.classList.contains('checked')) { chkState[type][val] = true; }
-        else { delete chkState[type][val]; }
-        activateSec(3);
-        showSkel();
-        setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
-    }
+/* ════════════════════════════════
+   §3 — CHECKBOX FILTERS
+════════════════════════════════ */
+function toggleChk(label, type, val) {
+    label.classList.toggle('checked');
+    if (label.classList.contains('checked')) { chkState[type][val] = true; }
+    else { delete chkState[type][val]; }
+    activateSec(3);
+    showSkel();
+    setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
+}
 
-    function toggleFit(chip, val) {
-        chip.classList.toggle('active');
-        if (chip.classList.contains('active')) { fitState.add(val); }
-        else { fitState.delete(val); }
-        activateSec(3);
-        showSkel();
-        setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
-    }
+function toggleFit(chip, val) {
+    chip.classList.toggle('active');
+    if (chip.classList.contains('active')) { fitState.add(val); }
+    else { fitState.delete(val); }
+    activateSec(3);
+    showSkel();
+    setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
+}
 
-    /* ════════════════════════════════
-       CART
-    ════════════════════════════════ */
-    function addCart(id, e) {
-        if (e) e.stopPropagation();
-        const p = PRODUCTS.find(x => x.id === id);
-        if (!p) return;
-        const qty = parseInt(gEl('qty-' + id)?.value) || 1;
-        const ex = cart.find(c => c.id === id);
-        if (ex) ex.qty += qty; else cart.push({ ...p, qty, isBO: (p.stock ?? 99) === 0 });
-        updateCart();
-        const btn = gEl('cb-' + id);
-        const isBO = (p.stock ?? 99) === 0;
-        if (btn) {
-            btn.classList.add('added');
-            btn.innerHTML = '<i class="bi bi-check-lg"></i> Added';
-            setTimeout(() => {
-                btn.classList.remove('added');
-                btn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
-            }, 1500);
-        }
-        toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…" ฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`);
+/* ════════════════════════════════
+   CART
+════════════════════════════════ */
+function addCart(id, e) {
+    if (e) e.stopPropagation();
+    const p = PRODUCTS.find(x => x.id === id);
+    if (!p) return;
+    const qty = parseInt(gEl('qty-' + id)?.value) || 1;
+    const ex = cart.find(c => c.id === id);
+    if (ex) ex.qty += qty; else cart.push({ ...p, qty, isBO: (p.stock ?? 99) === 0 });
+    updateCart();
+    const btn = gEl('cb-' + id);
+    const isBO = (p.stock ?? 99) === 0;
+    if (btn) {
+        btn.classList.add('added');
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Added';
+        setTimeout(() => {
+            btn.classList.remove('added');
+            btn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
+        }, 1500);
     }
+    toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…" ฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`);
+}
 
 /* ════════════════════════════════
    SKELETON
@@ -843,22 +735,22 @@ function updateBreadcrumb(group, page) {
     gEl('bc3').textContent = page || 'Parts Catalog';
 }
 
-    /* ════════════════════════════════
-       SECTION ACTIVATION
-    ════════════════════════════════ */
-    function activateSec(n) {
-        [1, 2, 3, 4].forEach(i => {
-            gEl('lb' + i)?.classList.remove('active-badge');
-            gEl('rb' + i)?.classList.remove('active-badge');
-        });
-        gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
-        gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
+/* ════════════════════════════════
+   SECTION ACTIVATION
+════════════════════════════════ */
+function activateSec(n) {
+    [1, 2, 3, 4].forEach(i => {
+        gEl('lb' + i)?.classList.remove('active-badge');
+        gEl('rb' + i)?.classList.remove('active-badge');
+    });
+    gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
+    gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 
-        if (n === 1) { glow('lb1', 'rb1', 'rz1', 'g1'); }
-        else if (n === 2) { glow('lb2', 'rb2', 'rz2', 'g2'); }
-        else if (n === 3) { badge('lb3'); badge('rb3'); gEl('rz2')?.classList.add('g3'); pulseEl('rz2'); }
-        else if (n === 4) { badge('rb4'); }
-    }
+    if (n === 1) { glow('lb1', 'rb1', 'rz1', 'g1'); }
+    else if (n === 2) { glow('lb2', 'rb2', 'rz2', 'g2'); }
+    else if (n === 3) { badge('lb3'); badge('rb3'); gEl('rz2')?.classList.add('g3'); pulseEl('rz2'); }
+    else if (n === 4) { badge('rb4'); }
+}
 
 function glow(lb, rb, zone, gc) {
     badge(lb); badge(rb);
@@ -957,11 +849,11 @@ function buildSuggestions(q) {
     return results.slice(0, 8);
 }
 
-    function highlightMatch(text, q) {
-        if (!q) return text;
-        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return text.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
-    }
+function highlightMatch(text, q) {
+    if (!q) return text;
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
+}
 
 let acSelected = null;
 let acFocusIdx = -1;
@@ -1021,13 +913,13 @@ function acSelect(event, val, code) {
     if (window.innerWidth > 575) runSearch();
 }
 
-    function acClose() {
-        const dd = gEl('acDropdown');
-        dd.classList.remove('open');
-        gEl('headerQ').setAttribute('aria-expanded', 'false');
-        acFocusIdx = -1;
-        acUpdateFocus();
-    }
+function acClose() {
+    const dd = gEl('acDropdown');
+    dd.classList.remove('open');
+    gEl('headerQ').setAttribute('aria-expanded', 'false');
+    acFocusIdx = -1;
+    acUpdateFocus();
+}
 
 function acKeyNav(event) {
     const dd = gEl('acDropdown');
@@ -1063,12 +955,12 @@ function acUpdateFocus(items) {
     }
 }
 
-    function updateMobSearchBtn(enabled) {
-        const btn = gEl('mobSearchBtn');
-        if (!btn) return;
-        btn.disabled = !enabled;
-        btn.style.background = enabled ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.15)';
-    }
+function updateMobSearchBtn(enabled) {
+    const btn = gEl('mobSearchBtn');
+    if (!btn) return;
+    btn.disabled = !enabled;
+    btn.style.background = enabled ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.15)';
+}
 
 function doMobSearch() { if (acSelected) runSearch(); }
 
@@ -1084,13 +976,13 @@ let acSbSelected = null;
 let acSbFocusIdx = -1;
 let acSbItems = [];
 
-    function acInputSidebar(inp) {
-        const q = inp.value.trim();
-        acSbSelected = null; acSbFocusIdx = -1;
-        if (!q) { acCloseSidebar(); return; }
-        acSbItems = buildSuggestions(q);
-        renderAcDropdownSidebar(q);
-    }
+function acInputSidebar(inp) {
+    const q = inp.value.trim();
+    acSbSelected = null; acSbFocusIdx = -1;
+    if (!q) { acCloseSidebar(); return; }
+    acSbItems = buildSuggestions(q);
+    renderAcDropdownSidebar(q);
+}
 
 function renderAcDropdownSidebar(q) {
     const dd = gEl('acDropdownSidebar');
@@ -1127,21 +1019,21 @@ function renderAcDropdownSidebar(q) {
     gEl('partQ').setAttribute('aria-expanded', 'true');
 }
 
-    function acSelectSidebar(event, val) {
-        if (event) event.preventDefault();
-        gEl('partQ').value = val;
-        syncSearch('sidebar');
-        acSbSelected = val;
-        acCloseSidebar();
-        runSearch();
-    }
+function acSelectSidebar(event, val) {
+    if (event) event.preventDefault();
+    gEl('partQ').value = val;
+    syncSearch('sidebar');
+    acSbSelected = val;
+    acCloseSidebar();
+    runSearch();
+}
 
-    function acCloseSidebar() {
-        gEl('acDropdownSidebar').classList.remove('open');
-        gEl('partQ').setAttribute('aria-expanded', 'false');
-        acSbFocusIdx = -1;
-        acUpdateFocusSidebar();
-    }
+function acCloseSidebar() {
+    gEl('acDropdownSidebar').classList.remove('open');
+    gEl('partQ').setAttribute('aria-expanded', 'false');
+    acSbFocusIdx = -1;
+    acUpdateFocusSidebar();
+}
 
 function acKeyNavSidebar(event) {
     const dd = gEl('acDropdownSidebar');
@@ -1159,15 +1051,15 @@ function acKeyNavSidebar(event) {
     } else if (event.key === 'Escape') { acCloseSidebar(); }
 }
 
-    function acUpdateFocusSidebar(items) {
-        const dd = gEl('acDropdownSidebar');
-        const all = items || dd.querySelectorAll('.ac-item');
-        all.forEach((el, i) => el.classList.toggle('ac-focused', i === acSbFocusIdx));
-        if (acSbFocusIdx >= 0 && all[acSbFocusIdx]) {
-            gEl('partQ').value = all[acSbFocusIdx].getAttribute('data-val');
-            all[acSbFocusIdx].scrollIntoView({ block: 'nearest' });
-        }
+function acUpdateFocusSidebar(items) {
+    const dd = gEl('acDropdownSidebar');
+    const all = items || dd.querySelectorAll('.ac-item');
+    all.forEach((el, i) => el.classList.toggle('ac-focused', i === acSbFocusIdx));
+    if (acSbFocusIdx >= 0 && all[acSbFocusIdx]) {
+        gEl('partQ').value = all[acSbFocusIdx].getAttribute('data-val');
+        all[acSbFocusIdx].scrollIntoView({ block: 'nearest' });
     }
+}
 
 /* ════════════════════════════════
    MOBILE SIDEBAR
@@ -1183,17 +1075,17 @@ function toggleMobSidebar() {
 }
 gEl('mobOverlay').addEventListener('click', toggleMobSidebar);
 
-    /* ════════════════════════════════
-       COLLAPSE SYNC
-    ════════════════════════════════ */
-    document.querySelectorAll('.sec-hd').forEach(hd => {
-        const t = hd.getAttribute('data-bs-target');
-        const el = document.querySelector(t);
-        if (el) {
-            el.addEventListener('show.bs.collapse', () => hd.setAttribute('aria-expanded', 'true'));
-            el.addEventListener('hide.bs.collapse', () => hd.setAttribute('aria-expanded', 'false'));
-        }
-    });
+/* ════════════════════════════════
+   COLLAPSE SYNC
+════════════════════════════════ */
+document.querySelectorAll('.sec-hd').forEach(hd => {
+    const t = hd.getAttribute('data-bs-target');
+    const el = document.querySelector(t);
+    if (el) {
+        el.addEventListener('show.bs.collapse', () => hd.setAttribute('aria-expanded', 'true'));
+        el.addEventListener('hide.bs.collapse', () => hd.setAttribute('aria-expanded', 'false'));
+    }
+});
 
 gEl('partQ').addEventListener('focus', () => { if (gEl('partQ').value.trim()) acInputSidebar(gEl('partQ')); });
 gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()) acInput(gEl('headerQ')); });
@@ -1204,22 +1096,22 @@ gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()
 const DISCOUNT_RATE = 0.075;
 const VAT_RATE = 0.07;
 
-    function openOrderSummary() {
-        if (!cart.length) { toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn'); return; }
-        renderOrderSummary();
-        closeCart();
-        gEl('osOverlay').classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
+function openOrderSummary() {
+    if (!cart.length) { toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn'); return; }
+    renderOrderSummary();
+    closeCart();
+    gEl('osOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
 
-    function closeOrderSummary() {
-        gEl('osOverlay').classList.remove('open');
-        document.body.style.overflow = '';
-    }
+function closeOrderSummary() {
+    gEl('osOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
 
-    function osOverlayClick(e) {
-        if (e.target === gEl('osOverlay')) closeOrderSummary();
-    }
+function osOverlayClick(e) {
+    if (e.target === gEl('osOverlay')) closeOrderSummary();
+}
 
 function renderOrderSummary() {
     const list = gEl('osProductList');
@@ -1247,11 +1139,11 @@ function renderOrderSummary() {
     updateOsSelection();
 }
 
-    function updateOsSelection() {
-        const chks = document.querySelectorAll('.os-item-chk');
-        const allChecked = [...chks].every(c => c.checked);
-        const selectAllChk = gEl('osSelectAll');
-        if (selectAllChk) selectAllChk.checked = allChecked;
+function updateOsSelection() {
+    const chks = document.querySelectorAll('.os-item-chk');
+    const allChecked = [...chks].every(c => c.checked);
+    const selectAllChk = gEl('osSelectAll');
+    if (selectAllChk) selectAllChk.checked = allChecked;
 
     const selectedIds = [...chks].filter(c => c.checked).map(c => parseInt(c.dataset.id));
     const selectedItems = cart.filter(c => selectedIds.includes(c.id));
@@ -1263,14 +1155,14 @@ function renderOrderSummary() {
     const vat = net * VAT_RATE;
     const total = net + vat;
 
-        gEl('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
-        gEl('osQtyCount').textContent = totalQty;
-        gEl('osSkuCount').textContent = skuCount;
-        gEl('osDiscount').textContent = '−' + discount.toFixed(2);
-        gEl('osNet').textContent = net.toFixed(2);
-        gEl('osVat').textContent = vat.toFixed(2);
-        gEl('osTotal').textContent = fmt(total);
-    }
+    gEl('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
+    gEl('osQtyCount').textContent = totalQty;
+    gEl('osSkuCount').textContent = skuCount;
+    gEl('osDiscount').textContent = '−' + discount.toFixed(2);
+    gEl('osNet').textContent = net.toFixed(2);
+    gEl('osVat').textContent = vat.toFixed(2);
+    gEl('osTotal').textContent = fmt(total);
+}
 
 function osToggleSelectAll(chk) {
     document.querySelectorAll('.os-item-chk').forEach(c => c.checked = chk.checked);
@@ -1376,10 +1268,10 @@ function osCheckout() {
     }, 2000);
 }
 
-    function setupDropdown(triggerId, dropdownId) {
-        const trigger = document.getElementById(triggerId);
-        const dropdown = document.getElementById(dropdownId);
-        let open = trigger.classList.contains('open');
+function setupDropdown(triggerId, dropdownId) {
+    const trigger = document.getElementById(triggerId);
+    const dropdown = document.getElementById(dropdownId);
+    let open = trigger.classList.contains('open');
 
     function toggle(e) {
         e.stopPropagation();
