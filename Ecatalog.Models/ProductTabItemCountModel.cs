@@ -6,17 +6,17 @@ using System.Threading.Tasks;
 
 namespace Ecatalog.Models
 {
-    public class ProductSearchVioModel
+    public class ProductTabItemCountModel
     {
         public int statusCode { get; set; }
         public string errorMessage { get; set; }
-        public List<ResultProductSearchVioModelList> result { get; set; }
+        public List<ResultProductTabItemCountList> result { get; set; }
     }
-    public class ResultProductSearchVioModelList
+    public class ResultProductTabItemCountList
     {
         public string stkcode { get; set; }
         public string stkcodeDescription { get; set; }
-        public string brand { get; set; }
+        public string brandName { get; set; }
         public string makerName { get; set; }
         public string modelName { get; set; }
         public string qtyReady { get; set; }
@@ -24,5 +24,11 @@ namespace Ecatalog.Models
         public string productGroup { get; set; }
         public string productLine { get; set; }
         public string imagePath { get; set; }
+        public int countProductDes { get; set; }
+        public int countProductSpec { get; set; }
+        public int countProductImage { get; set; }
+        public int countProductOem { get; set; }
+        public int countProductCom { get; set; }
+        public int countProductLinkage { get; set; }
     }
 }

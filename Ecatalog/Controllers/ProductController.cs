@@ -15,7 +15,7 @@ namespace Ecatalog.Controllers
     public class ProductController : Controller
     {
         // GET: Product
-        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType) {
+        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath) {
             try {
                 var result = await Utils.CallApiAsyncMemory<
                     ProductSearchVioModel>(
@@ -30,7 +30,8 @@ namespace Ecatalog.Controllers
                         engineId,
                         yearFrom,
                         yearTo,
-                        driveType
+                        driveType,
+                        imagePath
                     },
                     true,
                     30);
@@ -73,7 +74,36 @@ namespace Ecatalog.Controllers
                     IsSuccess = result.IsSuccess,
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
-                    Data = groupData
+                    Data = groupData //result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex) {
+                return Json(new {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        //get count by tab
+        public async Task<ActionResult> GetTabItemCountProduct(string stkcode) {
+            try {
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductTabItemCountModel>(
+                    "Ecatalog/GetTabItemCountProduct",
+                    "GET",
+                    new {
+                        stkcode
+                    },
+                    true,
+                    30);
+                return Json(new {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
                 },
 
                 JsonRequestBehavior.AllowGet);
