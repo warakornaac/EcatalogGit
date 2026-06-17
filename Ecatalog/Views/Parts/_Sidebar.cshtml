@@ -442,18 +442,13 @@
         }
     }
     //get rang
-    async function loadModelRange() {
-        try {
-            $("#bodyId").empty().append('<option value="">— Select Body —</option>');
-            $("#engineId").empty().append('<option value="">— Select Engine —</option>');
 
+ 
 
-    //$(function () {
-    //    GetProductionLine();
-    //   // GetBrandS();
-    //});
 async function loadModelRange() {
-
+    try {
+        $("#bodyId").empty().append('<option value="">— Select Body —</option>');
+        $("#engineId").empty().append('<option value="">— Select Engine —</option>');
             const marketSegmentId = $("#marketsegId").val();
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
