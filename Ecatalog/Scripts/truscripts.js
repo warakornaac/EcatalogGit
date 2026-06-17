@@ -36,6 +36,9 @@ const fmt = v => '฿' + v.toLocaleString('th-TH', { minimumFractionDigits: 2, m
 const totalAddress = document.querySelectorAll('#osAddrList .os-addr-item').length;
 document.getElementById('totalAddr').innerText = totalAddress + ' ที่อยู่';
 
+const drawer = document.getElementById('specDrawer');
+const overlay = document.getElementById('drawerOverlay');
+
 /* ════════════════════════════════
    INIT
 ════════════════════════════════ */
@@ -223,7 +226,10 @@ function buildSpecHTML(p) {
         ${p.img
             ? `<img src="${p.img}" alt="${p.name}"
                onerror="this.parentElement.innerHTML='<div class=\'no-image\'>No images found.</div>'">`
-            : `<div class="no-image" style="color:darkred;font-size:10px;>No images found.</div>`}
+        : `<div class="no-image">
+               <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
+               <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
+           </div>`}
         <div class="spec-hero-meta flex-grow-1">
             <h5>${p.name}</h5>
             <p>${p.code}</p>
@@ -257,6 +263,14 @@ function buildSpecHTML(p) {
     </div>`;
 }
 
+console.log('drawer classes:', drawer.className);
+console.log('overlay classes:', overlay.className);
+const s = window.getComputedStyle(drawer);
+console.log('transform:', s.transform);
+console.log('display:', s.display);
+console.log('visibility:', s.visibility);
+console.log('z-index:', s.zIndex);
+
 async function openDrawer(id, e) {
     if (e) e.stopPropagation();
     selCard(id);
@@ -265,23 +279,52 @@ async function openDrawer(id, e) {
     activeProduct = p;
     activateSec(4);
     updateBreadcrumb(activeGroup, p.name);
-
-    // เก็บ stkcode สำหรับ Tab loader
     window._currentStkcode = p.code;
 
-    if (isMobile()) {
-        /* ── MOBILE: slide-in drawer ── */
-        gEl('drTitle').textContent = p.name;
-        gEl('drCode').textContent = p.code;
-        gEl('drCode2').textContent = p.code;
-        gEl('drImg').src = p.img;
-        gEl('drBrand').textContent = p.brand;
-        gEl('drName').textContent = p.name;
-        gEl('drPrice').textContent = '฿' + p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 });
-        gEl('drDescFull').textContent = p.name;
-        gEl('drCat').textContent = p.cat;
-        gEl('drBrandCard').textContent = p.brand;
-        gEl('drPN').textContent = p.code;
+    // ✅ เพิ่ม 3 บรรทัดนี้
+    console.log('isMobile:', isMobile(), '| width:', window.innerWidth);
+    const drawerReady = !!gEl('specDrawer') && !!gEl('drTitle');
+    console.log('drawerReady:', drawerReady);
+    console.log('branch:', isMobile() && drawerReady ? 'MOBILE' : 'DESKTOP');
+
+    if (isMobile() && drawerReady) {
+        const set = (id, val) => { const el = gEl(id); if (el) el.textContent = val; };
+        set('drTitle', p.name);
+        set('drCode', p.code);
+        set('drCode2', p.code);
+        set('drBrand', p.brand);
+        set('drName', p.name);
+        set('drPrice', '฿' + p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 }));
+        set('drDescFull', p.name);
+        set('drCat', p.cat);
+        set('drBrandCard', p.brand);
+        set('drPN', p.code);
+
+        const drImg = gEl('drImg');
+        const drImgPh = gEl('drImgPh');
+
+        if (p.img) {
+            drImg.src = p.img;
+            drImg.style.cssText = `
+        display:block;
+        width:90px;
+        height:90px;
+        object-fit:contain;
+        background:var(--surface);
+        border-radius:var(--r);
+        padding:8px;
+        flex-shrink:0;
+        box-shadow:var(--sh-sm)
+    `;
+            if (drImgPh) drImgPh.style.display = 'none';
+            drImg.onerror = () => {
+                drImg.style.display = 'none';
+                if (drImgPh) drImgPh.style.display = 'flex';
+            };
+        } else {
+            if (drImg) drImg.style.display = 'none';
+            if (drImgPh) drImgPh.style.display = 'flex';
+        }
 
         const drBoRow = gEl('drBoRow');
         if (drBoRow) drBoRow.style.display = (p.stock ?? 99) === 0 ? '' : 'none';
@@ -293,28 +336,27 @@ async function openDrawer(id, e) {
             drAddBtn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
         }
 
-        // Reset tabs ก่อนเปิด
         gEl('specDrawer').querySelectorAll('.drtab').forEach((b, i) => b.classList.toggle('active', i === 0));
-        gEl('specDrawer').querySelectorAll('.drpane').forEach((p, i) => p.classList.toggle('active', i === 0));
+        gEl('specDrawer').querySelectorAll('.drpane').forEach((pane, i) => pane.classList.toggle('active', i === 0));
 
-        gEl('drawerOverlay').classList.add('open');
-        gEl('specDrawer').classList.add('open');
+        gEl('drawerOverlay').classList.add('show');
+        gEl('specDrawer').classList.add('show');
         document.body.style.overflow = 'hidden';
-
+        console.log('AFTER ADD — drawer class:', gEl('specDrawer').className);
+        console.log('AFTER ADD — right:', window.getComputedStyle(gEl('specDrawer')).right);
+        console.log('AFTER ADD — display:', window.getComputedStyle(gEl('specDrawer')).display);
     } else {
-        /* ── DESKTOP: modal ── */
+        // desktop หรือ drawer elements ไม่พร้อม → ใช้ modal
+        if (!drawerReady && isMobile()) {
+            console.warn('drawer elements missing — check _SpecDrawer partial is included');
+        }
         gEl('specModalContent').innerHTML = buildSpecHTML(p);
         gEl('specModalBackdrop').classList.add('open');
         document.body.style.overflow = 'hidden';
     }
 
-    // โหลด Tab จาก API
     if (typeof initProductTabs === 'function') {
-        await initProductTabs(
-            p.code,
-            isMobile() ? 'drawer' : 'inline',
-            p.id
-        );
+        await initProductTabs(p.code, isMobile() && drawerReady ? 'drawer' : 'inline', p.id);
     }
 }
 
@@ -330,8 +372,8 @@ function closeSpecModal(e) {
 
 /* ── Mobile drawer close ── */
 function closeDrawer() {
-    gEl('drawerOverlay').classList.remove('open');
-    gEl('specDrawer').classList.remove('open');
+    gEl('drawerOverlay').classList.remove('show');
+    gEl('specDrawer').classList.remove('show');
     document.body.style.overflow = '';
     document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
     gEl('rb4')?.classList.remove('active-badge');
@@ -450,7 +492,10 @@ function renderProducts(list) {
                 ${p.img
                 ? `<img src="${p.img}" alt="${p.name}"
                    onerror="this.parentElement.innerHTML='<div class=\'no-image\'>No images found.</div>'">`
-        : `<div class="no-image" style="color:darkred;font-size:10px;">No images found.</div>`}
+        : `<div class="no-image">
+               <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
+               <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
+           </div>`}
             </div>
             <div class="pbody">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px">
@@ -540,7 +585,7 @@ function applyAllFilters() {
     const fitK = [...fitState];
 
     const list = PRODUCTS.filter(p => {
-        if (activeGroup && activeGroup !== 'สินค้าทุกประเภท') {
+        if (activeGroup && activeGroup !== 'สินค้าทุกประเภท' && activeGroup !== '0') {
             if (p.cat !== activeGroup) return false;
         }
         if (q) {
@@ -1503,5 +1548,25 @@ function FilterProductionLines(allowedIds) {
     if (btn) {
         btn.classList.remove('expanded');
         btn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+    }
+}
+function toggleSec(hd, targetId) {
+    const body = document.getElementById(targetId);
+    if (!body) return;
+
+    const isOpen = hd.getAttribute('aria-expanded') === 'true';
+    hd.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+
+    if (isOpen) {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+            body.style.transition = 'max-height .25s ease';
+            body.style.maxHeight = '0';
+            body.style.overflow = 'hidden';
+        });
+    } else {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        body.style.overflow = '';
+        setTimeout(() => { body.style.maxHeight = ''; }, 260);
     }
 }
