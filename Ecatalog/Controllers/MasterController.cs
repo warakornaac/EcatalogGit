@@ -1,15 +1,18 @@
-﻿using System;
+﻿using Ecatalog.Library;
+using Ecatalog.Models;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.EnterpriseServices;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
-using Ecatalog.Models;
-using Ecatalog.Library;
 
 namespace Ecatalog.Controllers
 {
@@ -136,6 +139,148 @@ namespace Ecatalog.Controllers
             }
             catch (Exception ex) {
                 return Json(new {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public async Task<ActionResult> GetBrands(string id)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    BrandsFilterModel>(
+                    "Ecatalog/GetBrands",
+                    "GET",
+                    new
+                    {
+                        id
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        public async Task<ActionResult> GeProductGroups(string prodgrpid)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ModelProductionGroupFilterModel>(
+                    "Ecatalog/GetProductGroup",
+                    "GET",
+                    new
+                    {
+                        prodgrpid
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public async Task<ActionResult> GeProductLines(string prodlineid)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ModelProductionLineFilterModel>(
+                    "Ecatalog/GetProductLine",
+                    "GET",
+                    new
+                    {
+                        prodlineid
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        public async Task<ActionResult> GetMatchProductionGroup(string prodgrpid = "")
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    MatchProductGroupModel>(
+                    "Ecatalog/GetProductGroupMatched",
+                    "GET",
+                    new
+                    {
+                        prodgrpid
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
                     IsSuccess = false,
                     Message = ex.Message
                 },

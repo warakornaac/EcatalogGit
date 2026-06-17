@@ -1696,9 +1696,9 @@ body {
 }
 
 /* open states — applied only when JS adds .open (mobile path only) */
-.drawer-overlay.open {
+/* .spec-drawer เดิมใน CSS มี display:flex อยู่แล้ว — ไม่ต้องเพิ่ม */
+.drawer-overlay.show {
     display: block;
-    animation: drawerFadeIn .2s ease;
 }
 
 @keyframes drawerFadeIn {
@@ -1710,9 +1710,9 @@ body {
         opacity: 1
     }
 }
-
-.spec-drawer.open {
+.spec-drawer.show {
     right: 0;
+    /* ไม่ต้องเพิ่ม display เพราะ spec-drawer มี display:flex อยู่แล้ว */
 }
 
 /* Force-hide drawer on desktop so it can never bleed through */
@@ -3617,10 +3617,14 @@ body {
         display: flex;
     }
 
-.drawer-overlay, .spec-drawer {
-    display: none;
+.no-image {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 100px;
+    background: var(--surface-2);
+    border-radius: var(--r);
 }
-
-    .drawer-overlay.show, .spec-drawer.show {
-        display: block;
-    }

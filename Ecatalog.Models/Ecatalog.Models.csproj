@@ -46,11 +46,21 @@
     <Compile Include="ApiResponseModel.cs" />
     <Compile Include="AuthenApiResponseModel.cs" />
     <Compile Include="MarketCarFilterModel.cs" />
+    <Compile Include="MatchProductGroupModel.cs" />
+    <Compile Include="ModelBrandsFilterModel.cs" />
+    <Compile Include="ModelProductionGroupModel.cs" />
     <Compile Include="ModelRangeFilterModel.cs" />
     <Compile Include="ModelBodyFilterModel.cs" />
     <Compile Include="ModelEngineFilterModel.cs" />
+    <Compile Include="ProductionLineFilterModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />
+    <Compile Include="ProductTabCompetitorModel.cs" />
+    <Compile Include="ProductTabDescriptionModel.cs" />
+    <Compile Include="ProductTabImageModel.cs" />
     <Compile Include="ProductTabItemCountModel.cs" />
+    <Compile Include="ProductTabLinkageModel.cs" />
+    <Compile Include="ProductTabOemModel.cs" />
+    <Compile Include="ProductTabSpecModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserSessionModel.cs" />
   </ItemGroup>

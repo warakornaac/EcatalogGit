@@ -21,7 +21,10 @@
     </div>
 
     <div class="dr-hero">
-        <img id="drImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover">
+        <img id="drImg" src="" alt=""
+             style="display:none;width:90px;height:90px;object-fit:contain;
+            background:var(--surface);border-radius:var(--r);
+            padding:8px;flex-shrink:0;box-shadow:var(--sh-sm)">
         <div id="drImgPh" style="display:flex;width:100%;min-height:120px;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-3);font-size:40px;border-radius:8px">
             <i class="bi bi-image"></i>
         </div>
@@ -130,11 +133,3 @@
         </div>
     </div>
 </div>
-@*<script>
-const drAddBtn = gEl("drAddBtn");
-if (drAddBtn) {
-    const isBO = (p.stock ?? 99) === 0;
-    drAddBtn.className = "dr-add-btn" + (isBO ? " bo-btn" : "");
-    drAddBtn.innerHTML = `<i class="bi ${isBO ? " bi-hourglass-split" : "bi-cart-plus" }"></i> ${isBO ? "จอง (BO)" : "Add to Cart"}`;
-    }
-</script>*@
