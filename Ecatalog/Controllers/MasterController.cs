@@ -146,7 +146,7 @@ namespace Ecatalog.Controllers
             }
         }
 
-        public async Task<ActionResult> GetBrands()
+        public async Task<ActionResult> GetBrands(string id)
         {
             try
             {
@@ -156,7 +156,7 @@ namespace Ecatalog.Controllers
                     "GET",
                     new
                     {
-
+                        id
                     },
                     true,
                     10);
@@ -181,7 +181,7 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> GeProductGroups()
+        public async Task<ActionResult> GeProductGroups(string prodgrpid)
         {
             try
             {
@@ -191,7 +191,7 @@ namespace Ecatalog.Controllers
                     "GET",
                     new
                     {
-                        
+                        prodgrpid
                     },
                     true,
                     10);
@@ -217,7 +217,7 @@ namespace Ecatalog.Controllers
             }
         }
 
-        public async Task<ActionResult> GeProductLines()
+        public async Task<ActionResult> GeProductLines(string prodlineid)
         {
             try
             {
@@ -227,7 +227,7 @@ namespace Ecatalog.Controllers
                     "GET",
                     new
                     {
-
+                        prodlineid
                     },
                     true,
                     10);
