@@ -49,7 +49,6 @@
     <Compile Include="ModelRangeFilterModel.cs" />
     <Compile Include="ModelBodyFilterModel.cs" />
     <Compile Include="ModelEngineFilterModel.cs" />
-    <Compile Include="ModelRangeFilterModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />
     <Compile Include="ProductTabItemCountModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

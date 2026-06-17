@@ -142,13 +142,11 @@ namespace Ecatalog.Library
         }
 
         public static string GetConfig(string key) {
-            /*
-            if (key.Equals("CN"))
-                return (EncryptData.Decrypt(ConfigurationSettings.AppSettings[key]));
-            else
-            */
-
-            return (ConfigurationSettings.AppSettings[key]);
+            var value = ConfigurationManager.AppSettings[key];
+            if (string.IsNullOrWhiteSpace(value)) { 
+                throw new Exception($"AppSettings key '{key}' not found.");
+            }
+            return value;
         }
 
         public static string Left(string str, int length) {

@@ -25,6 +25,7 @@ namespace Ecatalog.Controllers
 
         [HttpPost]
         public async Task<ActionResult> AuthenUser(string Username, string Password) {
+            Boolean IsSuccess = false;
             try {
                 var result = await Utils.CallApiAsyncMemory<
                         AuthenApiResponseModel>(
@@ -37,8 +38,7 @@ namespace Ecatalog.Controllers
                         false,
                         10);
 
-                if (result.IsSuccess &&
-                    result.Data != null &&
+                if (result.Data != null &&
                     result.Data.result != null &&
                     result.Data.result.Count > 0) {
                     var user = result.Data.result.FirstOrDefault();
@@ -51,13 +51,14 @@ namespace Ecatalog.Controllers
                     Session["cuscode"] = user.cuscode;
                     Session["userType"] = user.userType;
                     Session["isActive"] = user.isActive;
-
+                    IsSuccess = true;
                 }
 
                 return Json(new {
-                    IsSuccess = result.IsSuccess,
+                    IsSuccess = IsSuccess,
                     IsFromCache = result.IsFromCache,
-                    Data = result.Data?.result
+                    Data = result.Data?.result,
+                    Message = result.Data.errorMessage
                 },
                 JsonRequestBehavior.AllowGet);
             }
