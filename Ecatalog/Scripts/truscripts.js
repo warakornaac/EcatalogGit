@@ -43,7 +43,7 @@ const overlay = document.getElementById('drawerOverlay');
    INIT
 ════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-    renderBB();
+    renderBottomBar();
     renderProducts(PRODUCTS);
     setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
 });
@@ -163,6 +163,33 @@ function clearAllFilters() {
 /* ════════════════════════════════
    §4 — SORTING
 ════════════════════════════════ */
+function switchSortbyPart() {
+    // toggle ระหว่าง carModel (default) และ part
+    if (currentSort === 'part') {
+        currentSort = 'carModel';
+    } else {
+        currentSort = 'part';
+    }
+
+    // sync dropdown ให้ตรง
+    const sel = gEl('sortSelect');
+    if (sel) sel.value = currentSort;
+
+    // update ปุ่มให้แสดง state ปัจจุบัน
+    const btn = document.querySelector('[onclick*="switchSortbyPart"]');
+    if (btn) {
+        const isPartMode = currentSort === 'part';
+        btn.innerHTML = isPartMode
+            ? '<i class="bi bi-toggle-on" style="color:#fff"></i> Sort: Part'
+            : '<i class="bi bi-toggle-off"></i> Sort: Car Model';
+        btn.style.background = isPartMode ? 'var(--primary)' : '';
+        btn.style.color = isPartMode ? '#fff' : '';
+    }
+
+    applyAllFilters();
+}
+
+
 function sortProducts(val) {
     currentSort = val;
     applyAllFilters();
@@ -179,17 +206,18 @@ function applySorting(list) {
     return arr.sort((a, b) => (a.carModel || '').localeCompare(b.carModel || '', 'th'));
 }
 
+
 /* ════════════════════════════════
    §5 — BOTTOM BAR
 ════════════════════════════════ */
-function renderBB() {
+function renderBottomBar() {
     gEl('bbScroll').innerHTML = GROUPS.map(g => `
         <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
             <i class="bi ${g.icon}"></i>
             <span class="bb-label">${g.label}</span>
         </div>`).join('');
 }
-function scrollBB(dx) { gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' }); }
+function scrollBottom(dx) { gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' }); }
 
 function selectGroup(id) {
     activeGroup = id;
@@ -263,13 +291,13 @@ function buildSpecHTML(p) {
     </div>`;
 }
 
-console.log('drawer classes:', drawer.className);
-console.log('overlay classes:', overlay.className);
+//console.log('drawer classes:', drawer.className);
+//console.log('overlay classes:', overlay.className);
 const s = window.getComputedStyle(drawer);
-console.log('transform:', s.transform);
-console.log('display:', s.display);
-console.log('visibility:', s.visibility);
-console.log('z-index:', s.zIndex);
+//console.log('transform:', s.transform);
+//console.log('display:', s.display);
+//console.log('visibility:', s.visibility);
+//console.log('z-index:', s.zIndex);
 
 async function openDrawer(id, e) {
     if (e) e.stopPropagation();
@@ -694,8 +722,24 @@ function runSearch() {
 ════════════════════════════════ */
 function toggleChk(label, type, val) {
     label.classList.toggle('checked');
-    if (label.classList.contains('checked')) { chkState[type][val] = true; }
-    else { delete chkState[type][val]; }
+    if (label.classList.contains('checked')) {
+        chkState[type][val] = true;
+        // ✅ auto switch sort เมื่อเลือก filter
+        if (type === 'pl' || type === 'br') {
+            currentSort = 'part';
+            const sel = gEl('sortSelect');
+            if (sel) sel.value = 'part';
+        }
+    } else {
+        delete chkState[type][val];
+        // ✅ reset กลับถ้าไม่มี filter เหลือ
+        const hasFilter = Object.keys(chkState.pl).length || Object.keys(chkState.br).length;
+        if (!hasFilter) {
+            currentSort = 'carModel';
+            const sel = gEl('sortSelect');
+            if (sel) sel.value = 'carModel';
+        }
+    }
     activateSec(3);
     showSkel();
     setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
@@ -1429,15 +1473,15 @@ function GetProductGroup() {
                 });
 
                 GROUPS = [...FIXED_GROUPS, ...apiGroups];
-                renderBB();
+                renderBottomBar();
             } else {
                 console.error("API Error:", result.Message);
-                renderBB();
+                renderBottomBar();
             }
         },
         error: function (xhr, status, error) {
             console.error(error);
-            renderBB();
+            renderBottomBar();
         }
     });
 }
