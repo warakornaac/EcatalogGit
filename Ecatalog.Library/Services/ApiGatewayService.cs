@@ -55,8 +55,7 @@ namespace Ecatalog.Library.Services
                 // GET -> QUERY STRING
                 // =====================
 
-                if ((request.Method.ToUpper() == "GET"
-                     || request.Method.ToUpper() == "POST")
+                if (request.Method.ToUpper() == "GET"
                      && request.DataParam != null) {
                     string queryString =
                         BuildQueryString(

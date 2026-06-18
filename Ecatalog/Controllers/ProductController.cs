@@ -94,6 +94,51 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
+        [HttpPost]
+        public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request) {
+            try {
+                var result =
+                    await Utils.CallApiAsyncMemory<
+                        ProductSearchVioModel>(
+                        "Ecatalog/GetProductBySearchCatagory",
+                        "POST",
+                        request,
+                        true,
+                        30);
+
+                if (result == null) {
+                    return Json(new {
+                        IsSuccess = false,
+                        Message = "API Response is null"
+                    });
+                }
+
+                var groupData =
+                    result.Data?.result?
+                    .GroupBy(x => x.productGroup)
+                    .Select(g => new {
+                        productGroupNameMain = g.Key,
+                        productList = g.ToList()
+                    })
+                    .ToList();
+
+                return Json(new {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = groupData
+                });
+            }
+            catch (Exception ex) {
+                return Json(new {
+                    IsSuccess = false,
+                    IsFromCache = false,
+                    ExecutionTime = 0,
+                    Message = ex.Message,
+                    Data = new List<object>()
+                });
+            }
+        }
         //get count by tab
         public async Task<ActionResult> GetTabItemCountProduct(string stkcode)
         {

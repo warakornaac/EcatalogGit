@@ -212,7 +212,7 @@ function applySorting(list) {
 ════════════════════════════════ */
 function renderBottomBar() {
     gEl('bbScroll').innerHTML = GROUPS.map(g => `
-        <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
+        <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" data-id="${g.id}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
             <i class="bi ${g.icon}"></i>
             <span class="bb-label">${g.label}</span>
         </div>`).join('');
@@ -1435,6 +1435,7 @@ function RenderBrands(brands) {
         const $label = $('<label>')
             .addClass('chk-item')
             .attr('data-id', brand.id)
+            .attr('data-filter', 'filterProductBrandId')
             .toggleClass('br-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
             .attr('onclick', `toggleChk(this,'br','${brand.name}'); `);
@@ -1522,6 +1523,7 @@ function RenderProductionLines(lines) {
             .addClass('chk-item')
             .attr('data-id', line.prodlineid)
             .attr('data-name', line.prodlinename)
+            .attr('data-filter', 'filterProductLineId')
             .toggleClass('pl-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
             .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}'); ClickedMatchData();`);

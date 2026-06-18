@@ -53,6 +53,7 @@
     <Compile Include="ModelBodyFilterModel.cs" />
     <Compile Include="ModelEngineFilterModel.cs" />
     <Compile Include="ProductionLineFilterModel.cs" />
+    <Compile Include="ProductSearchCatagoryRequestModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />
     <Compile Include="ProductTabCompetitorModel.cs" />
     <Compile Include="ProductTabDescriptionModel.cs" />

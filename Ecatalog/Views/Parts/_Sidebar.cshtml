@@ -44,7 +44,7 @@
                 </div>
                 <div class="mb-2">
                     <div class="flabel">Engine</div>
-                    <select class="fselect" id="engineId"  onchange="updateVehSummary()">
+                    <select class="fselect" id="engineId" onchange="updateVehSummary()">
                         <option value="">— Select Engine —</option>
                     </select>
                 </div>
@@ -58,7 +58,7 @@
                 </div>
                 <div class="mb-1">
                     <div class="flabel">Drive System</div>
-                    <select class="fselect" id="driveId"  onchange="updateVehSummary()">
+                    <select class="fselect" id="driveId" onchange="updateVehSummary()">
                         <option value="">— Select Drive —</option>
                         <option value="FWD">FWD</option>
                         <option value="RWD">RWD</option>
@@ -121,7 +121,7 @@
                 <!-- 3.1 Product Line -->
                 <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
                 <div class="chk-list" id="plList"></div>
-                
+
                 <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
                     <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
                 </button>
@@ -140,12 +140,21 @@
                 <!-- 3.3 Brand -->
                 <div class="flabel mt-3">Brand</div>
                 <div class="chk-list" id="brList"></div>
-                   
-                    <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
-                        <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
-                    </button>
+
+                <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
+                    <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
+                </button>
+                <div class="mb-1">
+                    <div>
+                        <span id="cacheStatusCatagory">-</span>
+                    </div>
                 </div>
+                <button class="search-btn" id="btnSearchProductCatagory" onclick="searchProductByCategory()">
+                    <i class="bi bi-lightning-charge-fill"></i> Search Catagory
+                </button>
+
             </div>
+        </div>
 
     </div>
 </aside>
@@ -306,6 +315,75 @@
             alert("Load Engine Failed");
         } finally {
             updateVehSummary(); // ← เพิ่ม
+        }
+    }
+    //set params obj by select catagory
+    function getSearchCatagoryObject() {
+
+        const filterObj = {
+            productGroupId:
+                $(".bb-item.active")
+                    .map(function () {
+                        return $(this).data("id");
+                    })
+                    .get(),
+            productLineId:
+                $(".chk-item.checked[data-filter='filterProductLineId']")
+                    .map(function () {
+                        return $(this).data("id");
+                    })
+                    .get(),
+            brandId:
+                $(".chk-item.checked[data-filter='filterProductBrandId']")
+                    .map(function () {
+                        return $(this).attr("data-id");
+                    })
+                    .get()
+        };
+        console.log(filterObj);
+        return filterObj;
+    }
+    //send params send to controller searchByCategory
+    async function searchProductByCategory() {
+        try {
+            const filters = await getSearchCatagoryObject();
+            console.log(filters);
+            const response = await fetch(
+                '@Url.Action("GetProductBySearchCatagory","Product")',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(filters)
+                });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(
+                    result.Message ||
+                    result.errorMessage ||
+                    "API Error");
+            }
+
+            if (result.IsSuccess) {
+                $("#cacheStatusCatagory").html(
+                    (result.IsFromCache
+                        ? "Catagory Cache Hit"
+                        : "API Call")
+                    +
+                    " (" +
+                    result.ExecutionTime +
+                    " ms)"
+                );
+                console.log(result);
+
+            } else {
+                alert(result.Message || "Search Error");
+            }
+        } catch (ex) {
+            console.error("searchProductByCategory Error:", ex);
+            alert(ex.message ||"System Error");
         }
     }
 </script>
