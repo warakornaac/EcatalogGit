@@ -1,15 +1,15 @@
-/* ====================================================================
+Ôªø/* ====================================================================
    productTabLoader.js
-   ‚À≈¥¢ÈÕ¡Ÿ≈ Tab ®“° API ‚¥¬„™È stkcode
-   √Õß√—∫∑—Èß mobile drawer (#dp-*) ·≈– desktop modal (#mdp-*)
+   ‡πÇ‡∏´‡∏•‡∏î‡∏Ç‡πâ‡∏≠‡∏°‡∏π‡∏• Tab ‡∏à‡∏≤‡∏Å API ‡πÇ‡∏î‡∏¢‡πÉ‡∏ä‡πâ stkcode
+   ‡∏£‡∏≠‡∏á‡∏£‡∏±‡∏ö‡∏ó‡∏±‡πâ‡∏á mobile drawer (#dp-*) ‡πÅ‡∏•‡∏∞ desktop modal (#mdp-*)
    Load order: truscripts.js -> productSearch.js -> productTabLoader.js
 
-   À¡“¬‡Àµÿ (·°È‰¢®“°‡«Õ√Ï™—π°ËÕπÀπÈ“):
-   field ∑ÿ°µ—«∂Ÿ°ª√—∫„ÀÈµ√ß°—∫ Model ®√‘ßΩ—Ëß C#
+   ‡∏´‡∏°‡∏≤‡∏¢‡πÄ‡∏´‡∏ï‡∏∏ (‡πÅ‡∏Å‡πâ‡πÑ‡∏Ç‡∏à‡∏≤‡∏Å‡πÄ‡∏ß‡∏≠‡∏£‡πå‡∏ä‡∏±‡∏ô‡∏Å‡πà‡∏≠‡∏ô‡∏´‡∏ô‡πâ‡∏≤):
+   field ‡∏ó‡∏∏‡∏Å‡∏ï‡∏±‡∏ß‡∏ñ‡∏π‡∏Å‡∏õ‡∏£‡∏±‡∏ö‡πÉ‡∏´‡πâ‡∏ï‡∏£‡∏á‡∏Å‡∏±‡∏ö Model ‡∏à‡∏£‡∏¥‡∏á‡∏ù‡∏±‡πà‡∏á C#
    (ProductTabDescriptionModel, ProductTabSpecModel, ProductTabImageModel,
     ProductTabOemModel, ProductTabCompetitorModel, ProductTabLinkageModel,
-    ProductTabItemCountModel) ‚¥¬ Data ∑’Ë Controller  Ëß°≈—∫¡“‡ªÁπ "array"
-    ¢Õß·∂« (result.Data?.result) ‰¡Ë„™Ë object ‡¥’¬«
+    ProductTabItemCountModel) ‡πÇ‡∏î‡∏¢ Data ‡∏ó‡∏µ‡πà Controller ‡∏™‡πà‡∏á‡∏Å‡∏•‡∏±‡∏ö‡∏°‡∏≤‡πÄ‡∏õ‡πá‡∏ô "array"
+    ‡∏Ç‡∏≠‡∏á‡πÅ‡∏ñ‡∏ß (result.Data?.result) ‡πÑ‡∏°‡πà‡πÉ‡∏ä‡πà object ‡πÄ‡∏î‡∏µ‡∏¢‡∏ß
 ==================================================================== */
 
 const TAB_API_URLS = {
@@ -87,11 +87,11 @@ function _setError(el, msg) {
 
 /* ====================================================================
    GENERIC DATA HELPERS
-   „™È·∑π°“√æ÷Ëßæ“ field name/µ—«æ‘¡æÏ„À≠Ë‡≈Á°·∫∫µ√ß Ê
-   - _pick(row, 'title', 'Title', ...)  -> ≈ÕßÀ≈“¬™◊ËÕ ‰¡Ë πµ—«æ‘¡æÏ„À≠Ë‡≈Á°
-   - _getRows(apiResponse)              -> ·ª≈ß„ÀÈ‡ªÁπ array ‡ ¡Õ ‰¡Ë«Ë“
-                                            Data ®–‡ªÁπ array µ√ß Ê, object ‡¥’¬«,
-                                            À√◊Õ´ÈÕπÕ¬ŸË„π .result/.Result Õ’°™—Èπ
+   ‡πÉ‡∏ä‡πâ‡πÅ‡∏ó‡∏ô‡∏Å‡∏≤‡∏£‡∏û‡∏∂‡πà‡∏á‡∏û‡∏≤ field name/‡∏ï‡∏±‡∏ß‡∏û‡∏¥‡∏°‡∏û‡πå‡πÉ‡∏´‡∏ç‡πà‡πÄ‡∏•‡πá‡∏Å‡πÅ‡∏ö‡∏ö‡∏ï‡∏£‡∏á ‡πÜ
+   - _pick(row, 'title', 'Title', ...)  -> ‡∏•‡∏≠‡∏á‡∏´‡∏•‡∏≤‡∏¢‡∏ä‡∏∑‡πà‡∏≠ ‡πÑ‡∏°‡πà‡∏™‡∏ô‡∏ï‡∏±‡∏ß‡∏û‡∏¥‡∏°‡∏û‡πå‡πÉ‡∏´‡∏ç‡πà‡πÄ‡∏•‡πá‡∏Å
+   - _getRows(apiResponse)              -> ‡πÅ‡∏õ‡∏•‡∏á‡πÉ‡∏´‡πâ‡πÄ‡∏õ‡πá‡∏ô array ‡πÄ‡∏™‡∏°‡∏≠ ‡πÑ‡∏°‡πà‡∏ß‡πà‡∏≤
+                                            Data ‡∏à‡∏∞‡πÄ‡∏õ‡πá‡∏ô array ‡∏ï‡∏£‡∏á ‡πÜ, object ‡πÄ‡∏î‡∏µ‡∏¢‡∏ß,
+                                            ‡∏´‡∏£‡∏∑‡∏≠‡∏ã‡πâ‡∏≠‡∏ô‡∏≠‡∏¢‡∏π‡πà‡πÉ‡∏ô .result/.Result ‡∏≠‡∏µ‡∏Å‡∏ä‡∏±‡πâ‡∏ô
 ==================================================================== */
 function _pick(row, ...keys) {
     if (!row || typeof row !== 'object') return undefined;
@@ -119,7 +119,7 @@ function _sortBy(rows, ...seqKeys) {
 
 /* ====================================================================
    RENDER HELPERS
-   API ∑ÿ°µ—« (¬°‡«Èπ count) §◊π Data ‡ªÁπ "array" ¢Õß·∂«‡ ¡Õ
+   API ‡∏ó‡∏∏‡∏Å‡∏ï‡∏±‡∏ß (‡∏¢‡∏Å‡πÄ‡∏ß‡πâ‡∏ô count) ‡∏Ñ‡∏∑‡∏ô Data ‡πÄ‡∏õ‡πá‡∏ô "array" ‡∏Ç‡∏≠‡∏á‡πÅ‡∏ñ‡∏ß‡πÄ‡∏™‡∏°‡∏≠
 ==================================================================== */
 
 // ResultProductTabDescription: stkcode, seqDescription, title, description
@@ -130,8 +130,8 @@ function _renderDesc(el, data) {
     const sorted = _sortBy(rows, 'seqDescription', 'seq');
 
     const cards = sorted.map(d => {
-        const title = _pick(d, 'title') ?? 'ó';
-        const desc = _pick(d, 'description') ?? 'ó';
+        const title = _pick(d, 'title') ?? '‚Äî';
+        const desc = _pick(d, 'description') ?? '‚Äî';
         return `
         <div class="col-6 col-sm-3">
             <div style="background:var(--surface-2);border-radius:var(--r);padding:10px;
@@ -153,8 +153,8 @@ function _renderSpec(el, data) {
 
     const sorted = _sortBy(rows, 'seqSpec', 'seq');
     const trs = sorted.map(r => {
-        const label = _pick(r, 'title', 'specName', 'label', 'name') ?? 'ó';
-        const value = _pick(r, 'description', 'specValue', 'value') ?? 'ó';
+        const label = _pick(r, 'title', 'specName', 'label', 'name') ?? '‚Äî';
+        const value = _pick(r, 'description', 'specValue', 'value') ?? '‚Äî';
         return `<tr><td>${label}</td><td>${value}</td></tr>`;
     }).join('');
     el.innerHTML = `<table class="spec-table">${trs}</table>`;
@@ -196,7 +196,7 @@ function _renderOem(el, data) {
 
     const sorted = _sortBy(rows, 'seqOem', 'seq');
     const chips = sorted.map(o => {
-        const num = _pick(o, 'oem', 'oemNumber', 'number') ?? 'ó';
+        const num = _pick(o, 'oem', 'oemNumber', 'number') ?? '‚Äî';
         return `
         <span class="oem-chip oem-a">
             <i class="bi bi-upc-scan"></i> ${num}
@@ -277,11 +277,11 @@ const _RENDERERS = {
 };
 
 /* ====================================================================
-   TAB COUNT ó Õ—ª‡¥µµ—«‡≈¢∫π Tab button
+   TAB COUNT ‚Äî ‡∏≠‡∏±‡∏õ‡πÄ‡∏î‡∏ï‡∏ï‡∏±‡∏ß‡πÄ‡∏•‡∏Ç‡∏ö‡∏ô Tab button
    ResultProductTabItemCountList: countProductDes, countProductSpec,
    countProductImage, countProductOem, countProductCom, countProductLinkage
-   À¡“¬‡Àµÿ: res.Data ‡ªÁπ array (Controller §◊π result.Data?.result)
-   ¥—ßπ—ÈπµÈÕßÀ¬‘∫·∂«·√°ÕÕ°¡“°ËÕπ
+   ‡∏´‡∏°‡∏≤‡∏¢‡πÄ‡∏´‡∏ï‡∏∏: res.Data ‡πÄ‡∏õ‡πá‡∏ô array (Controller ‡∏Ñ‡∏∑‡∏ô result.Data?.result)
+   ‡∏î‡∏±‡∏á‡∏ô‡∏±‡πâ‡∏ô‡∏ï‡πâ‡∏≠‡∏á‡∏´‡∏¢‡∏¥‡∏ö‡πÅ‡∏ñ‡∏ß‡πÅ‡∏£‡∏Å‡∏≠‡∏≠‡∏Å‡∏°‡∏≤‡∏Å‡πà‡∏≠‡∏ô
 ==================================================================== */
 async function _loadTabCounts(stkcode, mode) {
     const res = await _fetchTabApi(stkcode, 'count');
@@ -351,21 +351,19 @@ async function _loadOneTab(tabId, stkcode, mode, pid) {
 
 /**
  * initProductTabs
- * ‡√’¬°‡¡◊ËÕ‡ª‘¥ drawer/modal product „À¡Ë
+ * ‡πÄ‡∏£‡∏µ‡∏¢‡∏Å‡πÄ‡∏°‡∏∑‡πà‡∏≠‡πÄ‡∏õ‡∏¥‡∏î drawer/modal product ‡πÉ‡∏´‡∏°‡πà
  * @param {string} stkcode
  * @param {string} mode  'drawer' | 'modal' | 'inline'
- * @param {string|null} pid  product id  ”À√—∫ inline mode
+ * @param {string|null} pid  product id ‡∏™‡∏≥‡∏´‡∏£‡∏±‡∏ö inline mode
  */
 async function initProductTabs(stkcode, mode, pid) {
     if (!stkcode) return;
     mode = mode || 'drawer';
 
-    // ≈È“ß loaded keys  ”À√—∫ stkcode π’È (product „À¡Ë)
-    _loadedKeys.forEach(k => {
-        if (k.startsWith(`${stkcode}::`)) _loadedKeys.delete(k);
-    });
+    // ‚úÖ clear ALL keys ‡πÑ‡∏°‡πà‡πÉ‡∏ä‡πà‡πÅ‡∏Ñ‡πà‡∏Ç‡∏≠‡∏á stkcode ‡∏ô‡∏µ‡πâ
+    // ‡πÄ‡∏û‡∏£‡∏≤‡∏∞ pane element ‡πÄ‡∏î‡∏¥‡∏° (#dp-*) ‡∏ñ‡∏π‡∏Å reuse ‡∏Ç‡πâ‡∏≤‡∏° product
+    _loadedKeys.clear();
 
-    // ‚À≈¥ count badge ·≈– Tab ·√° (desc) æ√ÈÕ¡°—π
     await Promise.all([
         _loadTabCounts(stkcode, mode),
         _loadOneTab('desc', stkcode, mode, pid)
@@ -373,7 +371,7 @@ async function initProductTabs(stkcode, mode, pid) {
 }
 
 /**
- * loadModalTab ó ‡√’¬°®“° switchModalTab() „π productSearch.js
+ * loadModalTab ‚Äî ‡πÄ‡∏£‡∏µ‡∏¢‡∏Å‡∏à‡∏≤‡∏Å switchModalTab() ‡πÉ‡∏ô productSearch.js
  */
 async function loadModalTab(tabId, stkcode, pid) {
     if (!stkcode) return;
@@ -381,7 +379,7 @@ async function loadModalTab(tabId, stkcode, pid) {
 }
 
 /**
- * loadDrawerTab ó ‡√’¬°®“° switchDrTab() ¥È“π≈Ë“ß
+ * loadDrawerTab ‚Äî ‡πÄ‡∏£‡∏µ‡∏¢‡∏Å‡∏à‡∏≤‡∏Å switchDrTab() ‡∏î‡πâ‡∏≤‡∏ô‡∏•‡πà‡∏≤‡∏á
  */
 async function loadDrawerTab(tabId, stkcode) {
     if (!stkcode) return;
@@ -389,7 +387,7 @@ async function loadDrawerTab(tabId, stkcode) {
 }
 
 /**
- * loadInlineTab ó ‡√’¬°®“° switchTabIn() „π truscripts.js
+ * loadInlineTab ‚Äî ‡πÄ‡∏£‡∏µ‡∏¢‡∏Å‡∏à‡∏≤‡∏Å switchTabIn() ‡πÉ‡∏ô truscripts.js
  */
 async function loadInlineTab(tabId, stkcode, pid) {
     if (!stkcode) return;
@@ -398,7 +396,7 @@ async function loadInlineTab(tabId, stkcode, pid) {
 
 /* ====================================================================
    OVERRIDE switchDrTab (drawer tabs)
-   ·∑π∑’Ë fallback „π truscripts.js
+   ‡πÅ‡∏ó‡∏ô‡∏ó‡∏µ‡πà fallback ‡πÉ‡∏ô truscripts.js
 ==================================================================== */
 window.switchDrTab = function (btn, tabId) {
     const drawer = document.getElementById('specDrawer');
@@ -416,8 +414,8 @@ window.switchDrTab = function (btn, tabId) {
 };
 
 /* ====================================================================
-   OVERRIDE switchTabIn (inline/modal tabs ®“° truscripts)
-   ‡æ‘Ë¡ lazy load ∫π top ¢Õß function ‡¥‘¡
+   OVERRIDE switchTabIn (inline/modal tabs ‡∏à‡∏≤‡∏Å truscripts)
+   ‡πÄ‡∏û‡∏¥‡πà‡∏° lazy load ‡∏ö‡∏ô top ‡∏Ç‡∏≠‡∏á function ‡πÄ‡∏î‡∏¥‡∏°
 ==================================================================== */
 const _origSwitchTabIn = window.switchTabIn;
 window.switchTabIn = function (btn, tabId, pid) {

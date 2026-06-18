@@ -217,7 +217,9 @@ function renderBottomBar() {
             <span class="bb-label">${g.label}</span>
         </div>`).join('');
 }
-function scrollBottom(dx) { gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' }); }
+function scrollBottom(dx) {
+    gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
+} 
 
 function selectGroup(id) {
     activeGroup = id;
@@ -314,7 +316,9 @@ async function openDrawer(id, e) {
     const drawerReady = !!gEl('specDrawer') && !!gEl('drTitle');
     console.log('drawerReady:', drawerReady);
     console.log('branch:', isMobile() && drawerReady ? 'MOBILE' : 'DESKTOP');
-
+    console.log('isMobile:', isMobile(), 'drawerReady:', drawerReady);
+    console.log('specDrawer el:', gEl('specDrawer'));
+    console.log('drTitle el:', gEl('drTitle'));
     if (isMobile() && drawerReady) {
         const set = (id, val) => { const el = gEl(id); if (el) el.textContent = val; };
         set('drTitle', p.name);
@@ -400,8 +404,9 @@ function closeSpecModal(e) {
 
 /* ── Mobile drawer close ── */
 function closeDrawer() {
+    const dr = gEl('specDrawer');
+    dr.classList.remove('show');
     gEl('drawerOverlay').classList.remove('show');
-    gEl('specDrawer').classList.remove('show');
     document.body.style.overflow = '';
     document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
     gEl('rb4')?.classList.remove('active-badge');
@@ -614,7 +619,7 @@ function applyAllFilters() {
 
     const list = PRODUCTS.filter(p => {
         if (activeGroup && activeGroup !== 'สินค้าทุกประเภท' && activeGroup !== '0') {
-            if (p.cat !== activeGroup) return false;
+            //if (p.cat !== activeGroup) return false;
         }
         if (q) {
             let match = false;
