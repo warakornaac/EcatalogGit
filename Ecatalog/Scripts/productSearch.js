@@ -34,7 +34,7 @@ async function loadSearchProductVio() {
 
         if (result.IsSuccess) {
             $("#cacheStatus").html(
-                (result.IsFromCache ? "Cache Hit" : "API Call") +
+                (result.IsFromCache ? "VIO Cache Hit" : "API Call") +
                 " (" + result.ExecutionTime + " ms)"
             );
 
