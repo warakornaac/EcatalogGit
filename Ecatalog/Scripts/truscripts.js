@@ -339,8 +339,8 @@ async function openDrawer(id, e) {
             drImg.src = p.img;
             drImg.style.cssText = `
         display:block;
-        width:90px;
-        height:90px;
+        width:120px;
+        height:120px;
         object-fit:contain;
         background:var(--surface);
         border-radius:var(--r);
@@ -1620,4 +1620,9 @@ function toggleSec(hd, targetId) {
         body.style.overflow = '';
         setTimeout(() => { body.style.maxHeight = ''; }, 260);
     }
+}
+function toggleCompany(btn) {
+    btn.classList.toggle('active');
+    const isActive = btn.classList.contains('active');
+    btn.style.opacity = isActive ? '1' : '0.5';
 }

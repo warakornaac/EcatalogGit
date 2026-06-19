@@ -491,6 +491,7 @@ body {
 
 .sidebar-inner {
     padding: 0 0 24px;
+    
 }
 
 /* ─── MOBILE SIDEBAR (hamburger off-canvas) ─── */
@@ -1363,11 +1364,18 @@ body {
     padding: 10px 2px 8px;
 }
 
+    .nf-row-hd::after {
+        content: "";
+        flex: 1; /* ขยายเส้นให้ยาวจนสุดพื้นที่ที่เหลือ */
+        height: 1px; /* ความหนาของเส้น */
+        background-color: #ffafaf;
+    }
+
 .nf-row-title {
     font-family: 'Noto Sans Thai', sans-serif;
     font-weight: 700;
-    font-size: 14px;
-    color: var(--text);
+    font-size: 18px;
+    color: #850000;
 }
 
 .nf-row-cnt {
@@ -2311,10 +2319,12 @@ body {
         box-shadow: var(--sh-lg);
         width: var(--sidebar-w);
         transition: transform .3s cubic-bezier(.4,0,.2,1);
+        margin-top: 50px;
     }
 
         .sidebar.mob-open {
             transform: translateX(0);
+            
         }
 
     .mob-hamburger {

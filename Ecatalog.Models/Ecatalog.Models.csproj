@@ -45,6 +45,8 @@
     <Compile Include="ApiRequestModel.cs" />
     <Compile Include="ApiResponseModel.cs" />
     <Compile Include="AuthenApiResponseModel.cs" />
+    <Compile Include="GetCustomerbySalesmanModel.cs" />
+    <Compile Include="GetSalesmanAllModel.cs" />
     <Compile Include="MarketCarFilterModel.cs" />
     <Compile Include="MatchProductGroupModel.cs" />
     <Compile Include="ModelBrandsFilterModel.cs" />

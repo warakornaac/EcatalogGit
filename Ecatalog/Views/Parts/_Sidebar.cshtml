@@ -3,8 +3,51 @@
 
 <!-- ════ SIDEBAR ════ -->
 <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
-    <div class="sidebar-inner mt-5 mb-5">
+    <div class="sidebar-inner mb-7">
+        @if (this.Session["UserType"] != null && (int)this.Session["UserType"] == 1)
+        {
+        <!-- §0 Salesman / Customer -->
+        <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'scBody')">
+            <span class="sec-title">Salesman / Customer</span>
+            <i class="bi bi-chevron-down sec-chevron"></i>
+        </div>
+        <div class="collapse show" id="scBody">
+            <div class="filter-body mt-2">
+                <div class="mb-2">
+                    <div class="flabel">Salesman</div>
+                    <select class="fselect" id="salesmanId">
+                        <option value="">• Select Salesman</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <div class="flabel">Customer</div>
+                    <select class="fselect" id="customerId">
+                        <option value="">• Select Customer</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <div class="flabel">Company</div>
+                    <div class="company-btn-group" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+                        <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)"
+                                style="background:#5b9ef4; color:#fff; border:none; border-radius:20px; padding:6px 18px; font-weight:600; cursor:pointer;">
+                            AAC
+                        </button>
+                        <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)"
+                                style="background:#e05c5c; color:#fff; border:none; border-radius:20px; padding:6px 18px; font-weight:600; cursor:pointer;">
+                            TAC
+                        </button>
+                        <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)"
+                                style="background:#a855f7; color:#fff; border:none; border-radius:20px; padding:6px 18px; font-weight:600; cursor:pointer;">
+                            TAM
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        }
+
+        <div class="step-line"><div class="ln"></div></div>
         <!-- §1 Vehicle Filter -->
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
             <span class="sec-title">Vehicle Filter</span>

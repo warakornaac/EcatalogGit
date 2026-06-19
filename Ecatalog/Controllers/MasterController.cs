@@ -287,5 +287,73 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
+        public async Task<ActionResult> GetSalesmanAll()
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    GetSalesmanAllModel>(
+                    "Ecatalog/GetSalesmanAll",
+                    "GET",
+                    new
+                    {
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        public async Task<ActionResult> GetCustomerbySalesman()
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    GetCustomerbySalesmanModel>(
+                    "Ecatalog/GetCustomerbySalesman",
+                    "GET",
+                    new
+                    {
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
     }
 }
