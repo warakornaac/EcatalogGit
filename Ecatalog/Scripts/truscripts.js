@@ -1131,16 +1131,18 @@ function acUpdateFocusSidebar(items) {
 /* ════════════════════════════════
    MOBILE SIDEBAR
 ════════════════════════════════ */
-function toggleMobSidebar() {
-    const sb = gEl('sidebar');
-    const ov = gEl('mobOverlay');
-    const ham = gEl('mobHamburger');
-    const isOpen = sb.classList.toggle('mob-open');
-    ov.classList.toggle('show', isOpen);
-    ham.classList.toggle('open', isOpen);
-    ham.setAttribute('aria-expanded', isOpen);
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const btn = document.getElementById('mobHamburger');
+    const ov = document.getElementById('mobOverlay');
+
+    const open = sb.classList.toggle('mob-open');
+
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    ov.classList.toggle('visible', open);
 }
-gEl('mobOverlay').addEventListener('click', toggleMobSidebar);
+gEl('mobOverlay').addEventListener('click', toggleSidebar);
 
 /* ════════════════════════════════
    COLLAPSE SYNC
@@ -1626,3 +1628,71 @@ function toggleCompany(btn) {
     const isActive = btn.classList.contains('active');
     btn.style.opacity = isActive ? '1' : '0.5';
 }
+/* ════════════════════════════════
+   SIDEBAR TABS  (merged from sidebar-tabs.js)
+════════════════════════════════ */
+
+/* ── Tab switching ── */
+function switchTab(name) {
+    document.querySelectorAll('.sb-tab').forEach(t => {
+        const active = t.id === 'tab-' + name;
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-selected', String(active));
+    });
+    document.querySelectorAll('.sb-panel').forEach(p => {
+        p.id === 'panel-' + name
+            ? p.removeAttribute('hidden')
+            : p.setAttribute('hidden', '');
+    });
+}
+
+/* ── Close sidebar when search button tapped on mobile ── */
+function closeSidebarOnMobile() {
+    if (window.innerWidth > 768) return;
+    const sb = document.getElementById('sidebar');
+    const btn = document.getElementById('sbHamburger');
+    const ov = document.getElementById('sbOverlay');
+    sb.classList.remove('open');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    ov.classList.remove('visible');
+}
+
+/* ── Filter badge (Filters tab + hamburger) ── */
+function updateFilterBadge() {
+    let count = 0;
+    document.querySelectorAll('#fitGrid .fit-chip[aria-pressed="true"]').forEach(() => count++);
+    document.querySelectorAll('#plList input:checked, #brList input:checked').forEach(() => count++);
+    const tabBadge = document.getElementById('filterBadge');
+    const hamBadge = document.getElementById('sbHamBadge');
+    if (count > 0) {
+        tabBadge.textContent = count; tabBadge.style.display = '';
+        hamBadge.textContent = count; hamBadge.style.display = '';
+    } else {
+        tabBadge.style.display = 'none';
+        hamBadge.style.display = 'none';
+    }
+}
+
+/* ── Clear vehicle dropdowns ── */
+function clearVehicle() {
+    ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.selectedIndex = 0;
+    });
+    ['yearFrom', 'yearTo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    updateVehSummary();
+}
+
+/* ── Init: default tab + extend existing Escape/DOMContentLoaded ── */
+document.addEventListener('DOMContentLoaded', () => switchTab('filters'));
+
+/* Extend the existing keydown listener to also close sidebar */
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const sb = document.getElementById('sidebar');
+    if (sb && sb.classList.contains('open')) toggleSidebar();
+});

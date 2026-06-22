@@ -1,54 +1,31 @@
-﻿<!-- ═══ APP LAYOUT ═══ -->
-@*<div class="app-layout">*@
-
-<!-- ════ SIDEBAR ════ -->
+﻿<!-- ════ SIDEBAR ════ -->
 <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
     <div class="sidebar-inner mb-7">
         @if (this.Session["UserType"] != null && (int)this.Session["UserType"] == 1)
         {
-        <!-- §0 Salesman / Customer -->
-        <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'scBody')">
-            <span class="sec-title">Salesman / Customer</span>
-            <i class="bi bi-chevron-down sec-chevron"></i>
-        </div>
-        <div class="collapse show" id="scBody">
-            <div class="filter-body mt-2">
-                <div class="mb-2">
-                    <div class="flabel">Salesman</div>
-                    <select class="fselect" id="salesmanId">
-                        <option value="">• Select Salesman</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Customer</div>
-                    <select class="fselect" id="customerId">
-                        <option value="">• Select Customer</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Company</div>
-                    <div class="company-btn-group" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
-                        <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)"
-                                style="background:#5b9ef4; color:#fff; border:none; border-radius:20px; padding:6px 18px; font-weight:600; cursor:pointer;">
-                            AAC
-                        </button>
-                        <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)"
-                                style="background:#e05c5c; color:#fff; border:none; border-radius:20px; padding:6px 18px; font-weight:600; cursor:pointer;">
-                            TAC
-                        </button>
-                        <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)"
-                                style="background:#a855f7; color:#fff; border:none; border-radius:20px; padding:6px 18px; font-weight:600; cursor:pointer;">
-                            TAM
-                        </button>
+            <div class="sb-sc-bar">
+                <div class="sb-sc-row">
+                    <div class="sb-sc-field">
+                        <label class="sb-sc-label" for="salesmanId">Salesman</label>
+                        <select class="sb-select sb-select-sm" id="salesmanId">
+                            <option value="">— Select —</option>
+                        </select>
+                    </div>
+                    <div class="sb-sc-field">
+                        <label class="sb-sc-label" for="customerId">Customer</label>
+                        <select class="sb-select sb-select-sm" id="customerId">
+                            <option value="">— Select —</option>
+                        </select>
                     </div>
                 </div>
+                <div class="company-group" role="group" aria-label="Company">
+                    <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
+                    <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
+                    <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
+                </div>
             </div>
-        </div>
-
         }
 
-        <div class="step-line"><div class="ln"></div></div>
-        <!-- §1 Vehicle Filter -->
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
             <span class="sec-title">Vehicle Filter</span>
             <i class="bi bi-chevron-down sec-chevron"></i>
@@ -121,9 +98,6 @@
             </div>
         </div>
 
-        <div class="step-line"><div class="ln"></div></div>
-
-        <!-- §2 Search Panel -->
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
             <span class="sec-title">Part Search</span>
             <i class="bi bi-chevron-down sec-chevron"></i>
@@ -131,7 +105,6 @@
         <div class="collapse show" id="spBody">
             <div class="filter-body">
                 <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
-                <!-- Multi-select search mode (click to toggle each) -->
                 <div class="smode-group" id="smodeGroup">
                     <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
                         <i class="bi bi-card-text"></i> Description
@@ -144,10 +117,8 @@
                     </label>
                 </div>
                 <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-                    <!-- Sidebar search input (synced with header) -->
                     <input type="text" id="partQ" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
                     <i class="bi bi-search"></i>
-                    <!-- Sidebar Autocomplete Dropdown -->
                     <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
                 </div>
                 <button class="search-btn" id="" onclick="runSearch()">
@@ -156,12 +127,8 @@
             </div>
         </div>
 
-        <div class="step-line"><div class="ln"></div></div>
-
-        <!-- §3 Sidebar Filters -->
         <div class="collapse show" id="sfBody">
             <div class="filter-body">
-                <!-- 3.1 Product Line -->
                 <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
                 <div class="chk-list" id="plList"></div>
 
@@ -169,7 +136,6 @@
                     <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
                 </button>
 
-                <!-- 3.2 Fitting -->
                 <div class="flabel mt-3">Fitting</div>
                 <div class="fit-grid" id="fitGrid">
                     <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
@@ -180,7 +146,6 @@
                     <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
                 </div>
 
-                <!-- 3.3 Brand -->
                 <div class="flabel mt-3">Brand</div>
                 <div class="chk-list" id="brList"></div>
 
@@ -200,7 +165,7 @@
         </div>
 
     </div>
-</aside>
+    </aside>
 
 <script>
 
@@ -301,10 +266,9 @@
             const makerId = $("#makerId").val();
             const rangeId = $("#rangeId").val();
 
-            // เดิม: if (!marketsegId || ...) ← bug!
             if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
                 $("#bodyId").empty().append('<option value="">— Select Body —</option>');
-                updateVehSummary(); // ← เพิ่ม
+                updateVehSummary();
                 return;
             }
 
@@ -323,7 +287,7 @@
             console.error(error);
             alert("Load Body Failed");
         } finally {
-            updateVehSummary(); // ← เพิ่ม
+            updateVehSummary();
         }
     }
 
@@ -335,10 +299,9 @@
             const rangeId = $("#rangeId").val();
             const bodyId = $("#bodyId").val();
 
-            // เดิม: if (!marketsegId || ...) ← bug!
             if (!marketSegmentId || !segmentId || !makerId || !rangeId || !bodyId) {
                 $("#engineId").empty().append('<option value="">— Select Engine —</option>');
-                updateVehSummary(); // ← เพิ่ม
+                updateVehSummary();
                 return;
             }
 
@@ -357,7 +320,7 @@
             console.error(error);
             alert("Load Engine Failed");
         } finally {
-            updateVehSummary(); // ← เพิ่ม
+            updateVehSummary();
         }
     }
     //set params obj by select catagory

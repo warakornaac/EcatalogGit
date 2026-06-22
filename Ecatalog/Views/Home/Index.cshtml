@@ -1,7 +1,4 @@
-﻿@*@{
-        ViewBag.Title = "Home Page";
-    }*@
-@{
+﻿@{
     Layout = null;
     var SessionUserType = ViewBag.UserType;
 }
@@ -25,7 +22,7 @@
     <div class="mob-overlay" id="mobOverlay"></div>
 
     <!-- MOBILE HAMBURGER -->
-    <button class="mob-hamburger" id="mobHamburger" onclick="toggleMobSidebar()" aria-label="Toggle filter sidebar">
+    <button class="mob-hamburger" id="mobHamburger" onclick="toggleSidebar()" aria-label="Toggle filter sidebar">
         <span class="bar"></span>
         <span class="bar"></span>
         <span class="bar"></span>
@@ -40,7 +37,6 @@
         <main class="main-area" id="mainArea">
             <div class="main-content">
 
-                <!-- Zone 1: Vehicle Summary + Clear Filter -->
                 <div class="hz col-12" id="rz1">
                     <div class="rsh mb-2">
                         <span class="rsh-title col-8">Selected Vehicle</span>
@@ -56,14 +52,10 @@
                     </div>
                 </div>
 
-                <!-- Zone 2: Product Results -->
                 <div class="hz" id="rz2">
                     <div class="rsh">
                         <span class="rsh-title">Product Results</span>
                         <span class="rcount" id="rcount">12 items</span>
-                        @*<button class="clear-filter ms-auto" onclick="switchSortbyPart()">
-                            <i class="bi bi-toggle-on"></i> Swich Sort by Parts
-                        </button>*@
                         <select class="sort-select ms-auto" id="sortSelect" onchange="sortProducts(this.value)">
                             <option value="carModel" selected>เรียงตาม: รุ่นรถ</option>
                             <option value="part">เรียงตาม: Part</option>
@@ -74,10 +66,8 @@
                         </select>
                     </div>
 
-                    <!-- Active Filter Chips -->
                     <div class="active-filters" id="activeFilters"></div>
 
-                    <!-- Skeleton -->
                     <div id="skelWrap" style="display:none">
                         <div class="product-grid">
                             <div class="skel skel-card"></div>
@@ -87,15 +77,9 @@
                         </div>
                     </div>
 
-                    <!-- Product Grid -->
                     <div class="product-grid" id="pGrid"></div>
-
-                    <!-- Netflix-style grouped rows (active when a specific group is selected) -->
                     <div class="nf-rows" id="nfRows" style="display:none;"></div>
                 </div>
-
-                <!-- §4 SPEC DRAWER removed from inline — see drawer below -->
-
             </div>
         </main>
     </div>
@@ -119,14 +103,10 @@
         </p>
     </div>
 
-    <!-- ════════════════════════════════════════
-         CART PANEL
-    ════════════════════════════════════════ -->
+    <!-- ═══════════ CART PANEL ════════════════ -->
     @Html.Partial("~/Views/Parts/_Cart.cshtml")
 
-    <!-- ════════════════════════════════════════
-         ORDER SUMMARY MODAL
-    ════════════════════════════════════════ -->
+    <!-- ════════=ORDER SUMMARY MODAL ═════════════ -->
     @Html.Partial("~/Views/Parts/_OrderSummary.cshtml")
 
     <!-- TOASTS -->
