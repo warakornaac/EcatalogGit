@@ -1,29 +1,41 @@
-﻿<!-- ════ SIDEBAR ════ -->
+﻿@{
+    Layout = null;
+    var SessionslmCode = ViewBag.slmCode;
+    var SessioncusCode = ViewBag.cusCode;
+}
+
+<!-- ════ SIDEBAR ════ -->
 <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
     <div class="sidebar-inner mb-7">
         @if (this.Session["UserType"] != null && (int)this.Session["UserType"] == 1)
         {
-            <div class="sb-sc-bar">
-                <div class="sb-sc-row">
-                    <div class="sb-sc-field">
-                        <label class="sb-sc-label" for="salesmanId">Salesman</label>
-                        <select class="sb-select sb-select-sm" id="salesmanId">
-                            <option value="">— Select —</option>
-                        </select>
+            if (this.Session["slmcode"] != null)
+            {
+                <div class="sb-sc-bar">
+                    <div class="sb-sc-row">
+                        <div class="sb-sc-field">
+                            <label class="sb-sc-label" for="salesmanId">Salesman</label>
+                            <select class="sb-select sb-select-sm" id="salesmanId">
+                                <option value="">@ViewBag.slmCode</option>
+                            </select>
+                        </div>
+                        @if (this.Session["cusCode"] != null)
+                        {
+                            <div class="sb-sc-field">
+                                <label class="sb-sc-label" for="customerId">Customer</label>
+                                <select class="sb-select sb-select-sm" id="customerId">
+                                    <option value="">@ViewBag.cusCode</option>
+                                </select>
+                            </div>
+                        }
                     </div>
-                    <div class="sb-sc-field">
-                        <label class="sb-sc-label" for="customerId">Customer</label>
-                        <select class="sb-select sb-select-sm" id="customerId">
-                            <option value="">— Select —</option>
-                        </select>
+                    <div class="company-group" role="group" aria-label="Company">
+                        <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
+                        <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
+                        <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
                     </div>
                 </div>
-                <div class="company-group" role="group" aria-label="Company">
-                    <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
-                    <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
-                    <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
-                </div>
-            </div>
+            }
         }
 
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
@@ -165,7 +177,7 @@
         </div>
 
     </div>
-    </aside>
+</aside>
 
 <script>
 

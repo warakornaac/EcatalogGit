@@ -871,7 +871,7 @@ body {
 }
 
 .company-btn {
-    padding: 4px 12px;
+    padding: 5px 20px;
     border-radius: 20px;
     border: 1.5px solid;
     font-size: 11px;
@@ -1500,15 +1500,15 @@ body {
     background: #fd152f;
     color: #fff;
     border-radius: var(--r-sm);
-    padding: .38rem .9rem;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 10px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 3px;
     width: auto;
-    max-width: 140px;
+    max-width: 80px;
     cursor: pointer;
     transition: opacity var(--tr),transform var(--tr);
     white-space: nowrap;
@@ -1692,7 +1692,7 @@ body {
     color: var(--primary);
     border-radius: 20px;
     padding: 4px 10px;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
 }
 
