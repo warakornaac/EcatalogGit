@@ -164,18 +164,8 @@
                 <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
                     <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
                 </button>
-                <div class="mb-1">
-                    <div>
-                        <span id="cacheStatusCatagory">-</span>
-                    </div>
-                </div>
-                <button class="search-btn" id="btnSearchProductCatagory" onclick="searchProductByCategory()">
-                    <i class="bi bi-lightning-charge-fill"></i> Search Catagory
-                </button>
-
             </div>
         </div>
-
     </div>
 </aside>
 
@@ -358,50 +348,40 @@
                     })
                     .get()
         };
-        console.log(filterObj);
+        /*console.log(filterObj);*/
         return filterObj;
     }
     //send params send to controller searchByCategory
-    async function searchProductByCategory() {
-        try {
-            const filters = await getSearchCatagoryObject();
-            console.log(filters);
-            const response = await fetch(
-                '@Url.Action("GetProductBySearchCatagory","Product")',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(filters)
-                });
+   async function searchProductByCategory() {
+    try {
+        const filters = getSearchCatagoryObject();
+        //console.log('searchProductByCategory START, filters:', filters);
 
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(
-                    result.Message ||
-                    result.errorMessage ||
-                    "API Error");
-            }
+        const response = await fetch(
+            '@Url.Action("GetProductBySearchCatagory","Product")',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            });
 
-            if (result.IsSuccess) {
-                $("#cacheStatusCatagory").html(
-                    (result.IsFromCache
-                        ? "Catagory Cache Hit"
-                        : "API Call")
-                    +
-                    " (" +
-                    result.ExecutionTime +
-                    " ms)"
-                );
-                console.log(result);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.Message || "API Error");
 
-            } else {
-                alert(result.Message || "Search Error");
-            }
-        } catch (ex) {
-            console.error("searchProductByCategory Error:", ex);
-            alert(ex.message ||"System Error");
+        if (result.IsSuccess) {
+            //console.log('✅ IsSuccess, Data:', (result.Data || []).length);
+            PRODUCTS = mapApiResponseToProducts(result.Data || []);
+            //console.log('✅ PRODUCTS mapped:', PRODUCTS.length);
+            applyAllFilters();
+            //console.log('✅ applyAllFilters done');
+            updateFilterCounts();
+            //console.log('✅ updateFilterCounts done');
+        } else {
+            alert(result.Message || "Search Error");
         }
+    } catch (ex) {
+        console.error("searchProductByCategory Error:", ex);
+        alert(ex.message || "System Error");
     }
+}
 </script>

@@ -17,22 +17,19 @@ async function loadSearchProductVio() {
     showSkel();
 
     try {
-        const marketSegmentId = $("#marketsegId").val() || "";
-        const segmentId = $("#segmentId").val() || "";
-        const makerId = $("#makerId").val() || "";
-        const rangeId = $("#rangeId").val() || "";
-        const bodyId = $("#bodyId").val() || "";
-        const engineId = $("#engineId").val() || "";
-        const yearFrom = $("#yearFrom").val() || "";
-        const yearTo = $("#yearTo").val() || "";
-        const driveType = $("#driveId").val() || "";
-        const imagePath = $("#imagePath").val() || "";
-
         const result = await ajaxCallApiService(
             API_URLS.getProductBySearchVio,
             {
-                marketSegmentId, segmentId, makerId, rangeId,
-                bodyId, engineId, yearFrom, yearTo, driveType, imagePath
+                marketSegmentId: $("#marketsegId").val() || "",
+                segmentId: $("#segmentId").val() || "",
+                makerId: $("#makerId").val() || "",
+                rangeId: $("#rangeId").val() || "",
+                bodyId: $("#bodyId").val() || "",
+                engineId: $("#engineId").val() || "",
+                yearFrom: $("#yearFrom").val() || "",
+                yearTo: $("#yearTo").val() || "",
+                driveType: $("#driveId").val() || "",
+                imagePath: $("#imagePath").val() || ""
             }
         );
 
@@ -42,82 +39,23 @@ async function loadSearchProductVio() {
                 " (" + result.ExecutionTime + " ms)"
             );
 
-            currentGroups = result.Data || [];
-            currentProducts = [];
-            currentGroups.forEach(group => {
-                (group.productList || []).forEach(item => {
-                    currentProducts.push({ ...item, productGroupNameMain: group.productGroupNameMain });
-                });
-            });
-
-            // Sync เข้า PRODUCTS (vanilla JS)
             PRODUCTS = mapApiResponseToProducts(result.Data || []);
-            console.log('PRODUCTS after map:', PRODUCTS.length);
-            console.log('Sample product:', PRODUCTS[0]);
-            console.log('chkState:', chkState);
-            console.log('activeGroup:', activeGroup);
-            // ✅ reset group filter
+
             activeGroup = '0';
             window.selectedGroupId = '0';
             document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
             document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
 
-            renderProducts(PRODUCTS);
-            $("#rcount").text(PRODUCTS.length + " items");
+            applyAllFilters();      // filter + render products
+            updateFilterCounts();   // อัปเดต count ใน sidebar
 
         } else {
             toast(result.Message || "Search Error", "warn");
         }
+
     } catch (ex) {
         console.error(ex);
         toast("System Error", "warn");
-    } finally {
-        hideSkel();
-        btn.prop("disabled", false);
-    }
-}
-
-async function searchProductByCategory() {
-    const btn = $("#btnSearchProductCatagory");
-    btn.prop("disabled", true);
-    showSkel();
-
-    try {
-        const filters = getSearchCatagoryObject();
-
-        const response = await fetch(
-            API_URLS.getProductBySearchCatagory,   // ← ใช้ API_URLS แทน @Url.Action
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(filters)
-            });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.Message || result.errorMessage || "API Error");
-        }
-
-        if (result.IsSuccess) {
-            $("#cacheStatusCatagory").html(
-                (result.IsFromCache ? "Category Cache Hit" : "API Call") +
-                " (" + result.ExecutionTime + " ms)"
-            );
-
-            // ✅ sync เข้า PRODUCTS (vanilla JS) — เหมือน loadSearchProductVio
-            PRODUCTS = mapApiResponseToProducts(result.Data || []);
-
-            applyAllFilters();
-            $("#rcount").text(PRODUCTS.length + " items");
-
-        } else {
-            toast(result.Message || "Search Error", "warn");
-        }
-
-    } catch (ex) {
-        console.error("searchProductByCategory Error:", ex);
-        toast(ex.message || "System Error", "warn");
     } finally {
         hideSkel();
         btn.prop("disabled", false);

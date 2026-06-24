@@ -6,9 +6,7 @@ let PRODUCTS = [];
 
 let GROUPS = [];
 
-/* ════════════════════════════════
-   STATE
-════════════════════════════════ */
+/* ═══════════════ STATE ═════════════════ */
 let cart = [];
 let cartCnt = 0;
 let vfData = {};
@@ -25,9 +23,7 @@ const currentAllowed = {
     br: []
 };
 
-/* ════════════════════════════════
-   HELPERS
-════════════════════════════════ */
+/* ════════════════ HELPERS ═══════════════════ */
 const gEl = id => document.getElementById(id);
 const g = id => document.getElementById(id);
 const isMobile = () => window.innerWidth <= 991;
@@ -39,18 +35,14 @@ document.getElementById('totalAddr').innerText = totalAddress + ' ที่อ�
 const drawer = document.getElementById('specDrawer');
 const overlay = document.getElementById('drawerOverlay');
 
-/* ════════════════════════════════
-   INIT
-════════════════════════════════ */
+/* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
     renderBottomBar();
     renderProducts(PRODUCTS);
     setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
 });
 
-/* ════════════════════════════════
-   API: MAP RESPONSE → FLAT PRODUCTS
-════════════════════════════════ */
+/* ══════════════ API: MAP RESPONSE → FLAT PRODUCTS ═══════════════ */
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
@@ -75,9 +67,7 @@ function mapApiResponseToProducts(groups) {
     return list;
 }
 
-/* ════════════════════════════════
-   §1 — SEARCH SYNC
-════════════════════════════════ */
+/* ═══════════════ §1 — SEARCH SYNC ════════════════ */
 function syncSearch(source) {
     const headerQ = gEl('headerQ');
     const partQ = gEl('partQ');
@@ -90,9 +80,7 @@ function syncSearch(source) {
     applyAllFilters();
 }
 
-/* ════════════════════════════════
-   §2 — SEARCH MODE
-════════════════════════════════ */
+/* ════════  §2 — SEARCH MODE ══════════════════ */
 function toggleMode(btn) {
     const mode = btn.dataset.mode;
     if (activeModes.has(mode)) {
@@ -108,9 +96,7 @@ function toggleMode(btn) {
     applyAllFilters();
 }
 
-/* ════════════════════════════════
-   §3 — CLEAR ALL FILTERS
-════════════════════════════════ */
+/* ════════════ §3 — CLEAR ALL FILTERS ═════════════ */
 function clearAllFilters() {
     vfData = {};
     ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
@@ -160,9 +146,7 @@ function clearAllFilters() {
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 }
 
-/* ════════════════════════════════
-   §4 — SORTING
-════════════════════════════════ */
+/* ═══════════════ §4 — SORTING ════════════════ */
 function switchSortbyPart() {
     // toggle ระหว่าง carModel (default) และ part
     if (currentSort === 'part') {
@@ -207,9 +191,7 @@ function applySorting(list) {
 }
 
 
-/* ════════════════════════════════
-   §5 — BOTTOM BAR
-════════════════════════════════ */
+/* ═══════════════ §5 — BOTTOM BAR ═══════════════════ */
 function renderBottomBar() {
     gEl('bbScroll').innerHTML = GROUPS.map(g => `
         <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" data-id="${g.id}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
@@ -237,7 +219,11 @@ function selectGroup(id) {
 
     updateBreadcrumb(id, 'Parts Catalog');
     showSkel();
-    setTimeout(() => { hideSkel(); applyAllFilters(); }, 500);
+    setTimeout(() => {
+        hideSkel();
+        applyAllFilters();
+        searchProductByCategory(); // ✅ เพิ่มตรงนี้
+    }, 500);
 }
 
 /* ════════════════════════════════
@@ -293,13 +279,7 @@ function buildSpecHTML(p) {
     </div>`;
 }
 
-//console.log('drawer classes:', drawer.className);
-//console.log('overlay classes:', overlay.className);
-const s = window.getComputedStyle(drawer);
-//console.log('transform:', s.transform);
-//console.log('display:', s.display);
-//console.log('visibility:', s.visibility);
-//console.log('z-index:', s.zIndex);
+const s = window.getComputedStyle(drawer); 
 
 async function openDrawer(id, e) {
     if (e) e.stopPropagation();
@@ -311,14 +291,7 @@ async function openDrawer(id, e) {
     updateBreadcrumb(activeGroup, p.name);
     window._currentStkcode = p.code;
 
-    // ✅ เพิ่ม 3 บรรทัดนี้
-    console.log('isMobile:', isMobile(), '| width:', window.innerWidth);
     const drawerReady = !!gEl('specDrawer') && !!gEl('drTitle');
-    console.log('drawerReady:', drawerReady);
-    console.log('branch:', isMobile() && drawerReady ? 'MOBILE' : 'DESKTOP');
-    console.log('isMobile:', isMobile(), 'drawerReady:', drawerReady);
-    console.log('specDrawer el:', gEl('specDrawer'));
-    console.log('drTitle el:', gEl('drTitle'));
     if (isMobile() && drawerReady) {
         const set = (id, val) => { const el = gEl(id); if (el) el.textContent = val; };
         set('drTitle', p.name);
@@ -374,9 +347,9 @@ async function openDrawer(id, e) {
         gEl('drawerOverlay').classList.add('show');
         gEl('specDrawer').classList.add('show');
         document.body.style.overflow = 'hidden';
-        console.log('AFTER ADD — drawer class:', gEl('specDrawer').className);
-        console.log('AFTER ADD — right:', window.getComputedStyle(gEl('specDrawer')).right);
-        console.log('AFTER ADD — display:', window.getComputedStyle(gEl('specDrawer')).display);
+        //console.log('AFTER ADD — drawer class:', gEl('specDrawer').className);
+        //console.log('AFTER ADD — right:', window.getComputedStyle(gEl('specDrawer')).right);
+        //console.log('AFTER ADD — display:', window.getComputedStyle(gEl('specDrawer')).display);
     } else {
         // desktop หรือ drawer elements ไม่พร้อม → ใช้ modal
         if (!drawerReady && isMobile()) {
@@ -478,9 +451,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-/* ════════════════════════════════
-   GROUP BY HELPER
-════════════════════════════════ */
+/* ═════════════════ GROUP BY HELPER ══════════════════ */
 function groupByLine(list, forceByLine) {
     const keyFn = p =>
         forceByLine ? (p.line || 'อื่นๆ') :
@@ -501,9 +472,7 @@ function nfScroll(rowId, dir) {
     if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
 }
 
-/* ════════════════════════════════
-   RENDER PRODUCTS
-════════════════════════════════ */
+/* ═════════════════ RENDER PRODUCTS ═══════════════════ */
 function renderProducts(list) {
     const sorted = applySorting(list);
     const pGrid = gEl('pGrid');
@@ -608,9 +577,7 @@ function renderProducts(list) {
     }).join('');
 }
 
-/* ════════════════════════════════
-   APPLY ALL FILTERS
-════════════════════════════════ */
+/* ══════════════ APPLY ALL FILTERS ══════════════════ */
 function applyAllFilters() {
     const q = gEl('partQ').value.toLowerCase().trim();
     const plK = Object.keys(chkState.pl);
@@ -637,9 +604,7 @@ function applyAllFilters() {
     renderProducts(list);
 }
 
-/* ════════════════════════════════
-   ACTIVE FILTER CHIPS
-════════════════════════════════ */
+/* ══════════════ ACTIVE FILTER CHIPS ══════════════════ */
 function renderActiveChips() {
     const chips = [];
     Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
@@ -658,9 +623,7 @@ function removeChip(t, v) {
     applyAllFilters();
 }
 
-/* ════════════════════════════════
-   §1 — VEHICLE FILTER
-════════════════════════════════ */
+/* ═════════════ §1 — VEHICLE FILTER ═════════════════════ */
 function vfChange(sel, key) {
     activateSec(1);
     if (sel.value) { vfData[key] = sel.value; } else { delete vfData[key]; }
@@ -709,9 +672,7 @@ function removeVfTag(k) {
     loadSearchProductVio();
 }
 
-/* ════════════════════════════════
-   §2 — SEARCH
-════════════════════════════════ */
+/* ═════════════ §2 — SEARCH ════════════════════ */
 function runSearch() {
     activateSec(2);
     showSkel();
@@ -722,14 +683,11 @@ function runSearch() {
     }, 500);
 }
 
-/* ════════════════════════════════
-   §3 — CHECKBOX FILTERS
-════════════════════════════════ */
+/* ══════════════ §3 — CHECKBOX FILTERS ══════════════════ */
 function toggleChk(label, type, val) {
     label.classList.toggle('checked');
     if (label.classList.contains('checked')) {
         chkState[type][val] = true;
-        // ✅ auto switch sort เมื่อเลือก filter
         if (type === 'pl' || type === 'br') {
             currentSort = 'part';
             const sel = gEl('sortSelect');
@@ -737,7 +695,6 @@ function toggleChk(label, type, val) {
         }
     } else {
         delete chkState[type][val];
-        // ✅ reset กลับถ้าไม่มี filter เหลือ
         const hasFilter = Object.keys(chkState.pl).length || Object.keys(chkState.br).length;
         if (!hasFilter) {
             currentSort = 'carModel';
@@ -747,21 +704,31 @@ function toggleChk(label, type, val) {
     }
     activateSec(3);
     showSkel();
-    setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
-}
 
+    // ✅ ถ้าเป็น pl ให้ sync ClickedMatchData ก่อน แล้วค่อย search
+    if (type === 'pl') {
+        ClickedMatchData();
+    }
+
+    searchProductByCategory().finally(() => {
+        hideSkel();
+        renderActiveChips();
+    });
+}
 function toggleFit(chip, val) {
     chip.classList.toggle('active');
     if (chip.classList.contains('active')) { fitState.add(val); }
     else { fitState.delete(val); }
     activateSec(3);
     showSkel();
-    setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
+
+    searchProductByCategory().finally(() => {
+        hideSkel();
+        renderActiveChips();
+    });
 }
 
-/* ════════════════════════════════
-   CART
-════════════════════════════════ */
+/* ════════════════ CART ══════════════════ */
 function addCart(id, e) {
     if (e) e.stopPropagation();
     const p = PRODUCTS.find(x => x.id === id);
@@ -783,9 +750,7 @@ function addCart(id, e) {
     toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…" ฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`);
 }
 
-/* ════════════════════════════════
-   SKELETON
-════════════════════════════════ */
+/* ══════════════════ SKELETON ══════════════════ */
 function showSkel() {
     gEl('skelWrap').style.display = 'block';
     gEl('pGrid').style.display = 'none';
@@ -795,16 +760,12 @@ function hideSkel() {
     gEl('skelWrap').style.display = 'none';
 }
 
-/* ════════════════════════════════
-   BREADCRUMB
-════════════════════════════════ */
+/* ═══════════════ BREADCRUMB ════════════════ */
 function updateBreadcrumb(group, page) {
     gEl('bc3').textContent = page || 'Parts Catalog';
 }
 
-/* ════════════════════════════════
-   SECTION ACTIVATION
-════════════════════════════════ */
+/* ════════════════ SECTION ACTIVATION ═════════════════ */
 function activateSec(n) {
     [1, 2, 3, 4].forEach(i => {
         gEl('lb' + i)?.classList.remove('active-badge');
@@ -830,9 +791,7 @@ function pulseEl(id) {
     setTimeout(() => e.classList.remove('pulse'), 350);
 }
 
-/* ════════════════════════════════
-   CART PANEL
-════════════════════════════════ */
+/* ════════════════ CART PANEL ═════════════════ */
 function openCart() { document.getElementById('cartPanel').classList.add('open'); document.getElementById('cartOverlay').classList.add('open'); }
 function closeCart() { document.getElementById('cartPanel').classList.remove('open'); document.getElementById('cartOverlay').classList.remove('open'); }
 function clearCart() { cart = []; updateCart(); toast('🗑️ ล้างตะกร้าแล้ว', 'warn'); }
@@ -873,9 +832,7 @@ function updateCart() {
         </div>`).join('');
 }
 
-/* ════════════════════════════════
-   TOAST
-════════════════════════════════ */
+/* ═════════════ TOAST ═══════════════ */
 function toast(msg, type = '') {
     const el = document.createElement('div');
     el.className = 'toast-item' + (type === 'warn' ? ' warn' : '');
@@ -887,9 +844,7 @@ function toast(msg, type = '') {
     }, 2500);
 }
 
-/* ════════════════════════════════
-   AUTOCOMPLETE
-════════════════════════════════ */
+/* ══════════════ AUTOCOMPLETE ════════════════ */
 function buildSuggestions(q) {
     if (!q || q.length < 1) return [];
     const qLow = q.toLowerCase().trim();
@@ -1128,9 +1083,7 @@ function acUpdateFocusSidebar(items) {
     }
 }
 
-/* ════════════════════════════════
-   MOBILE SIDEBAR
-════════════════════════════════ */
+/* ═════════════ MOBILE SIDEBAR ═══════════════ */
 function toggleSidebar() {
     const sb = document.getElementById('sidebar');
     const btn = document.getElementById('mobHamburger');
@@ -1144,9 +1097,7 @@ function toggleSidebar() {
 }
 gEl('mobOverlay').addEventListener('click', toggleSidebar);
 
-/* ════════════════════════════════
-   COLLAPSE SYNC
-════════════════════════════════ */
+/* ═════════════ COLLAPSE SYNC ═════════════════ */
 document.querySelectorAll('.sec-hd').forEach(hd => {
     const t = hd.getAttribute('data-bs-target');
     const el = document.querySelector(t);
@@ -1159,9 +1110,7 @@ document.querySelectorAll('.sec-hd').forEach(hd => {
 gEl('partQ').addEventListener('focus', () => { if (gEl('partQ').value.trim()) acInputSidebar(gEl('partQ')); });
 gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()) acInput(gEl('headerQ')); });
 
-/* ════════════════════════════════
-   ORDER SUMMARY
-════════════════════════════════ */
+/* ══════════════ ORDER SUMMARY ═══════════════ */
 const DISCOUNT_RATE = 0.075;
 const VAT_RATE = 0.07;
 
@@ -1387,9 +1336,7 @@ function setupDropdown(triggerId, dropdownId) {
 }
 setupDropdown('trigger1', 'dropdown1');
 
-/* ════════════════════════════════
-   API HELPER
-════════════════════════════════ */
+/* ══════════════ API HELPER ══════════════════ */
 async function ajaxCallApiService(url, params) {
     const response = await fetch(`${url}?${new URLSearchParams(params)}`, { method: 'GET' });
     if (!response.ok) {
@@ -1400,10 +1347,7 @@ async function ajaxCallApiService(url, params) {
     return await response.json();
 }
 
-
-/* ════════════════════════════════
-   LOADING FILTER SELECTOR
-════════════════════════════════ */
+/* ═══════════LOADING FILTER SELECTOR ═══════════════════ */
 $(document).ready(function () {
     GetProductGroup();
     GetBrandS();
@@ -1442,10 +1386,11 @@ function RenderBrands(brands) {
         const $label = $('<label>')
             .addClass('chk-item')
             .attr('data-id', brand.id)
+            .attr('data-name', brand.name) 
             .attr('data-filter', 'filterProductBrandId')
             .toggleClass('br-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
-            .attr('onclick', `toggleChk(this,'br','${brand.name}'); `);
+            .attr('onclick', `toggleChk(this,'br','${brand.name}');`);
 
         $label.append(
             $('<div>').addClass('chk-box'),
@@ -1456,15 +1401,11 @@ function RenderBrands(brands) {
         $container.append($label);
     });
 }
-
-
 //----------- ProductGroup ----------------//
 const FIXED_GROUPS = [
     { id: '0', icon: 'bi-grid-3x3-gap', label: 'สินค้าทุกประเภท', isClear: true },
     { id: '99', icon: 'bi-stars', label: 'Universal' },
 ];
-
-
 
 function GetProductGroup() {
     $.ajax({
@@ -1533,28 +1474,18 @@ function RenderProductionLines(lines) {
             .attr('data-filter', 'filterProductLineId')
             .toggleClass('pl-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
-            .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}'); ClickedMatchData();`);
+            .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}');`);
 
         $label.append(
             $('<div>').addClass('chk-box'),
             $('<span>').addClass('chk-label').text(line.prodlinename),
             $('<span>').addClass('chk-count').text(line.count ?? 0)
         );
-
         $container.append($label);
     });
-
-
 }
 function ClickedMatchData() {
     const grpId = window.selectedGroupId || null;
-
-    const plIds = Object.keys(chkState.pl);
-    const brNames = Object.keys(chkState.br);
-
-    console.log("Group:", grpId);
-    console.log("PL:", plIds);
-    console.log("Brand:", brNames);
 
     $.ajax({
         url: '/Master/GetMatchProductionGroup',
@@ -1562,10 +1493,8 @@ function ClickedMatchData() {
         data: { prodgrpid: grpId },
         success: function (result) {
             if (result.IsSuccess) {
-                console.log("AllowedIds:", result.Data);
                 const allowedIds = (result.Data || []).map(x => x.prodlineid.toString());
-                FilterProductionLines(allowedIds);
-
+                FilterProductionLines(allowedIds); // ✅ แค่ filter sidebar
             } else {
                 console.error("API Error:", result.Message);
             }
@@ -1575,7 +1504,6 @@ function ClickedMatchData() {
         }
     });
 }
-
 function FilterProductionLines(allowedIds) {
     currentAllowed.pl = allowedIds;
 
@@ -1628,67 +1556,6 @@ function toggleCompany(btn) {
     const isActive = btn.classList.contains('active');
     btn.style.opacity = isActive ? '1' : '0.5';
 }
-/* ════════════════════════════════
-   SIDEBAR TABS  (merged from sidebar-tabs.js)
-════════════════════════════════ */
-
-/* ── Tab switching ── */
-function switchTab(name) {
-    document.querySelectorAll('.sb-tab').forEach(t => {
-        const active = t.id === 'tab-' + name;
-        t.classList.toggle('active', active);
-        t.setAttribute('aria-selected', String(active));
-    });
-    document.querySelectorAll('.sb-panel').forEach(p => {
-        p.id === 'panel-' + name
-            ? p.removeAttribute('hidden')
-            : p.setAttribute('hidden', '');
-    });
-}
-
-/* ── Close sidebar when search button tapped on mobile ── */
-function closeSidebarOnMobile() {
-    if (window.innerWidth > 768) return;
-    const sb = document.getElementById('sidebar');
-    const btn = document.getElementById('sbHamburger');
-    const ov = document.getElementById('sbOverlay');
-    sb.classList.remove('open');
-    btn.classList.remove('open');
-    btn.setAttribute('aria-expanded', 'false');
-    ov.classList.remove('visible');
-}
-
-/* ── Filter badge (Filters tab + hamburger) ── */
-function updateFilterBadge() {
-    let count = 0;
-    document.querySelectorAll('#fitGrid .fit-chip[aria-pressed="true"]').forEach(() => count++);
-    document.querySelectorAll('#plList input:checked, #brList input:checked').forEach(() => count++);
-    const tabBadge = document.getElementById('filterBadge');
-    const hamBadge = document.getElementById('sbHamBadge');
-    if (count > 0) {
-        tabBadge.textContent = count; tabBadge.style.display = '';
-        hamBadge.textContent = count; hamBadge.style.display = '';
-    } else {
-        tabBadge.style.display = 'none';
-        hamBadge.style.display = 'none';
-    }
-}
-
-/* ── Clear vehicle dropdowns ── */
-function clearVehicle() {
-    ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.selectedIndex = 0;
-    });
-    ['yearFrom', 'yearTo'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    updateVehSummary();
-}
-
-/* ── Init: default tab + extend existing Escape/DOMContentLoaded ── */
-document.addEventListener('DOMContentLoaded', () => switchTab('filters'));
 
 /* Extend the existing keydown listener to also close sidebar */
 document.addEventListener('keydown', e => {
@@ -1696,3 +1563,54 @@ document.addEventListener('keydown', e => {
     const sb = document.getElementById('sidebar');
     if (sb && sb.classList.contains('open')) toggleSidebar();
 });
+
+function updateFilterCounts() {
+    // อัปเดต count Brand
+    $("#brList .chk-item").each(function () {
+        const brandName = $(this).attr('data-name');
+        const count = PRODUCTS.filter(p => p.brand === brandName).length;
+        $(this).find('.chk-count').text(count);
+    });
+
+    // อัปเดต count Product Line
+    $("#plList .chk-item").each(function () {
+        const lineName = $(this).attr('data-name');
+        const count = PRODUCTS.filter(p => p.line === lineName).length;
+        $(this).find('.chk-count').text(count);
+    });
+
+    // ✅ Sort Brand จากมากไปน้อย
+    const $brList = $("#brList");
+    $brList.find('.chk-item').sort(function (a, b) {
+        const countA = parseInt($(a).find('.chk-count').text()) || 0;
+        const countB = parseInt($(b).find('.chk-count').text()) || 0;
+        return countB - countA;
+    }).appendTo($brList);
+
+    // ✅ Sort Product Line จากมากไปน้อย
+    const $plList = $("#plList");
+    $plList.find('.chk-item').sort(function (a, b) {
+        const countA = parseInt($(a).find('.chk-count').text()) || 0;
+        const countB = parseInt($(b).find('.chk-count').text()) || 0;
+        return countB - countA;
+    }).appendTo($plList);
+
+    // ✅ Re-apply SHOW_LIMIT หลัง sort — แสดงแค่ 5 อันดับแรกที่มี count > 0
+    const SHOW_LIMIT = 5;
+
+    [
+        { listId: '#brList', extraClass: 'br-extra' },
+        { listId: '#plList', extraClass: 'pl-extra' }
+    ].forEach(({ listId, extraClass }) => {
+        let visible = 0;
+        $(`${listId} .chk-item`).each(function () {
+            const count = parseInt($(this).find('.chk-count').text()) || 0;
+            if (visible < SHOW_LIMIT && count > 0) {
+                $(this).show().removeClass(extraClass);
+                visible++;
+            } else {
+                $(this).hide().addClass(extraClass);
+            }
+        });
+    });
+}

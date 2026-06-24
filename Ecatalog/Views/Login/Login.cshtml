@@ -56,9 +56,9 @@
                         <label class="form-label" for="password">รหัสผ่าน</label>
                         <div class="input-wrap">
                             <i class="bi bi-lock input-icon"></i>
-                            <input class="form-input" type="text" id="txtPassword" value="" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+                            <input class="form-input" type="password" id="txtPassword" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
                             <button type="button" class="eye-btn" onclick="togglePwd()" id="eyeBtn" aria-label="แสดง/ซ่อนรหัสผ่าน">
-                                <i class="bi bi-eye" id="eyeIcon"></i>
+                                <i id="eyeIcon"></i>
                             </button>
                         </div>
                         <p class="form-error" id="errPass">กรุณากรอกรหัสผ่าน</p>
@@ -97,10 +97,10 @@
 
             if (inp.type === 'password') {
                 inp.type = 'text';
-                ico.className = 'bi bi-eye-slash';
+                ico.classList.replace('bi-eye', 'bi-eye-slash');
             } else {
                 inp.type = 'password';
-                ico.className = 'bi bi-eye';
+                ico.classList.replace('bi-eye-slash', 'bi-eye');
             }
         }
 
