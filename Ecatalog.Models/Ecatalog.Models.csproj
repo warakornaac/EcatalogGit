@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddToCartResponse.cs" />
     <Compile Include="ApiRequestModel.cs" />
     <Compile Include="ApiResponseModel.cs" />
     <Compile Include="AuthenApiResponseModel.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="ModelRangeFilterModel.cs" />
     <Compile Include="ModelBodyFilterModel.cs" />
     <Compile Include="ModelEngineFilterModel.cs" />
+    <Compile Include="ProductCartModel.cs" />
     <Compile Include="ProductionLineFilterModel.cs" />
     <Compile Include="ProductSearchCatagoryRequestModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />

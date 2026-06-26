@@ -421,6 +421,93 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
+        [HttpPost]
+        public async Task<ActionResult> AddProductToCart(string Cuscode, string Stkcode, string Company, string Price, string Qty, string BackOrder="0" )
+        {
+            Boolean IsSuccess = false;
+            string ResponseString = "Added Item";
+            string StatusResponse = "Y";
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                        AddToCartResponse>(
+                        "Ecatalog/AddProductToCart",
+                        "POST",
+                        new
+                        {
+                            cuscod = Cuscode,
+                            stkcod = Stkcode,
+                            company = Company,
+                            price = Price, qty = Qty,
+                            backbrder = BackOrder
+                        },
+                        false,
+                        10);
 
+                if(result.StatusCode != 200)
+                {
+                    ResponseString = result.Data.errorMessage.ToString();
+                    StatusResponse = "N";
+                }
+
+                return Json(new
+                {
+                    IsSuccess = IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = StatusResponse,
+                    Message = ResponseString
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public async Task<ActionResult> GetProductToCart()
+        {
+            string cuscode = Session["cuscode"].ToString();
+            string usrname = Session["username"].ToString();
+            try
+            {
+                
+                var result = await Utils.CallApiAsyncMemory<
+                    ProductCartModel>(
+                    "Ecatalog/GetProductToCart",
+                    "GET",
+                    new
+                    {
+                        cuscode=cuscode,
+                        usrname = usrname
+                    },
+                    true,
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
     }
 }
