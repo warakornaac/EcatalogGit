@@ -10,6 +10,17 @@ namespace Ecatalog.Models
     {
         public int statusCode { get; set; }
         public string errorMessage { get; set; }
-        public string result { get; set; }
+        public CartAddResponse result { get; set; }
+    }
+
+    public class CartAddResponse
+    {
+        public string cuscode { get; set; }
+        public string stkcod { get; set; }
+        public string company { get; set; }
+        public string price { get; set; }
+        public string qty { get; set; }
+        public string username { get; set; }
+        public string backorder { get; set; }
     }
 }

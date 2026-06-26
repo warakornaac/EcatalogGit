@@ -425,36 +425,35 @@ namespace Ecatalog.Controllers
         public async Task<ActionResult> AddProductToCart(string Cuscode, string Stkcode, string Company, string Price, string Qty, string BackOrder="0" )
         {
             Boolean IsSuccess = false;
-            string ResponseString = "Added Item";
-            string StatusResponse = "Y";
+            string ResponseString = "";
+            string usrname = Session["username"].ToString();
+            //string StatusResponse = "Y";
             try
             {
                 var result = await Utils.CallApiAsyncMemory<
                         AddToCartResponse>(
-                        "Ecatalog/AddProductToCart",
-                        "POST",
-                        new
-                        {
-                            cuscod = Cuscode,
-                            stkcod = Stkcode,
-                            company = Company,
-                            price = Price, qty = Qty,
-                            backbrder = BackOrder
-                        },
+                            $"Ecatalog/AddProductToCart?cuscode={Cuscode}&stkcod={Stkcode}&company={Company}&price={Price}&qty={Qty}&backorder={BackOrder}&username={usrname}",
+                            "POST",
+                            null,  // ไม่ต้อง body
                         false,
                         10);
 
                 if(result.StatusCode != 200)
                 {
                     ResponseString = result.Data.errorMessage.ToString();
-                    StatusResponse = "N";
+                    //StatusResponse = "N";
+                }
+                else
+                {
+                    IsSuccess = true;
+                    ResponseString = "Added Item";
                 }
 
                 return Json(new
                 {
                     IsSuccess = IsSuccess,
                     IsFromCache = result.IsFromCache,
-                    Data = StatusResponse,
+                    Data = result.Data?.result,
                     Message = ResponseString
                 },
                 JsonRequestBehavior.AllowGet);

@@ -1614,3 +1614,26 @@ function updateFilterCounts() {
         });
     });
 }
+
+
+    function TestAPIADD() {
+        $.ajax({
+            //url: 'AddProductToCart, Product',
+            url: '/Product/AddProductToCart',
+            data: {
+                Cuscode: '110Z0001O',
+                Stkcode: 'DF7163',
+                Company: 'TAC',
+                Price: '50',
+                Qty: '6'
+            },
+            type: "POST",
+            dataType: "JSON",
+            success: function (data) {
+                console.log('succ:'+ data.IsSuccess);
+                console.log('succ:' + data.Data);
+                console.log('succ:' + data.ResponseString);
+                console.log('succ:'+ data.IsSuccess);
+            }
+        });
+     }
