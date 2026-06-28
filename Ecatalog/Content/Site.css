@@ -4253,7 +4253,6 @@ body {
     }
 }
 
-<<<<<<< HEAD
     .spec-modal-backdrop.show {
         display: flex;
     }
@@ -4364,9 +4363,7 @@ body {
         flex-direction: column;
     }
 }
-=======
 .spin {
     display: inline-block;
     animation: spin .6s linear infinite;
 }
->>>>>>> 53fd760851f481168967019d10d8633c419818ae

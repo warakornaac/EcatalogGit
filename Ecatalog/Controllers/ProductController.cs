@@ -174,13 +174,13 @@ namespace Ecatalog.Controllers
                 }
 
                 var groupData =
-                    result.Data?.result?
-                    .GroupBy(x => x.productGroup)
-                    .Select(g => new {
-                        productGroupNameMain = g.Key,
-                        productList = g.ToList()
-                    })
-                    .ToList();
+                  result.Data?.result?
+                  .GroupBy(x => x.productGroup)
+                  .Select(g => new {
+                      productGroupNameMain = g.Key,
+                      productList = g.ToList()
+                  })
+                  .ToList();
 
                 return Json(new {
                     IsSuccess = result.IsSuccess,

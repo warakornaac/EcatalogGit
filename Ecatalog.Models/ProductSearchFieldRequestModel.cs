@@ -10,6 +10,6 @@ namespace Ecatalog.Models
     {
         public string searchText { get; set; }
 
-        public List<int> searchFields { get; set; }
+        public List<string> searchFields { get; set; }
     }
 }
