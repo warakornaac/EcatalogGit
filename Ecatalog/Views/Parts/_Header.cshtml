@@ -49,6 +49,14 @@
                                     <span class="item-label">Account settings</span>
                                 </div>
                             </div>*@
+                        @if (Ecatalog.Security.PermissionHelper.HasPermission(Ecatalog.Security.PermissionCode.RbacManage)) {
+                            <div class="dropdown-section">
+                                <a class="dropdown-item" role="menuitem" href="@Url.Action("Index", "Rbac")">
+                                    <i class="bi bi-shield-lock"></i>
+                                    <span class="item-label">RBAC Admin</span>
+                                </a>
+                            </div>
+                        }
                         <div class="dropdown-section">
                             <a class="dropdown-item danger" role="menuitem" href="@Url.Action("Login", "Login")">
                                 <i class="bi bi-arrow-right-short"></i>

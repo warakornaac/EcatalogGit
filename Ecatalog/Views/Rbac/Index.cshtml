@@ -1,0 +1,149 @@
+@model Ecatalog.Models.RbacAdminViewModel
+@{
+    ViewBag.Title = "RBAC";
+}
+
+<div class="rbac-page">
+    <div class="rbac-header">
+        <div>
+            <h1>RBAC</h1>
+            <p>Manage roles, permissions, and user role assignments.</p>
+        </div>
+        @using (Html.BeginForm("SyncPermissions", "Rbac", FormMethod.Post)) {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary">Sync Permission Codes</button>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {
+        <div class="alert alert-info">@Model.StatusMessage</div>
+    }
+
+    <div class="rbac-grid">
+        <section class="rbac-panel">
+            <h2>Roles</h2>
+            <table class="table table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in Model.Roles) {
+                        <tr>
+                            <td>
+                                <strong>@role.RoleName</strong>
+                                <div class="text-muted">@role.Description</div>
+                            </td>
+                            <td>@(role.IsActive ? "Active" : "Inactive")</td>
+                            <td class="text-right">
+                                <a class="btn btn-default btn-xs" href="@Url.Action("Index", "Rbac", new { roleId = role.RoleId, username = Model.UserRoleEdit.Username })">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+
+        <section class="rbac-panel">
+            <h2>@(Model.RoleEdit.RoleId == 0 ? "Create Role" : "Edit Role")</h2>
+            @using (Html.BeginForm("SaveRole", "Rbac", FormMethod.Post)) {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.RoleEdit.RoleId)
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.RoleEdit.RoleName, "Role name")
+                    @Html.TextBoxFor(m => m.RoleEdit.RoleName, new { @class = "form-control", maxlength = "100" })
+                    @Html.ValidationMessageFor(m => m.RoleEdit.RoleName, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="form-group">
+                    @Html.LabelFor(m => m.RoleEdit.Description)
+                    @Html.TextAreaFor(m => m.RoleEdit.Description, new { @class = "form-control", rows = "3", maxlength = "500" })
+                </div>
+
+                <label class="checkbox-inline">
+                    @Html.CheckBoxFor(m => m.RoleEdit.IsActive) Active
+                </label>
+
+                <h3>Permissions</h3>
+                <div class="rbac-check-list">
+                    @foreach (var permission in Model.RoleEdit.Permissions) {
+                        var isChecked = Model.RoleEdit.SelectedPermissionIds.Contains(permission.PermissionId);
+                        <label class="rbac-check">
+                            <input type="checkbox" name="RoleEdit.SelectedPermissionIds" value="@permission.PermissionId" @(isChecked ? "checked=\"checked\"" : "") />
+                            <span>
+                                <strong>@permission.PermissionCode</strong>
+                                <small>@permission.PermissionName</small>
+                            </span>
+                        </label>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save Role</button>
+                <a class="btn btn-default" href="@Url.Action("Index", "Rbac", new { username = Model.UserRoleEdit.Username })">New Role</a>
+            }
+        </section>
+
+        <section class="rbac-panel">
+            <h2>User Roles</h2>
+            @using (Html.BeginForm("Index", "Rbac", FormMethod.Get)) {
+                <div class="input-group">
+                    <input type="text" name="username" class="form-control" value="@Model.UserRoleEdit.Username" placeholder="Username" />
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="submit">Load</button>
+                    </span>
+                </div>
+            }
+
+            @using (Html.BeginForm("SaveUserRoles", "Rbac", FormMethod.Post)) {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.UserRoleEdit.Username)
+
+                <div class="rbac-check-list rbac-user-roles">
+                    @foreach (var role in Model.UserRoleEdit.Roles) {
+                        var isChecked = Model.UserRoleEdit.SelectedRoleIds.Contains(role.RoleId);
+                        <label class="rbac-check">
+                            <input type="checkbox" name="UserRoleEdit.SelectedRoleIds" value="@role.RoleId" @(isChecked ? "checked=\"checked\"" : "") />
+                            <span>
+                                <strong>@role.RoleName</strong>
+                                <small>@role.Description</small>
+                            </span>
+                        </label>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary" @(string.IsNullOrWhiteSpace(Model.UserRoleEdit.Username) ? "disabled=\"disabled\"" : "")>Save User Roles</button>
+            }
+        </section>
+
+        <section class="rbac-panel">
+            <h2>Permission Codes</h2>
+            <table class="table table-condensed">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var permission in Model.Permissions) {
+                        <tr>
+                            <td><code>@permission.PermissionCode</code></td>
+                            <td>
+                                @permission.PermissionName
+                                <div class="text-muted">@permission.Description</div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

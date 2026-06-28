@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ecatalog.Models</RootNamespace>
     <AssemblyName>Ecatalog.Models</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -54,6 +54,7 @@
     <Compile Include="ModelEngineFilterModel.cs" />
     <Compile Include="ProductionLineFilterModel.cs" />
     <Compile Include="ProductSearchCatagoryRequestModel.cs" />
+    <Compile Include="ProductSearchFieldRequestModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />
     <Compile Include="ProductTabCompetitorModel.cs" />
     <Compile Include="ProductTabDescriptionModel.cs" />

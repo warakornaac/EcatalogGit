@@ -3628,3 +3628,98 @@ body {
     background: var(--surface-2);
     border-radius: var(--r);
 }
+
+.rbac-page {
+    padding: 78px 24px 32px;
+    color: #2c1a1a;
+}
+
+.rbac-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.rbac-header h1 {
+    margin: 0 0 4px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.rbac-header p {
+    margin: 0;
+    color: #6b4c4c;
+}
+
+.rbac-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr);
+    gap: 16px;
+}
+
+.rbac-panel {
+    background: #fff;
+    border: 1px solid #e8dcdc;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.rbac-panel h2 {
+    margin: 0 0 14px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.rbac-panel h3 {
+    margin: 18px 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.rbac-check-list {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0 16px;
+}
+
+.rbac-check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 9px 10px;
+    border: 1px solid #e8dcdc;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.rbac-check input {
+    margin-top: 3px;
+}
+
+.rbac-check span {
+    display: grid;
+    gap: 2px;
+}
+
+.rbac-check small {
+    color: #6b4c4c;
+}
+
+.rbac-user-roles {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+    .rbac-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rbac-header {
+        flex-direction: column;
+    }
+}

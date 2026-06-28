@@ -14,6 +14,21 @@ namespace Ecatalog.Controllers
 {
     public class ProductController : Controller
     {
+        /*
+         * Function name / test example usage:
+         *
+         * GET  /Product/GetProductBySearchVio?marketSegmentId=&segmentId=&makerId=&rangeId=&bodyId=&engineId=&yearFrom=&yearTo=&driveType=&imagePath=
+         * POST /Product/GetProductBySearchCatagory
+         *      Body: { "marketSegmentId": "", "segmentId": "", "makerId": "", "rangeId": "", "bodyId": "", "engineId": "", "yearFrom": "", "yearTo": "", "driveType": "", "imagePath": "" }
+         *
+         * GET  /Product/GetTabItemCountProduct?stkcode=0986280765
+         * GET  /Product/GetTabDescription?stkcode=0986280765
+         * GET  /Product/GetTabSpec?stkcode=0986280765
+         * GET  /Product/GetTabImage?stkcode=0986280765
+         * GET  /Product/GetTabOem?stkcode=0986280765
+         * GET  /Product/GetTabCompetitor?stkcode=0986280765
+         * GET  /Product/GetTabLinkage?stkcode=0986280765
+         */
         // GET: Product
         public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath)
         {
@@ -101,6 +116,51 @@ namespace Ecatalog.Controllers
                     await Utils.CallApiAsyncMemory<
                         ProductSearchVioModel>(
                         "Ecatalog/GetProductBySearchCatagory",
+                        "POST",
+                        request,
+                        true,
+                        30);
+
+                if (result == null) {
+                    return Json(new {
+                        IsSuccess = false,
+                        Message = "API Response is null"
+                    });
+                }
+
+                var groupData =
+                    result.Data?.result?
+                    .GroupBy(x => x.productGroup)
+                    .Select(g => new {
+                        productGroupNameMain = g.Key,
+                        productList = g.ToList()
+                    })
+                    .ToList();
+
+                return Json(new {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = groupData
+                });
+            }
+            catch (Exception ex) {
+                return Json(new {
+                    IsSuccess = false,
+                    IsFromCache = false,
+                    ExecutionTime = 0,
+                    Message = ex.Message,
+                    Data = new List<object>()
+                });
+            }
+        }
+        [HttpPost]
+        public async Task<ActionResult> GetProductBySearchField(ProductSearchFieldRequestModel request) {
+            try {
+                var result =
+                    await Utils.CallApiAsyncMemory<
+                        ProductSearchVioModel>(
+                        "Ecatalog/GetProductBySearchField",
                         "POST",
                         request,
                         true,
