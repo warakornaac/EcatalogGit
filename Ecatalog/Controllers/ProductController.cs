@@ -481,6 +481,181 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
+        [HttpPost]
+        public async Task<ActionResult> AddProductToCart(string Cuscode, string Stkcode, string Price, string Qty, string BackOrder="0", string Company = "TAC" )
+        {
+            Boolean IsSuccess = false;
+            string ResponseString = "";
+            string username = Session["username"].ToString();
+            //string StatusResponse = "Y";
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                        AddToCartResponse>(
+                            $"Ecatalog/AddProductToCart?cuscode={Cuscode}&stkcod={Stkcode}&company={Company}&price={Price}&qty={Qty}&backorder={BackOrder}&username={username}",
+                            "POST",
+                            null,  // ไม่ต้อง body
+                        false,
+                        10);
 
+                if(result.StatusCode != 200)
+                {
+
+                    ResponseString = result.Data.errorMessage.ToString();
+                    //StatusResponse = "N";
+                }
+                else
+                {
+                    IsSuccess = true;
+                    ResponseString = "Added Item";
+                }
+
+                return Json(new
+                {
+                    IsSuccess = IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = result.Data?.result,
+                    Message = ResponseString
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        //public async Task<ActionResult> GetProductToCart()
+        //{
+        //    string cuscode = Session["cuscode"].ToString();
+        //    string username = Session["username"].ToString();
+        //    try
+        //    {
+
+        //        var result = await Utils.CallApiAsyncMemory<
+        //            ProductCartModel>(
+        //            "Ecatalog/GetProductToCart",
+        //            "GET",
+        //            new
+        //            {
+        //                cuscode=cuscode,
+        //                username = username
+        //            },
+        //            true,
+        //            10);
+
+        //        return Json(new
+        //        {
+        //            IsSuccess = result.IsSuccess,
+        //            IsFromCache = result.IsFromCache,
+        //            ExecutionTime = result.ExecutionTime,
+        //            Data = result.Data?.result
+        //        },
+
+        //        JsonRequestBehavior.AllowGet);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Json(new
+        //        {
+        //            IsSuccess = false,
+        //            Message = ex.Message
+        //        },
+        //        JsonRequestBehavior.AllowGet);
+        //    }
+        //}
+
+        public async Task<ActionResult> GetProductToCart()
+        {
+            string cuscode = Session["cuscode"].ToString();
+            string username = Session["username"].ToString();
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<ProductCartModel>(
+                    "Ecatalog/GetProductToCart",
+                    "GET",
+                    new
+                    {
+                        cuscode = cuscode,
+                        username = username,
+                        t = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() // ✅ bust cache
+                    },
+                    false, // ✅ ไม่ cache
+                    10);
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> DeleteProductToCart(string ordId, string username)
+        {
+            Boolean IsSuccess = false;
+            string ResponseString = "";
+            username = Session["username"].ToString();
+            //string StatusResponse = "Y";
+
+            if (Session["username"] == null)
+            {
+                return Json(new { IsSuccess = false, Message = "Session หมดอายุ กรุณา Login ใหม่" }, JsonRequestBehavior.AllowGet);
+            }
+
+            username = Session["username"].ToString();
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<DeleteProductToCart>(
+                            $"Ecatalog/DeleteProductToCart?ordid={ordId}&username={username}&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
+                            "POST",
+                            null,
+                            false,
+                            10);
+
+                if (result.StatusCode != 200)
+                {
+                    ResponseString = result.Data?.errorMessage ?? "เกิดข้อผิดพลาดจาก API";
+                    //ResponseString = result.Data.errorMessage.ToString();
+                    //StatusResponse = "N";
+                }
+                else
+                {
+                    IsSuccess = true;
+                    ResponseString = "Added Item";
+                }
+
+                return Json(new
+                {
+                    IsSuccess = IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = result.Data?.result,
+                    Message = ResponseString
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
     }
 }

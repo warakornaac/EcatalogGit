@@ -1,11 +1,43 @@
-﻿<!-- ═══ APP LAYOUT ═══ -->
-@*<div class="app-layout">*@
+﻿@{
+    Layout = null;
+    var SessionslmCode = ViewBag.slmCode;
+    var SessioncusCode = ViewBag.cusCode;
+}
 
 <!-- ════ SIDEBAR ════ -->
 <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
-    <div class="sidebar-inner mt-5 mb-5">
+    <div class="sidebar-inner mb-7">
+        @if (this.Session["UserType"] != null && (int)this.Session["UserType"] == 1)
+        {
+            if (this.Session["slmcode"] != null)
+            {
+                <div class="sb-sc-bar">
+                    <div class="sb-sc-row">
+                        <div class="sb-sc-field">
+                            <label class="sb-sc-label" for="salesmanId">Salesman</label>
+                            <select class="sb-select sb-select-sm" id="salesmanId">
+                                <option value="">@ViewBag.slmCode</option>
+                            </select>
+                        </div>
+                        @if (this.Session["cusCode"] != null)
+                        {
+                            <div class="sb-sc-field">
+                                <label class="sb-sc-label" for="customerId">Customer</label>
+                                <select class="sb-select sb-select-sm" id="customerId">
+                                    <option value="">@ViewBag.cusCode</option>
+                                </select>
+                            </div>
+                        }
+                    </div>
+                    <div class="company-group" role="group" aria-label="Company">
+                        <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
+                        <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
+                        <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
+                    </div>
+                </div>
+            }
+        }
 
-        <!-- §1 Vehicle Filter -->
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
             <span class="sec-title">Vehicle Filter</span>
             <i class="bi bi-chevron-down sec-chevron"></i>
@@ -78,9 +110,6 @@
             </div>
         </div>
 
-        <div class="step-line"><div class="ln"></div></div>
-
-        <!-- §2 Search Panel -->
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
             <span class="sec-title">Part Search</span>
             <i class="bi bi-chevron-down sec-chevron"></i>
@@ -88,7 +117,6 @@
         <div class="collapse show" id="spBody">
             <div class="filter-body">
                 <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
-                <!-- Multi-select search mode (click to toggle each) -->
                 <div class="smode-group" id="smodeGroup">
                     <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
                         <i class="bi bi-card-text"></i> Description
@@ -101,10 +129,8 @@
                     </label>
                 </div>
                 <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-                    <!-- Sidebar search input (synced with header) -->
                     <input type="text" id="partQ" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
                     <i class="bi bi-search"></i>
-                    <!-- Sidebar Autocomplete Dropdown -->
                     <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
                 </div>
                 <button class="search-btn" id="" onclick="runSearch()">
@@ -113,12 +139,8 @@
             </div>
         </div>
 
-        <div class="step-line"><div class="ln"></div></div>
-
-        <!-- §3 Sidebar Filters -->
         <div class="collapse show" id="sfBody">
             <div class="filter-body">
-                <!-- 3.1 Product Line -->
                 <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
                 <div class="chk-list" id="plList"></div>
 
@@ -126,7 +148,6 @@
                     <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
                 </button>
 
-                <!-- 3.2 Fitting -->
                 <div class="flabel mt-3">Fitting</div>
                 <div class="fit-grid" id="fitGrid">
                     <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
@@ -137,46 +158,18 @@
                     <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
                 </div>
 
-                <!-- 3.3 Brand -->
                 <div class="flabel mt-3">Brand</div>
                 <div class="chk-list" id="brList"></div>
 
                 <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
                     <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
                 </button>
-                <div class="mb-1">
-                    <div>
-                        <span id="cacheStatusCatagory">-</span>
-                    </div>
-                </div>
-                <button class="search-btn" id="btnSearchProductCatagory" onclick="searchProductByCategory()">
-                    <i class="bi bi-lightning-charge-fill"></i> Search Catagory
-                </button>
-
             </div>
         </div>
-
     </div>
 </aside>
 
 <script>
-
-    $(document).ready(async function () {
-        //get dropdown
-        await Promise.all([
-            loadMasterMarketDefault(1),
-            loadMasterMarketDefault(2),
-            loadMasterMarketDefault(3)
-        ]);
-
-    });
-
-    $('#yearTo').on('input', function () {
-        const currentYear = new Date().getFullYear();
-        if (this.value > currentYear) {
-            this.value = currentYear;
-        }
-    });
     //get master
     async function loadMasterMarketDefault(moduleId) {
         let selectId = "marketsegId";
@@ -258,10 +251,9 @@
             const makerId = $("#makerId").val();
             const rangeId = $("#rangeId").val();
 
-            // เดิม: if (!marketsegId || ...) ← bug!
             if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
                 $("#bodyId").empty().append('<option value="">— Select Body —</option>');
-                updateVehSummary(); // ← เพิ่ม
+                updateVehSummary();
                 return;
             }
 
@@ -280,7 +272,7 @@
             console.error(error);
             alert("Load Body Failed");
         } finally {
-            updateVehSummary(); // ← เพิ่ม
+            updateVehSummary();
         }
     }
 
@@ -292,10 +284,9 @@
             const rangeId = $("#rangeId").val();
             const bodyId = $("#bodyId").val();
 
-            // เดิม: if (!marketsegId || ...) ← bug!
             if (!marketSegmentId || !segmentId || !makerId || !rangeId || !bodyId) {
                 $("#engineId").empty().append('<option value="">— Select Engine —</option>');
-                updateVehSummary(); // ← เพิ่ม
+                updateVehSummary();
                 return;
             }
 
@@ -314,7 +305,7 @@
             console.error(error);
             alert("Load Engine Failed");
         } finally {
-            updateVehSummary(); // ← เพิ่ม
+            updateVehSummary();
         }
     }
     //set params obj by select catagory
@@ -340,50 +331,40 @@
                     })
                     .get()
         };
-        console.log(filterObj);
+        /*console.log(filterObj);*/
         return filterObj;
     }
     //send params send to controller searchByCategory
-    async function searchProductByCategory() {
-        try {
-            const filters = await getSearchCatagoryObject();
-            console.log(filters);
-            const response = await fetch(
-                '@Url.Action("GetProductBySearchCatagory","Product")',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(filters)
-                });
+   async function searchProductByCategory() {
+    try {
+        const filters = getSearchCatagoryObject();
+        //console.log('searchProductByCategory START, filters:', filters);
 
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(
-                    result.Message ||
-                    result.errorMessage ||
-                    "API Error");
-            }
+        const response = await fetch(
+            '@Url.Action("GetProductBySearchCatagory","Product")',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            });
 
-            if (result.IsSuccess) {
-                $("#cacheStatusCatagory").html(
-                    (result.IsFromCache
-                        ? "Catagory Cache Hit"
-                        : "API Call")
-                    +
-                    " (" +
-                    result.ExecutionTime +
-                    " ms)"
-                );
-                console.log(result);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.Message || "API Error");
 
-            } else {
-                alert(result.Message || "Search Error");
-            }
-        } catch (ex) {
-            console.error("searchProductByCategory Error:", ex);
-            alert(ex.message ||"System Error");
+        if (result.IsSuccess) {
+            //console.log('✅ IsSuccess, Data:', (result.Data || []).length);
+            PRODUCTS = mapApiResponseToProducts(result.Data || []);
+            //console.log('✅ PRODUCTS mapped:', PRODUCTS.length);
+            applyAllFilters();
+            //console.log('✅ applyAllFilters done');
+            updateFilterCounts();
+            //console.log('✅ updateFilterCounts done');
+        } else {
+            alert(result.Message || "Search Error");
         }
+    } catch (ex) {
+        console.error("searchProductByCategory Error:", ex);
+        alert(ex.message || "System Error");
     }
+}
 </script>

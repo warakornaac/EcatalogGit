@@ -24,6 +24,8 @@ namespace Ecatalog.Controllers
             ViewBag.UserType = Utils.SessionUserType;
             ViewBag.Email = Utils.SessionEmail;
             ViewBag.Account = Utils.SessionUsername;
+            ViewBag.slmCode = Utils.SessionSlmCode;
+            ViewBag.cusCode = Utils.SessionCusCode;
             return View();
             
         }

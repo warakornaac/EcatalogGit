@@ -6,9 +6,7 @@ let PRODUCTS = [];
 
 let GROUPS = [];
 
-/* ════════════════════════════════
-   STATE
-════════════════════════════════ */
+/* ═══════════════ STATE ═════════════════ */
 let cart = [];
 let cartCnt = 0;
 let vfData = {};
@@ -25,9 +23,7 @@ const currentAllowed = {
     br: []
 };
 
-/* ════════════════════════════════
-   HELPERS
-════════════════════════════════ */
+/* ════════════════ HELPERS ═══════════════════ */
 const gEl = id => document.getElementById(id);
 const g = id => document.getElementById(id);
 const isMobile = () => window.innerWidth <= 991;
@@ -39,18 +35,17 @@ document.getElementById('totalAddr').innerText = totalAddress + ' ที่อ�
 const drawer = document.getElementById('specDrawer');
 const overlay = document.getElementById('drawerOverlay');
 
-/* ════════════════════════════════
-   INIT
-════════════════════════════════ */
+/* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-    renderBB();
+    renderBottomBar();
     renderProducts(PRODUCTS);
     setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
+
+    // ✅ โหลด cart จาก server เมื่อเปิดหน้า
+    _fetchCartFromServer();
 });
 
-/* ════════════════════════════════
-   API: MAP RESPONSE → FLAT PRODUCTS
-════════════════════════════════ */
+/* ══════════════ API: MAP RESPONSE → FLAT PRODUCTS ═══════════════ */
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
@@ -75,9 +70,7 @@ function mapApiResponseToProducts(groups) {
     return list;
 }
 
-/* ════════════════════════════════
-   §1 — SEARCH SYNC
-════════════════════════════════ */
+/* ═══════════════ §1 — SEARCH SYNC ════════════════ */
 function syncSearch(source) {
     const headerQ = gEl('headerQ');
     const partQ = gEl('partQ');
@@ -90,9 +83,7 @@ function syncSearch(source) {
     applyAllFilters();
 }
 
-/* ════════════════════════════════
-   §2 — SEARCH MODE
-════════════════════════════════ */
+/* ════════  §2 — SEARCH MODE ══════════════════ */
 function toggleMode(btn) {
     const mode = btn.dataset.mode;
     if (activeModes.has(mode)) {
@@ -108,9 +99,7 @@ function toggleMode(btn) {
     applyAllFilters();
 }
 
-/* ════════════════════════════════
-   §3 — CLEAR ALL FILTERS
-════════════════════════════════ */
+/* ════════════ §3 — CLEAR ALL FILTERS ═════════════ */
 function clearAllFilters() {
     vfData = {};
     ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
@@ -160,9 +149,34 @@ function clearAllFilters() {
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 }
 
-/* ════════════════════════════════
-   §4 — SORTING
-════════════════════════════════ */
+/* ═══════════════ §4 — SORTING ════════════════ */
+function switchSortbyPart() {
+    // toggle ระหว่าง carModel (default) และ part
+    if (currentSort === 'part') {
+        currentSort = 'carModel';
+    } else {
+        currentSort = 'part';
+    }
+
+    // sync dropdown ให้ตรง
+    const sel = gEl('sortSelect');
+    if (sel) sel.value = currentSort;
+
+    // update ปุ่มให้แสดง state ปัจจุบัน
+    const btn = document.querySelector('[onclick*="switchSortbyPart"]');
+    if (btn) {
+        const isPartMode = currentSort === 'part';
+        btn.innerHTML = isPartMode
+            ? '<i class="bi bi-toggle-on" style="color:#fff"></i> Sort: Part'
+            : '<i class="bi bi-toggle-off"></i> Sort: Car Model';
+        btn.style.background = isPartMode ? 'var(--primary)' : '';
+        btn.style.color = isPartMode ? '#fff' : '';
+    }
+
+    applyAllFilters();
+}
+
+
 function sortProducts(val) {
     currentSort = val;
     applyAllFilters();
@@ -179,17 +193,18 @@ function applySorting(list) {
     return arr.sort((a, b) => (a.carModel || '').localeCompare(b.carModel || '', 'th'));
 }
 
-/* ════════════════════════════════
-   §5 — BOTTOM BAR
-════════════════════════════════ */
-function renderBB() {
+
+/* ═══════════════ §5 — BOTTOM BAR ═══════════════════ */
+function renderBottomBar() {
     gEl('bbScroll').innerHTML = GROUPS.map(g => `
         <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" data-id="${g.id}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
             <i class="bi ${g.icon}"></i>
             <span class="bb-label">${g.label}</span>
         </div>`).join('');
 }
-function scrollBB(dx) { gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' }); }
+function scrollBottom(dx) {
+    gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
+} 
 
 function selectGroup(id) {
     activeGroup = id;
@@ -207,7 +222,11 @@ function selectGroup(id) {
 
     updateBreadcrumb(id, 'Parts Catalog');
     showSkel();
-    setTimeout(() => { hideSkel(); applyAllFilters(); }, 500);
+    setTimeout(() => {
+        hideSkel();
+        applyAllFilters();
+        searchProductByCategory(); // ✅ เพิ่มตรงนี้
+    }, 500);
 }
 
 /* ════════════════════════════════
@@ -238,7 +257,7 @@ function buildSpecHTML(p) {
                 <div class="spec-price">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
                 <input type="number" class="qty" value="1" min="1" max="99" onclick="event.stopPropagation()">
                 <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
-                        style="max-width:160px" onclick="addCart(${p.id},event)">
+                        style="max-width:160px" onclick="addCartFromModal(${p.id}, event)">
                     <i class="bi ${(p.stock ?? 99) === 0 ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
                     ${(p.stock ?? 99) === 0 ? 'จอง (BO)' : 'เพิ่ม'}
                 </button>
@@ -263,30 +282,27 @@ function buildSpecHTML(p) {
     </div>`;
 }
 
-console.log('drawer classes:', drawer.className);
-console.log('overlay classes:', overlay.className);
-const s = window.getComputedStyle(drawer);
-console.log('transform:', s.transform);
-console.log('display:', s.display);
-console.log('visibility:', s.visibility);
-console.log('z-index:', s.zIndex);
+const s = window.getComputedStyle(drawer); 
 
-async function openDrawer(id, e) {
-    if (e) e.stopPropagation();
-    selCard(id);
-    const p = PRODUCTS.find(x => x.id === id);
+async function openDrawer(productId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    selCard(productId);
+
+    const p = PRODUCTS.find(x => x.id === productId);
     if (!p) return;
+
     activeProduct = p;
+    if (typeof _normalizeProduct === 'function') {
+        currentSpecProduct = _normalizeProduct(p);
+    } else {
+        currentSpecProduct = p;
+    }
+
     activateSec(4);
     updateBreadcrumb(activeGroup, p.name);
     window._currentStkcode = p.code;
 
-    // ✅ เพิ่ม 3 บรรทัดนี้
-    console.log('isMobile:', isMobile(), '| width:', window.innerWidth);
     const drawerReady = !!gEl('specDrawer') && !!gEl('drTitle');
-    console.log('drawerReady:', drawerReady);
-    console.log('branch:', isMobile() && drawerReady ? 'MOBILE' : 'DESKTOP');
-
     if (isMobile() && drawerReady) {
         const set = (id, val) => { const el = gEl(id); if (el) el.textContent = val; };
         set('drTitle', p.name);
@@ -307,8 +323,8 @@ async function openDrawer(id, e) {
             drImg.src = p.img;
             drImg.style.cssText = `
         display:block;
-        width:90px;
-        height:90px;
+        width:120px;
+        height:120px;
         object-fit:contain;
         background:var(--surface);
         border-radius:var(--r);
@@ -342,9 +358,9 @@ async function openDrawer(id, e) {
         gEl('drawerOverlay').classList.add('show');
         gEl('specDrawer').classList.add('show');
         document.body.style.overflow = 'hidden';
-        console.log('AFTER ADD — drawer class:', gEl('specDrawer').className);
-        console.log('AFTER ADD — right:', window.getComputedStyle(gEl('specDrawer')).right);
-        console.log('AFTER ADD — display:', window.getComputedStyle(gEl('specDrawer')).display);
+        //console.log('AFTER ADD — drawer class:', gEl('specDrawer').className);
+        //console.log('AFTER ADD — right:', window.getComputedStyle(gEl('specDrawer')).right);
+        //console.log('AFTER ADD — display:', window.getComputedStyle(gEl('specDrawer')).display);
     } else {
         // desktop หรือ drawer elements ไม่พร้อม → ใช้ modal
         if (!drawerReady && isMobile()) {
@@ -372,8 +388,9 @@ function closeSpecModal(e) {
 
 /* ── Mobile drawer close ── */
 function closeDrawer() {
+    const dr = gEl('specDrawer');
+    dr.classList.remove('show');
     gEl('drawerOverlay').classList.remove('show');
-    gEl('specDrawer').classList.remove('show');
     document.body.style.overflow = '';
     document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
     gEl('rb4')?.classList.remove('active-badge');
@@ -410,14 +427,17 @@ function switchDrTab(btn, tabId) {
 }
 
 /* ── Add to cart from drawer ── */
-function addCartFromDrawer(e) {
+/* จาก Mobile Drawer — ใช้ currentSpecProduct (normalized) */
+async function addCartFromDrawer(e) {
     if (e) e.stopPropagation();
-    if (!activeProduct) return;
-    const qty = parseInt(gEl('drQty')?.value) || 1;
-    const ex = cart.find(c => c.id === activeProduct.id);
-    if (ex) ex.qty += qty; else cart.push({ ...activeProduct, qty });
-    updateCart();
-    toast(`🛒 เพิ่ม "${activeProduct.name.substring(0, 30)}…"`);
+
+    const p = currentSpecProduct;
+    if (!p) return;
+
+    const qty = parseInt($("#drQty").val()) || 1;
+    const btn = document.getElementById('drAddBtn');
+
+    await _callAddToCartAPI(p, qty, btn);
 }
 
 /* ── Escape key ── */
@@ -445,9 +465,7 @@ window.addEventListener('resize', () => {
     }
 });
 
-/* ════════════════════════════════
-   GROUP BY HELPER
-════════════════════════════════ */
+/* ═════════════════ GROUP BY HELPER ══════════════════ */
 function groupByLine(list, forceByLine) {
     const keyFn = p =>
         forceByLine ? (p.line || 'อื่นๆ') :
@@ -468,9 +486,7 @@ function nfScroll(rowId, dir) {
     if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
 }
 
-/* ════════════════════════════════
-   RENDER PRODUCTS
-════════════════════════════════ */
+/* ═════════════════ RENDER PRODUCTS ═══════════════════ */
 function renderProducts(list) {
     const sorted = applySorting(list);
     const pGrid = gEl('pGrid');
@@ -575,9 +591,7 @@ function renderProducts(list) {
     }).join('');
 }
 
-/* ════════════════════════════════
-   APPLY ALL FILTERS
-════════════════════════════════ */
+/* ══════════════ APPLY ALL FILTERS ══════════════════ */
 function applyAllFilters() {
     const q = gEl('partQ').value.toLowerCase().trim();
     const plK = Object.keys(chkState.pl);
@@ -586,7 +600,7 @@ function applyAllFilters() {
 
     const list = PRODUCTS.filter(p => {
         if (activeGroup && activeGroup !== 'สินค้าทุกประเภท' && activeGroup !== '0') {
-            if (p.cat !== activeGroup) return false;
+            //if (p.cat !== activeGroup) return false;
         }
         if (q) {
             let match = false;
@@ -604,9 +618,7 @@ function applyAllFilters() {
     renderProducts(list);
 }
 
-/* ════════════════════════════════
-   ACTIVE FILTER CHIPS
-════════════════════════════════ */
+/* ══════════════ ACTIVE FILTER CHIPS ══════════════════ */
 function renderActiveChips() {
     const chips = [];
     Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
@@ -625,9 +637,7 @@ function removeChip(t, v) {
     applyAllFilters();
 }
 
-/* ════════════════════════════════
-   §1 — VEHICLE FILTER
-════════════════════════════════ */
+/* ═════════════ §1 — VEHICLE FILTER ═════════════════════ */
 function vfChange(sel, key) {
     activateSec(1);
     if (sel.value) { vfData[key] = sel.value; } else { delete vfData[key]; }
@@ -676,9 +686,7 @@ function removeVfTag(k) {
     loadSearchProductVio();
 }
 
-/* ════════════════════════════════
-   §2 — SEARCH
-════════════════════════════════ */
+/* ═════════════ §2 — SEARCH ════════════════════ */
 function runSearch() {
     activateSec(2);
     showSkel();
@@ -689,54 +697,63 @@ function runSearch() {
     }, 500);
 }
 
-/* ════════════════════════════════
-   §3 — CHECKBOX FILTERS
-════════════════════════════════ */
+/* ══════════════ §3 — CHECKBOX FILTERS ══════════════════ */
 function toggleChk(label, type, val) {
     label.classList.toggle('checked');
-    if (label.classList.contains('checked')) { chkState[type][val] = true; }
-    else { delete chkState[type][val]; }
+    if (label.classList.contains('checked')) {
+        chkState[type][val] = true;
+        if (type === 'pl' || type === 'br') {
+            currentSort = 'part';
+            const sel = gEl('sortSelect');
+            if (sel) sel.value = 'part';
+        }
+    } else {
+        delete chkState[type][val];
+        const hasFilter = Object.keys(chkState.pl).length || Object.keys(chkState.br).length;
+        if (!hasFilter) {
+            currentSort = 'carModel';
+            const sel = gEl('sortSelect');
+            if (sel) sel.value = 'carModel';
+        }
+    }
     activateSec(3);
     showSkel();
-    setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
-}
 
+    // ✅ ถ้าเป็น pl ให้ sync ClickedMatchData ก่อน แล้วค่อย search
+    if (type === 'pl') {
+        ClickedMatchData();
+    }
+
+    searchProductByCategory().finally(() => {
+        hideSkel();
+        renderActiveChips();
+    });
+}
 function toggleFit(chip, val) {
     chip.classList.toggle('active');
     if (chip.classList.contains('active')) { fitState.add(val); }
     else { fitState.delete(val); }
     activateSec(3);
     showSkel();
-    setTimeout(() => { hideSkel(); applyAllFilters(); renderActiveChips(); }, 400);
+
+    searchProductByCategory().finally(() => {
+        hideSkel();
+        renderActiveChips();
+    });
 }
 
-/* ════════════════════════════════
-   CART
-════════════════════════════════ */
-function addCart(id, e) {
-    if (e) e.stopPropagation();
-    const p = PRODUCTS.find(x => x.id === id);
+/* ════════════════ CART ══════════════════ */
+/* จาก Product Card — ใช้ PRODUCTS[] + id integer */
+// ✅ แก้แล้ว
+async function addCart(productId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    const p = PRODUCTS.find(x => x.id === productId);
     if (!p) return;
-    const qty = parseInt(gEl('qty-' + id)?.value) || 1;
-    const ex = cart.find(c => c.id === id);
-    if (ex) ex.qty += qty; else cart.push({ ...p, qty, isBO: (p.stock ?? 99) === 0 });
-    updateCart();
-    const btn = gEl('cb-' + id);
-    const isBO = (p.stock ?? 99) === 0;
-    if (btn) {
-        btn.classList.add('added');
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Added';
-        setTimeout(() => {
-            btn.classList.remove('added');
-            btn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
-        }, 1500);
-    }
-    toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…" ฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`);
+    const qty = parseInt(gEl('qty-' + productId)?.value) || 1;
+    const btn = gEl('cb-' + productId);
+    await _callAddToCartAPI(p, qty, btn);
 }
-
-/* ════════════════════════════════
-   SKELETON
-════════════════════════════════ */
+/* ══════════════════ SKELETON ══════════════════ */
 function showSkel() {
     gEl('skelWrap').style.display = 'block';
     gEl('pGrid').style.display = 'none';
@@ -746,16 +763,12 @@ function hideSkel() {
     gEl('skelWrap').style.display = 'none';
 }
 
-/* ════════════════════════════════
-   BREADCRUMB
-════════════════════════════════ */
+/* ═══════════════ BREADCRUMB ════════════════ */
 function updateBreadcrumb(group, page) {
     gEl('bc3').textContent = page || 'Parts Catalog';
 }
 
-/* ════════════════════════════════
-   SECTION ACTIVATION
-════════════════════════════════ */
+/* ════════════════ SECTION ACTIVATION ═════════════════ */
 function activateSec(n) {
     [1, 2, 3, 4].forEach(i => {
         gEl('lb' + i)?.classList.remove('active-badge');
@@ -781,13 +794,41 @@ function pulseEl(id) {
     setTimeout(() => e.classList.remove('pulse'), 350);
 }
 
-/* ════════════════════════════════
-   CART PANEL
-════════════════════════════════ */
-function openCart() { document.getElementById('cartPanel').classList.add('open'); document.getElementById('cartOverlay').classList.add('open'); }
-function closeCart() { document.getElementById('cartPanel').classList.remove('open'); document.getElementById('cartOverlay').classList.remove('open'); }
-function clearCart() { cart = []; updateCart(); toast('🗑️ ล้างตะกร้าแล้ว', 'warn'); }
-function removeFromCart(id) { cart = cart.filter(c => c.id !== id); updateCart(); }
+/* ════════════════ CART PANEL ═════════════════ */
+function openCart() {
+    document.getElementById('cartPanel').classList.add('open');
+    document.getElementById('cartOverlay').classList.add('open');
+    // sync ล่าสุดจาก server ทุกครั้งที่เปิด
+    _fetchCartFromServer();
+}
+
+function closeCart() {
+    document.getElementById('cartPanel').classList.remove('open');
+    document.getElementById('cartOverlay').classList.remove('open');
+}
+
+/* removeFromCart — เรียก API delete แล้ว re-fetch */
+function removeFromCart(ordId) {
+    _deleteCartItem(ordId);
+}
+
+async function clearCart() {
+    if (!cart.length) return;
+    const ids = cart.map(c => c.id);
+    for (const ordId of ids) {
+        try {
+            await fetch('/Product/DeleteProductToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ ordId })
+            });
+        } catch (e) {
+            console.warn('clearCart delete error:', e);
+        }
+    }
+    await _fetchCartFromServer();
+    toast('🗑️ ล้างตะกร้าแล้ว', 'warn');
+}
 
 function changeQty(id, delta) {
     const item = cart.find(c => c.id === id);
@@ -799,34 +840,71 @@ function changeQty(id, delta) {
 function updateCart() {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const count = cart.reduce((s, c) => s + c.qty, 0);
-    g('cartCount').textContent = count;
-    g('cpCount').textContent = `${cart.length} ชิ้น`;
-    g('cpTotal').textContent = fmt(total);
-    const qsCart = g('qs-cart'); if (qsCart) qsCart.textContent = cart.length;
+
+    // badge / counter
+    const cartCountEl = g('cartCount');
+    if (cartCountEl) cartCountEl.textContent = count;
+
+    const cpCountEl = g('cpCount');
+    if (cpCountEl) cpCountEl.textContent = `${cart.length} ชิ้น`;
+
+    const cpTotalEl = g('cpTotal');
+    if (cpTotalEl) cpTotalEl.textContent = fmt(total);
+
+    const qsCartEl = g('qs-cart');
+    if (qsCartEl) qsCartEl.textContent = cart.length;
+
+    // render cpBody
+    const cpBody = g('cpBody');
+    if (!cpBody) return;
+
     if (!cart.length) {
-        g('cpBody').innerHTML = '<div class="cp-empty"><i class="bi bi-cart-x"></i><p>ยังไม่มีสินค้าในตะกร้า</p></div>';
+        cpBody.innerHTML = `
+            <div class="cp-empty">
+                <i class="bi bi-cart-x"></i>
+                <p>ยังไม่มีสินค้าในตะกร้า</p>
+            </div>`;
         return;
     }
-    g('cpBody').innerHTML = cart.map(c => `
-        <div class="cart-row">
-            <img src="${c.img}" alt="" onerror="this.onerror=null;this.src='/Content/images/no-image.png'">
+
+    cpBody.innerHTML = cart.map(c => `
+        <div class="cart-row" id="cr-${c.id}">
+            ${c.img
+            ? `<img src="${c.img}" alt="${c.name}"
+                        onerror="this.outerHTML='<div class=\\'no-imagecart\\'><i class=\\'bi bi-image\\'></i></div>'">`
+            : `<div class="no-imagecart"><i class="bi bi-image"></i></div>`}
             <div class="cr-info">
-                <div class="cr-name">${c.name}${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}</div>
+                <div class="cr-name">
+                    ${c.name}
+                    ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
+                </div>
                 <div class="cr-code">${c.code}</div>
                 <div class="cr-price">${fmt(c.price * c.qty)}</div>
             </div>
             <div class="cr-qty-ctrl">
-                <button class="qty-btn" onclick="changeQty(${c.id},-1)"><i class="bi bi-dash"></i></button>
+                <button class="qty-btn" onclick="changeQty('${c.id}',-1)">
+                    <i class="bi bi-dash"></i>
+                </button>
                 <span class="cr-qval">${c.qty}</span>
-                <button class="qty-btn" onclick="changeQty(${c.id},1)"><i class="bi bi-plus"></i></button>
+                <button class="qty-btn" onclick="changeQty('${c.id}',1)">
+                    <i class="bi bi-plus"></i>
+                </button>
             </div>
-            <button class="cr-del" onclick="removeFromCart(${c.id})"><i class="bi bi-x-lg"></i></button>
+            <button class="cr-del" onclick="removeFromCart('${c.id}')">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>`).join('');
+
+    // ถ้า Order Summary เปิดอยู่ ให้ re-render ด้วย
+    const osOverlay = g('osOverlay');
+    if (osOverlay && osOverlay.classList.contains('open')) {
+        renderOrderSummary();
+        updateOsSelection();
+    }
 }
 
-/* ════════════════════════════════
-   TOAST
-════════════════════════════════ */
+
+/* ═════════════ TOAST ═══════════════ */
 function toast(msg, type = '') {
     const el = document.createElement('div');
     el.className = 'toast-item' + (type === 'warn' ? ' warn' : '');
@@ -838,9 +916,7 @@ function toast(msg, type = '') {
     }, 2500);
 }
 
-/* ════════════════════════════════
-   AUTOCOMPLETE
-════════════════════════════════ */
+/* ══════════════ AUTOCOMPLETE ════════════════ */
 function buildSuggestions(q) {
     if (!q || q.length < 1) return [];
     const qLow = q.toLowerCase().trim();
@@ -1079,23 +1155,21 @@ function acUpdateFocusSidebar(items) {
     }
 }
 
-/* ════════════════════════════════
-   MOBILE SIDEBAR
-════════════════════════════════ */
-function toggleMobSidebar() {
-    const sb = gEl('sidebar');
-    const ov = gEl('mobOverlay');
-    const ham = gEl('mobHamburger');
-    const isOpen = sb.classList.toggle('mob-open');
-    ov.classList.toggle('show', isOpen);
-    ham.classList.toggle('open', isOpen);
-    ham.setAttribute('aria-expanded', isOpen);
-}
-gEl('mobOverlay').addEventListener('click', toggleMobSidebar);
+/* ═════════════ MOBILE SIDEBAR ═══════════════ */
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const btn = document.getElementById('mobHamburger');
+    const ov = document.getElementById('mobOverlay');
 
-/* ════════════════════════════════
-   COLLAPSE SYNC
-════════════════════════════════ */
+    const open = sb.classList.toggle('mob-open');
+
+    btn.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    ov.classList.toggle('visible', open);
+}
+gEl('mobOverlay').addEventListener('click', toggleSidebar);
+
+/* ═════════════ COLLAPSE SYNC ═════════════════ */
 document.querySelectorAll('.sec-hd').forEach(hd => {
     const t = hd.getAttribute('data-bs-target');
     const el = document.querySelector(t);
@@ -1108,19 +1182,39 @@ document.querySelectorAll('.sec-hd').forEach(hd => {
 gEl('partQ').addEventListener('focus', () => { if (gEl('partQ').value.trim()) acInputSidebar(gEl('partQ')); });
 gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()) acInput(gEl('headerQ')); });
 
-/* ════════════════════════════════
-   ORDER SUMMARY
-════════════════════════════════ */
+/* ══════════════ ORDER SUMMARY ═══════════════ */
 const DISCOUNT_RATE = 0.075;
 const VAT_RATE = 0.07;
 
-function openOrderSummary() {
-    if (!cart.length) { toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn'); return; }
+/* ════════════════════════════════════════════════════════
+   ORDER SUMMARY — ต้องใช้ข้อมูลเดียวกับ cart[]
+════════════════════════════════════════════════════════ */
+async function openOrderSummary(clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    if (!cart.length) {
+        // ลองดึงจาก server ก่อน เผื่อ badge ยังไม่ sync
+        await _fetchCartFromServer();
+        if (!cart.length) {
+            toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn');
+            return;
+        }
+    } else {
+        // เปิด OS → fetch ล่าสุดเสมอ
+        await _fetchCartFromServer();
+    }
+
     renderOrderSummary();
     closeCart();
-    gEl('osOverlay').classList.add('open');
+    g('osOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
+
+/* _loadCartFromServer — เก็บ backward compat ชื่อเดิม
+   ทุกที่ที่เคยเรียก _loadCartFromServer() ยังใช้ได้ */
+async function _loadCartFromServer() {
+    await _fetchCartFromServer();
+}
+
 
 function closeOrderSummary() {
     gEl('osOverlay').classList.remove('open');
@@ -1131,40 +1225,65 @@ function osOverlayClick(e) {
     if (e.target === gEl('osOverlay')) closeOrderSummary();
 }
 
+/* ════════════════════════════════════════════════════════
+   renderOrderSummary — ใช้ cart[] ที่ sync มาจาก server
+════════════════════════════════════════════════════════ */
 function renderOrderSummary() {
-    const list = gEl('osProductList');
+    const list = g('osProductList');
+    if (!list) return;
+
     list.innerHTML = cart.map(c => `
         <div class="os-item" id="osItem-${c.id}">
             <label class="os-chk-wrap" onclick="event.stopPropagation()">
-                <input type="checkbox" class="os-item-chk" data-id="${c.id}" checked onchange="updateOsSelection()">
+                <input type="checkbox" class="os-item-chk" data-id="${c.id}" checked
+                       onchange="updateOsSelection()">
                 <span class="os-chk-box"></span>
             </label>
-            <img class="os-thumb" src="${c.img}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <img class="os-thumb" src="${c.img}" alt="${c.name}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="os-thumb-ph" style="display:none">🔧</div>
             <div class="os-info">
-                <div class="os-name">${c.name}${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}</div>
+                <div class="os-name">
+                    ${c.name}
+                    ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
+                </div>
                 <div class="os-sku">${c.code}</div>
                 <div class="os-price">${fmt(c.price)}</div>
             </div>
             <div class="os-stepper">
-                <button class="os-step-btn" onclick="osChangeQty(${c.id},-1)">−</button>
+                <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)" disabled style="opacity:0.3">−</button>
                 <input class="os-step-input" type="number" value="${c.qty}" min="1"
-                       onchange="osSetQty(${c.id},this.value)" oninput="osSetQty(${c.id},this.value)">
-                <button class="os-step-btn" onclick="osChangeQty(${c.id},1)">+</button>
+                       onchange="osSetQty('${c.id}',this.value)"
+                       oninput="osSetQty('${c.id}',this.value)">
+                <button class="os-step-btn" onclick="osChangeQty('${c.id}',1)">+</button>
             </div>
-            <button class="os-del-btn" onclick="osRemoveItem(${c.id})"><i class="bi bi-x-lg"></i></button>
+            <button class="os-del-btn" onclick="osRemoveItem('${c.id}')">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>`).join('');
+
     updateOsSelection();
 }
-
+function osChangeQty(ordId, delta) {
+    if (delta < 0) {
+        toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
+        return;
+    }
+    changeQty(ordId, delta);
+}
 function updateOsSelection() {
     const chks = document.querySelectorAll('.os-item-chk');
     const allChecked = [...chks].every(c => c.checked);
-    const selectAllChk = gEl('osSelectAll');
+    const selectAllChk = g('osSelectAll');
     if (selectAllChk) selectAllChk.checked = allChecked;
 
-    const selectedIds = [...chks].filter(c => c.checked).map(c => parseInt(c.dataset.id));
-    const selectedItems = cart.filter(c => selectedIds.includes(c.id));
+    // ✅ ใช้ string เปรียบเทียบ ไม่ใช้ parseInt
+    const selectedIds = [...chks]
+        .filter(c => c.checked)
+        .map(c => c.dataset.id);  // string เหมือน ordId
+
+    const selectedItems = cart.filter(c => selectedIds.includes(String(c.id)));
+
     const totalQty = selectedItems.reduce((s, c) => s + c.qty, 0);
     const skuCount = selectedItems.length;
     const subtotal = selectedItems.reduce((s, c) => s + c.price * c.qty, 0);
@@ -1173,48 +1292,96 @@ function updateOsSelection() {
     const vat = net * VAT_RATE;
     const total = net + vat;
 
-    gEl('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
-    gEl('osQtyCount').textContent = totalQty;
-    gEl('osSkuCount').textContent = skuCount;
-    gEl('osDiscount').textContent = '−' + discount.toFixed(2);
-    gEl('osNet').textContent = net.toFixed(2);
-    gEl('osVat').textContent = vat.toFixed(2);
-    gEl('osTotal').textContent = fmt(total);
+    g('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
+    g('osQtyCount').textContent = totalQty;
+    g('osSkuCount').textContent = skuCount;
+    g('osDiscount').textContent = '−' + discount.toFixed(2);
+    g('osNet').textContent = net.toFixed(2);
+    g('osVat').textContent = vat.toFixed(2);
+    g('osTotal').textContent = fmt(total);
 }
 
 function osToggleSelectAll(chk) {
     document.querySelectorAll('.os-item-chk').forEach(c => c.checked = chk.checked);
     updateOsSelection();
 }
-function osChangeQty(id, delta) {
-    const item = cart.find(c => c.id === id);
+/* changeQty — อัปเดตใน local แล้ว re-add ผ่าน API
+   หมายเหตุ: ถ้า backend มี UpdateQty endpoint ให้เปลี่ยนตรงนี้ */
+async function changeQty(ordId, delta) {
+    const item = cart.find(c => c.id === ordId);
     if (!item) return;
-    item.qty = Math.max(1, item.qty + delta);
+
+    const newQty = Math.max(1, item.qty + delta);
+    if (newQty === item.qty) return;
+
+    // optimistic update UI
+    item.qty = newQty;
     updateCart();
-    const input = document.querySelector(`#osItem-${id} .os-step-input`);
-    if (input) input.value = item.qty;
-    updateOsSelection();
+
+    try {
+        const cuscode = window.APP_SESSION?.cuscode || '';
+        const company = window.APP_SESSION?.company || 'TAC';
+
+        if (delta > 0) {
+            // ✅ เพิ่ม → ส่งแค่ delta ที่ต้องการเพิ่ม
+            await fetch('/Product/AddProductToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    Cuscode: cuscode,
+                    Stkcode: item.code,
+                    Company: company,
+                    Price: item.price.toString(),
+                    Qty: Math.abs(delta).toString(), // ✅ ส่งแค่จำนวนที่เพิ่ม
+                    BackOrder: item.isBO ? '1' : '0'
+                })
+            });
+        } else {
+            // ลด → รอ Delete API พร้อม
+            toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
+            item.qty = item.qty - delta; // rollback
+            updateCart();
+            return;
+        }
+
+    } catch (err) {
+        console.error('changeQty error:', err);
+        // rollback
+        item.qty = item.qty - delta;
+        updateCart();
+    }
+
+    await _fetchCartFromServer(true);
 }
-function osSetQty(id, val) {
-    const item = cart.find(c => c.id === id);
+/* osSetQty — set ค่า qty โดยตรง */
+async function osSetQty(ordId, val) {
+    const item = cart.find(c => c.id === ordId);
     if (!item) return;
     const n = parseInt(val);
-    if (!isNaN(n) && n >= 1) { item.qty = n; updateCart(); updateOsSelection(); }
+    if (isNaN(n) || n < 1) return;
+    const delta = n - item.qty;
+    if (delta === 0) return;
+    await changeQty(ordId, delta);
 }
-function osRemoveItem(id) {
-    const row = gEl('osItem-' + id);
+/* osRemoveItem — animate แล้วเรียก delete API */
+function osRemoveItem(ordId) {
+    const row = g('osItem-' + ordId);
     if (row) {
         row.style.transition = 'opacity .18s, transform .18s';
         row.style.opacity = '0';
         row.style.transform = 'translateX(10px)';
-        setTimeout(() => {
-            cart = cart.filter(c => c.id !== id);
-            updateCart();
-            if (!cart.length) { closeOrderSummary(); toast('🗑️ ตะกร้าว่างแล้ว', 'warn'); return; }
-            renderOrderSummary();
+        setTimeout(async () => {
+            await _deleteCartItem(ordId);
+            if (!cart.length) {
+                closeOrderSummary();
+                toast('🗑️ ตะกร้าว่างแล้ว', 'warn');
+            }
         }, 200);
+    } else {
+        _deleteCartItem(ordId);
     }
 }
+
 function osSelectAddr(el) {
     gEl('osAddrList').querySelectorAll('.os-addr-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
@@ -1336,9 +1503,7 @@ function setupDropdown(triggerId, dropdownId) {
 }
 setupDropdown('trigger1', 'dropdown1');
 
-/* ════════════════════════════════
-   API HELPER
-════════════════════════════════ */
+/* ══════════════ API HELPER ══════════════════ */
 async function ajaxCallApiService(url, params) {
     const response = await fetch(`${url}?${new URLSearchParams(params)}`, { method: 'GET' });
     if (!response.ok) {
@@ -1349,10 +1514,7 @@ async function ajaxCallApiService(url, params) {
     return await response.json();
 }
 
-
-/* ════════════════════════════════
-   LOADING FILTER SELECTOR
-════════════════════════════════ */
+/* ═══════════LOADING FILTER SELECTOR ═══════════════════ */
 $(document).ready(function () {
     GetProductGroup();
     GetBrandS();
@@ -1391,10 +1553,11 @@ function RenderBrands(brands) {
         const $label = $('<label>')
             .addClass('chk-item')
             .attr('data-id', brand.id)
+            .attr('data-name', brand.name) 
             .attr('data-filter', 'filterProductBrandId')
             .toggleClass('br-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
-            .attr('onclick', `toggleChk(this,'br','${brand.name}'); `);
+            .attr('onclick', `toggleChk(this,'br','${brand.name}');`);
 
         $label.append(
             $('<div>').addClass('chk-box'),
@@ -1405,15 +1568,11 @@ function RenderBrands(brands) {
         $container.append($label);
     });
 }
-
-
 //----------- ProductGroup ----------------//
 const FIXED_GROUPS = [
     { id: '0', icon: 'bi-grid-3x3-gap', label: 'สินค้าทุกประเภท', isClear: true },
     { id: '99', icon: 'bi-stars', label: 'Universal' },
 ];
-
-
 
 function GetProductGroup() {
     $.ajax({
@@ -1430,15 +1589,15 @@ function GetProductGroup() {
                 });
 
                 GROUPS = [...FIXED_GROUPS, ...apiGroups];
-                renderBB();
+                renderBottomBar();
             } else {
                 console.error("API Error:", result.Message);
-                renderBB();
+                renderBottomBar();
             }
         },
         error: function (xhr, status, error) {
             console.error(error);
-            renderBB();
+            renderBottomBar();
         }
     });
 }
@@ -1482,28 +1641,18 @@ function RenderProductionLines(lines) {
             .attr('data-filter', 'filterProductLineId')
             .toggleClass('pl-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
-            .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}'); ClickedMatchData();`);
+            .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}');`);
 
         $label.append(
             $('<div>').addClass('chk-box'),
             $('<span>').addClass('chk-label').text(line.prodlinename),
             $('<span>').addClass('chk-count').text(line.count ?? 0)
         );
-
         $container.append($label);
     });
-
-
 }
 function ClickedMatchData() {
     const grpId = window.selectedGroupId || null;
-
-    const plIds = Object.keys(chkState.pl);
-    const brNames = Object.keys(chkState.br);
-
-    console.log("Group:", grpId);
-    console.log("PL:", plIds);
-    console.log("Brand:", brNames);
 
     $.ajax({
         url: '/Master/GetMatchProductionGroup',
@@ -1511,10 +1660,8 @@ function ClickedMatchData() {
         data: { prodgrpid: grpId },
         success: function (result) {
             if (result.IsSuccess) {
-                console.log("AllowedIds:", result.Data);
                 const allowedIds = (result.Data || []).map(x => x.prodlineid.toString());
-                FilterProductionLines(allowedIds);
-
+                FilterProductionLines(allowedIds); // ✅ แค่ filter sidebar
             } else {
                 console.error("API Error:", result.Message);
             }
@@ -1524,7 +1671,6 @@ function ClickedMatchData() {
         }
     });
 }
-
 function FilterProductionLines(allowedIds) {
     currentAllowed.pl = allowedIds;
 
@@ -1572,3 +1718,159 @@ function toggleSec(hd, targetId) {
         setTimeout(() => { body.style.maxHeight = ''; }, 260);
     }
 }
+function toggleCompany(btn) {
+    btn.classList.toggle('active');
+    const isActive = btn.classList.contains('active');
+    btn.style.opacity = isActive ? '1' : '0.5';
+}
+
+/* Extend the existing keydown listener to also close sidebar */
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const sb = document.getElementById('sidebar');
+    if (sb && sb.classList.contains('open')) toggleSidebar();
+});
+
+function updateFilterCounts() {
+    // อัปเดต count Brand
+    $("#brList .chk-item").each(function () {
+        const brandName = $(this).attr('data-name');
+        const count = PRODUCTS.filter(p => p.brand === brandName).length;
+        $(this).find('.chk-count').text(count);
+    });
+
+    // อัปเดต count Product Line
+    $("#plList .chk-item").each(function () {
+        const lineName = $(this).attr('data-name');
+        const count = PRODUCTS.filter(p => p.line === lineName).length;
+        $(this).find('.chk-count').text(count);
+    });
+
+    // ✅ Sort Brand จากมากไปน้อย
+    const $brList = $("#brList");
+    $brList.find('.chk-item').sort(function (a, b) {
+        const countA = parseInt($(a).find('.chk-count').text()) || 0;
+        const countB = parseInt($(b).find('.chk-count').text()) || 0;
+        return countB - countA;
+    }).appendTo($brList);
+
+    // ✅ Sort Product Line จากมากไปน้อย
+    const $plList = $("#plList");
+    $plList.find('.chk-item').sort(function (a, b) {
+        const countA = parseInt($(a).find('.chk-count').text()) || 0;
+        const countB = parseInt($(b).find('.chk-count').text()) || 0;
+        return countB - countA;
+    }).appendTo($plList);
+
+    // ✅ Re-apply SHOW_LIMIT หลัง sort — แสดงแค่ 5 อันดับแรกที่มี count > 0
+    const SHOW_LIMIT = 5;
+
+    [
+        { listId: '#brList', extraClass: 'br-extra' },
+        { listId: '#plList', extraClass: 'pl-extra' }
+    ].forEach(({ listId, extraClass }) => {
+        let visible = 0;
+        $(`${listId} .chk-item`).each(function () {
+            const count = parseInt($(this).find('.chk-count').text()) || 0;
+            if (visible < SHOW_LIMIT && count > 0) {
+                $(this).show().removeClass(extraClass);
+                visible++;
+            } else {
+                $(this).hide().addClass(extraClass);
+            }
+        });
+    });
+}
+
+/* ════════════════════════════════════════════════════════
+   CART — SINGLE SOURCE OF TRUTH
+   cart[] ถูก populate จาก server เท่านั้น
+   Primary key = ordId (string จาก API)
+════════════════════════════════════════════════════════ */
+
+/* ── Map API response row → cart item ── */
+function _mapCartItem(item) {
+    return {
+        id: item.ordId || '',          // PK ใช้ ordId ตลอด
+        code: item.stkcod || '—',
+        name: item.stkdes || '—',
+        price: parseFloat(item.price) || 0,
+        qty: parseInt(item.qty) || 1,
+        img: item.imagePath || '',
+        brand: item.stkgrp || '—',
+        isBO: item.backOrder === '1',
+        uom: item.uom || '',
+        amt: parseFloat(item.amt) || 0
+    };
+}
+
+/* ── Fetch cart จาก server แล้ว render ทุก view ── */
+async function _fetchCartFromServer(forceRefresh = false) {
+    try {
+        const url = forceRefresh
+            ? `/Product/GetProductToCart?t=${Date.now()}`  // ✅ bust cache
+            : '/Product/GetProductToCart';
+
+        const res = await fetch(url, { method: 'GET' });
+        const json = await res.json();
+
+        if (json.IsSuccess && Array.isArray(json.Data) && json.Data.length > 0) {
+            cart = json.Data.map(_mapCartItem);
+        } else {
+            cart = [];
+        }
+    } catch (err) {
+        console.warn('_fetchCartFromServer failed:', err);
+    }
+
+    updateCart();
+}
+/* ── Delete สินค้าจาก server แล้ว re-fetch ── */
+async function _deleteCartItem(ordId) {
+    if (!ordId) return;
+    try {
+        const res = await fetch('/Product/DeleteProductToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                ordId,
+                username: window.APP_SESSION?.username || ''
+            })
+        });
+        const json = await res.json();
+        if (!json.IsSuccess) {
+            toast(`❌ ลบไม่สำเร็จ: ${json.Message || ''}`, 'warn');
+            await _fetchCartFromServer();
+            return;
+        }
+        // ✅ ลบสำเร็จ → fetch ใหม่โดยไม่ใช้ cache
+        await _fetchCartFromServer(true);
+
+    } catch (err) {
+        console.error('_deleteCartItem error:', err);
+        toast('❌ เกิดข้อผิดพลาดในการลบสินค้า', 'warn');
+        await _fetchCartFromServer();
+    }
+}
+
+function TestAPIADD() {
+    $.ajax({
+        //url: 'AddProductToCart, Product',
+        url: '/Product/AddProductToCart',
+        data: {
+            Cuscode: '110Z0001O',
+            Stkcode: 'DF7163',
+            Company: 'TAC',
+            Price: '50',
+            Qty: '6'
+        },
+        type: "POST",
+        dataType: "JSON",
+        success: function (data) {
+            console.log('succ:'+ data.IsSuccess);
+            console.log('succ:' + data.Data);
+            console.log('succ:' + data.ResponseString);
+            console.log('succ:'+ data.IsSuccess);
+        }
+    });
+    }
