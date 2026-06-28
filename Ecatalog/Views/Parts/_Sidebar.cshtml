@@ -170,23 +170,6 @@
 </aside>
 
 <script>
-
-    $(document).ready(async function () {
-        //get dropdown
-        await Promise.all([
-            loadMasterMarketDefault(1),
-            loadMasterMarketDefault(2),
-            loadMasterMarketDefault(3)
-        ]);
-
-    });
-
-    $('#yearTo').on('input', function () {
-        const currentYear = new Date().getFullYear();
-        if (this.value > currentYear) {
-            this.value = currentYear;
-        }
-    });
     //get master
     async function loadMasterMarketDefault(moduleId) {
         let selectId = "marketsegId";

@@ -40,6 +40,9 @@ window.addEventListener('DOMContentLoaded', () => {
     renderBottomBar();
     renderProducts(PRODUCTS);
     setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
+
+    // ✅ โหลด cart จาก server เมื่อเปิดหน้า
+    _fetchCartFromServer();
 });
 
 /* ══════════════ API: MAP RESPONSE → FLAT PRODUCTS ═══════════════ */
@@ -254,7 +257,7 @@ function buildSpecHTML(p) {
                 <div class="spec-price">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
                 <input type="number" class="qty" value="1" min="1" max="99" onclick="event.stopPropagation()">
                 <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
-                        style="max-width:160px" onclick="addCart(${p.id},event)">
+                        style="max-width:160px" onclick="addCartFromModal(${p.id}, event)">
                     <i class="bi ${(p.stock ?? 99) === 0 ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
                     ${(p.stock ?? 99) === 0 ? 'จอง (BO)' : 'เพิ่ม'}
                 </button>
@@ -281,12 +284,20 @@ function buildSpecHTML(p) {
 
 const s = window.getComputedStyle(drawer); 
 
-async function openDrawer(id, e) {
-    if (e) e.stopPropagation();
-    selCard(id);
-    const p = PRODUCTS.find(x => x.id === id);
+async function openDrawer(productId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    selCard(productId);
+
+    const p = PRODUCTS.find(x => x.id === productId);
     if (!p) return;
+
     activeProduct = p;
+    if (typeof _normalizeProduct === 'function') {
+        currentSpecProduct = _normalizeProduct(p);
+    } else {
+        currentSpecProduct = p;
+    }
+
     activateSec(4);
     updateBreadcrumb(activeGroup, p.name);
     window._currentStkcode = p.code;
@@ -416,14 +427,17 @@ function switchDrTab(btn, tabId) {
 }
 
 /* ── Add to cart from drawer ── */
-function addCartFromDrawer(e) {
+/* จาก Mobile Drawer — ใช้ currentSpecProduct (normalized) */
+async function addCartFromDrawer(e) {
     if (e) e.stopPropagation();
-    if (!activeProduct) return;
-    const qty = parseInt(gEl('drQty')?.value) || 1;
-    const ex = cart.find(c => c.id === activeProduct.id);
-    if (ex) ex.qty += qty; else cart.push({ ...activeProduct, qty });
-    updateCart();
-    toast(`🛒 เพิ่ม "${activeProduct.name.substring(0, 30)}…"`);
+
+    const p = currentSpecProduct;
+    if (!p) return;
+
+    const qty = parseInt($("#drQty").val()) || 1;
+    const btn = document.getElementById('drAddBtn');
+
+    await _callAddToCartAPI(p, qty, btn);
 }
 
 /* ── Escape key ── */
@@ -729,27 +743,16 @@ function toggleFit(chip, val) {
 }
 
 /* ════════════════ CART ══════════════════ */
-function addCart(id, e) {
-    if (e) e.stopPropagation();
-    const p = PRODUCTS.find(x => x.id === id);
+/* จาก Product Card — ใช้ PRODUCTS[] + id integer */
+// ✅ แก้แล้ว
+async function addCart(productId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    const p = PRODUCTS.find(x => x.id === productId);
     if (!p) return;
-    const qty = parseInt(gEl('qty-' + id)?.value) || 1;
-    const ex = cart.find(c => c.id === id);
-    if (ex) ex.qty += qty; else cart.push({ ...p, qty, isBO: (p.stock ?? 99) === 0 });
-    updateCart();
-    const btn = gEl('cb-' + id);
-    const isBO = (p.stock ?? 99) === 0;
-    if (btn) {
-        btn.classList.add('added');
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Added';
-        setTimeout(() => {
-            btn.classList.remove('added');
-            btn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
-        }, 1500);
-    }
-    toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…" ฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`);
+    const qty = parseInt(gEl('qty-' + productId)?.value) || 1;
+    const btn = gEl('cb-' + productId);
+    await _callAddToCartAPI(p, qty, btn);
 }
-
 /* ══════════════════ SKELETON ══════════════════ */
 function showSkel() {
     gEl('skelWrap').style.display = 'block';
@@ -792,10 +795,40 @@ function pulseEl(id) {
 }
 
 /* ════════════════ CART PANEL ═════════════════ */
-function openCart() { document.getElementById('cartPanel').classList.add('open'); document.getElementById('cartOverlay').classList.add('open'); }
-function closeCart() { document.getElementById('cartPanel').classList.remove('open'); document.getElementById('cartOverlay').classList.remove('open'); }
-function clearCart() { cart = []; updateCart(); toast('🗑️ ล้างตะกร้าแล้ว', 'warn'); }
-function removeFromCart(id) { cart = cart.filter(c => c.id !== id); updateCart(); }
+function openCart() {
+    document.getElementById('cartPanel').classList.add('open');
+    document.getElementById('cartOverlay').classList.add('open');
+    // sync ล่าสุดจาก server ทุกครั้งที่เปิด
+    _fetchCartFromServer();
+}
+
+function closeCart() {
+    document.getElementById('cartPanel').classList.remove('open');
+    document.getElementById('cartOverlay').classList.remove('open');
+}
+
+/* removeFromCart — เรียก API delete แล้ว re-fetch */
+function removeFromCart(ordId) {
+    _deleteCartItem(ordId);
+}
+
+async function clearCart() {
+    if (!cart.length) return;
+    const ids = cart.map(c => c.id);
+    for (const ordId of ids) {
+        try {
+            await fetch('/Product/DeleteProductToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ ordId })
+            });
+        } catch (e) {
+            console.warn('clearCart delete error:', e);
+        }
+    }
+    await _fetchCartFromServer();
+    toast('🗑️ ล้างตะกร้าแล้ว', 'warn');
+}
 
 function changeQty(id, delta) {
     const item = cart.find(c => c.id === id);
@@ -807,30 +840,69 @@ function changeQty(id, delta) {
 function updateCart() {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const count = cart.reduce((s, c) => s + c.qty, 0);
-    g('cartCount').textContent = count;
-    g('cpCount').textContent = `${cart.length} ชิ้น`;
-    g('cpTotal').textContent = fmt(total);
-    const qsCart = g('qs-cart'); if (qsCart) qsCart.textContent = cart.length;
+
+    // badge / counter
+    const cartCountEl = g('cartCount');
+    if (cartCountEl) cartCountEl.textContent = count;
+
+    const cpCountEl = g('cpCount');
+    if (cpCountEl) cpCountEl.textContent = `${cart.length} ชิ้น`;
+
+    const cpTotalEl = g('cpTotal');
+    if (cpTotalEl) cpTotalEl.textContent = fmt(total);
+
+    const qsCartEl = g('qs-cart');
+    if (qsCartEl) qsCartEl.textContent = cart.length;
+
+    // render cpBody
+    const cpBody = g('cpBody');
+    if (!cpBody) return;
+
     if (!cart.length) {
-        g('cpBody').innerHTML = '<div class="cp-empty"><i class="bi bi-cart-x"></i><p>ยังไม่มีสินค้าในตะกร้า</p></div>';
+        cpBody.innerHTML = `
+            <div class="cp-empty">
+                <i class="bi bi-cart-x"></i>
+                <p>ยังไม่มีสินค้าในตะกร้า</p>
+            </div>`;
         return;
     }
-    g('cpBody').innerHTML = cart.map(c => `
-        <div class="cart-row">
-            <img src="${c.img}" alt="" onerror="this.onerror=null;this.src='/Content/images/no-image.png'">
+
+    cpBody.innerHTML = cart.map(c => `
+        <div class="cart-row" id="cr-${c.id}">
+            ${c.img
+            ? `<img src="${c.img}" alt="${c.name}"
+                        onerror="this.outerHTML='<div class=\\'no-imagecart\\'><i class=\\'bi bi-image\\'></i></div>'">`
+            : `<div class="no-imagecart"><i class="bi bi-image"></i></div>`}
             <div class="cr-info">
-                <div class="cr-name">${c.name}${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}</div>
+                <div class="cr-name">
+                    ${c.name}
+                    ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
+                </div>
                 <div class="cr-code">${c.code}</div>
                 <div class="cr-price">${fmt(c.price * c.qty)}</div>
             </div>
             <div class="cr-qty-ctrl">
-                <button class="qty-btn" onclick="changeQty(${c.id},-1)"><i class="bi bi-dash"></i></button>
+                <button class="qty-btn" onclick="changeQty('${c.id}',-1)">
+                    <i class="bi bi-dash"></i>
+                </button>
                 <span class="cr-qval">${c.qty}</span>
-                <button class="qty-btn" onclick="changeQty(${c.id},1)"><i class="bi bi-plus"></i></button>
+                <button class="qty-btn" onclick="changeQty('${c.id}',1)">
+                    <i class="bi bi-plus"></i>
+                </button>
             </div>
-            <button class="cr-del" onclick="removeFromCart(${c.id})"><i class="bi bi-x-lg"></i></button>
+            <button class="cr-del" onclick="removeFromCart('${c.id}')">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>`).join('');
+
+    // ถ้า Order Summary เปิดอยู่ ให้ re-render ด้วย
+    const osOverlay = g('osOverlay');
+    if (osOverlay && osOverlay.classList.contains('open')) {
+        renderOrderSummary();
+        updateOsSelection();
+    }
 }
+
 
 /* ═════════════ TOAST ═══════════════ */
 function toast(msg, type = '') {
@@ -1114,13 +1186,35 @@ gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()
 const DISCOUNT_RATE = 0.075;
 const VAT_RATE = 0.07;
 
-function openOrderSummary() {
-    if (!cart.length) { toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn'); return; }
+/* ════════════════════════════════════════════════════════
+   ORDER SUMMARY — ต้องใช้ข้อมูลเดียวกับ cart[]
+════════════════════════════════════════════════════════ */
+async function openOrderSummary(clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+    if (!cart.length) {
+        // ลองดึงจาก server ก่อน เผื่อ badge ยังไม่ sync
+        await _fetchCartFromServer();
+        if (!cart.length) {
+            toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn');
+            return;
+        }
+    } else {
+        // เปิด OS → fetch ล่าสุดเสมอ
+        await _fetchCartFromServer();
+    }
+
     renderOrderSummary();
     closeCart();
-    gEl('osOverlay').classList.add('open');
+    g('osOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
+
+/* _loadCartFromServer — เก็บ backward compat ชื่อเดิม
+   ทุกที่ที่เคยเรียก _loadCartFromServer() ยังใช้ได้ */
+async function _loadCartFromServer() {
+    await _fetchCartFromServer();
+}
+
 
 function closeOrderSummary() {
     gEl('osOverlay').classList.remove('open');
@@ -1131,40 +1225,65 @@ function osOverlayClick(e) {
     if (e.target === gEl('osOverlay')) closeOrderSummary();
 }
 
+/* ════════════════════════════════════════════════════════
+   renderOrderSummary — ใช้ cart[] ที่ sync มาจาก server
+════════════════════════════════════════════════════════ */
 function renderOrderSummary() {
-    const list = gEl('osProductList');
+    const list = g('osProductList');
+    if (!list) return;
+
     list.innerHTML = cart.map(c => `
         <div class="os-item" id="osItem-${c.id}">
             <label class="os-chk-wrap" onclick="event.stopPropagation()">
-                <input type="checkbox" class="os-item-chk" data-id="${c.id}" checked onchange="updateOsSelection()">
+                <input type="checkbox" class="os-item-chk" data-id="${c.id}" checked
+                       onchange="updateOsSelection()">
                 <span class="os-chk-box"></span>
             </label>
-            <img class="os-thumb" src="${c.img}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <img class="os-thumb" src="${c.img}" alt="${c.name}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div class="os-thumb-ph" style="display:none">🔧</div>
             <div class="os-info">
-                <div class="os-name">${c.name}${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}</div>
+                <div class="os-name">
+                    ${c.name}
+                    ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
+                </div>
                 <div class="os-sku">${c.code}</div>
                 <div class="os-price">${fmt(c.price)}</div>
             </div>
             <div class="os-stepper">
-                <button class="os-step-btn" onclick="osChangeQty(${c.id},-1)">−</button>
+                <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)" disabled style="opacity:0.3">−</button>
                 <input class="os-step-input" type="number" value="${c.qty}" min="1"
-                       onchange="osSetQty(${c.id},this.value)" oninput="osSetQty(${c.id},this.value)">
-                <button class="os-step-btn" onclick="osChangeQty(${c.id},1)">+</button>
+                       onchange="osSetQty('${c.id}',this.value)"
+                       oninput="osSetQty('${c.id}',this.value)">
+                <button class="os-step-btn" onclick="osChangeQty('${c.id}',1)">+</button>
             </div>
-            <button class="os-del-btn" onclick="osRemoveItem(${c.id})"><i class="bi bi-x-lg"></i></button>
+            <button class="os-del-btn" onclick="osRemoveItem('${c.id}')">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>`).join('');
+
     updateOsSelection();
 }
-
+function osChangeQty(ordId, delta) {
+    if (delta < 0) {
+        toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
+        return;
+    }
+    changeQty(ordId, delta);
+}
 function updateOsSelection() {
     const chks = document.querySelectorAll('.os-item-chk');
     const allChecked = [...chks].every(c => c.checked);
-    const selectAllChk = gEl('osSelectAll');
+    const selectAllChk = g('osSelectAll');
     if (selectAllChk) selectAllChk.checked = allChecked;
 
-    const selectedIds = [...chks].filter(c => c.checked).map(c => parseInt(c.dataset.id));
-    const selectedItems = cart.filter(c => selectedIds.includes(c.id));
+    // ✅ ใช้ string เปรียบเทียบ ไม่ใช้ parseInt
+    const selectedIds = [...chks]
+        .filter(c => c.checked)
+        .map(c => c.dataset.id);  // string เหมือน ordId
+
+    const selectedItems = cart.filter(c => selectedIds.includes(String(c.id)));
+
     const totalQty = selectedItems.reduce((s, c) => s + c.qty, 0);
     const skuCount = selectedItems.length;
     const subtotal = selectedItems.reduce((s, c) => s + c.price * c.qty, 0);
@@ -1173,48 +1292,96 @@ function updateOsSelection() {
     const vat = net * VAT_RATE;
     const total = net + vat;
 
-    gEl('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
-    gEl('osQtyCount').textContent = totalQty;
-    gEl('osSkuCount').textContent = skuCount;
-    gEl('osDiscount').textContent = '−' + discount.toFixed(2);
-    gEl('osNet').textContent = net.toFixed(2);
-    gEl('osVat').textContent = vat.toFixed(2);
-    gEl('osTotal').textContent = fmt(total);
+    g('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
+    g('osQtyCount').textContent = totalQty;
+    g('osSkuCount').textContent = skuCount;
+    g('osDiscount').textContent = '−' + discount.toFixed(2);
+    g('osNet').textContent = net.toFixed(2);
+    g('osVat').textContent = vat.toFixed(2);
+    g('osTotal').textContent = fmt(total);
 }
 
 function osToggleSelectAll(chk) {
     document.querySelectorAll('.os-item-chk').forEach(c => c.checked = chk.checked);
     updateOsSelection();
 }
-function osChangeQty(id, delta) {
-    const item = cart.find(c => c.id === id);
+/* changeQty — อัปเดตใน local แล้ว re-add ผ่าน API
+   หมายเหตุ: ถ้า backend มี UpdateQty endpoint ให้เปลี่ยนตรงนี้ */
+async function changeQty(ordId, delta) {
+    const item = cart.find(c => c.id === ordId);
     if (!item) return;
-    item.qty = Math.max(1, item.qty + delta);
+
+    const newQty = Math.max(1, item.qty + delta);
+    if (newQty === item.qty) return;
+
+    // optimistic update UI
+    item.qty = newQty;
     updateCart();
-    const input = document.querySelector(`#osItem-${id} .os-step-input`);
-    if (input) input.value = item.qty;
-    updateOsSelection();
+
+    try {
+        const cuscode = window.APP_SESSION?.cuscode || '';
+        const company = window.APP_SESSION?.company || 'TAC';
+
+        if (delta > 0) {
+            // ✅ เพิ่ม → ส่งแค่ delta ที่ต้องการเพิ่ม
+            await fetch('/Product/AddProductToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    Cuscode: cuscode,
+                    Stkcode: item.code,
+                    Company: company,
+                    Price: item.price.toString(),
+                    Qty: Math.abs(delta).toString(), // ✅ ส่งแค่จำนวนที่เพิ่ม
+                    BackOrder: item.isBO ? '1' : '0'
+                })
+            });
+        } else {
+            // ลด → รอ Delete API พร้อม
+            toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
+            item.qty = item.qty - delta; // rollback
+            updateCart();
+            return;
+        }
+
+    } catch (err) {
+        console.error('changeQty error:', err);
+        // rollback
+        item.qty = item.qty - delta;
+        updateCart();
+    }
+
+    await _fetchCartFromServer(true);
 }
-function osSetQty(id, val) {
-    const item = cart.find(c => c.id === id);
+/* osSetQty — set ค่า qty โดยตรง */
+async function osSetQty(ordId, val) {
+    const item = cart.find(c => c.id === ordId);
     if (!item) return;
     const n = parseInt(val);
-    if (!isNaN(n) && n >= 1) { item.qty = n; updateCart(); updateOsSelection(); }
+    if (isNaN(n) || n < 1) return;
+    const delta = n - item.qty;
+    if (delta === 0) return;
+    await changeQty(ordId, delta);
 }
-function osRemoveItem(id) {
-    const row = gEl('osItem-' + id);
+/* osRemoveItem — animate แล้วเรียก delete API */
+function osRemoveItem(ordId) {
+    const row = g('osItem-' + ordId);
     if (row) {
         row.style.transition = 'opacity .18s, transform .18s';
         row.style.opacity = '0';
         row.style.transform = 'translateX(10px)';
-        setTimeout(() => {
-            cart = cart.filter(c => c.id !== id);
-            updateCart();
-            if (!cart.length) { closeOrderSummary(); toast('🗑️ ตะกร้าว่างแล้ว', 'warn'); return; }
-            renderOrderSummary();
+        setTimeout(async () => {
+            await _deleteCartItem(ordId);
+            if (!cart.length) {
+                closeOrderSummary();
+                toast('🗑️ ตะกร้าว่างแล้ว', 'warn');
+            }
         }, 200);
+    } else {
+        _deleteCartItem(ordId);
     }
 }
+
 function osSelectAddr(el) {
     gEl('osAddrList').querySelectorAll('.os-addr-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
@@ -1615,25 +1782,95 @@ function updateFilterCounts() {
     });
 }
 
+/* ════════════════════════════════════════════════════════
+   CART — SINGLE SOURCE OF TRUTH
+   cart[] ถูก populate จาก server เท่านั้น
+   Primary key = ordId (string จาก API)
+════════════════════════════════════════════════════════ */
 
-    function TestAPIADD() {
-        $.ajax({
-            //url: 'AddProductToCart, Product',
-            url: '/Product/AddProductToCart',
-            data: {
-                Cuscode: '110Z0001O',
-                Stkcode: 'DF7163',
-                Company: 'TAC',
-                Price: '50',
-                Qty: '6'
-            },
-            type: "POST",
-            dataType: "JSON",
-            success: function (data) {
-                console.log('succ:'+ data.IsSuccess);
-                console.log('succ:' + data.Data);
-                console.log('succ:' + data.ResponseString);
-                console.log('succ:'+ data.IsSuccess);
-            }
+/* ── Map API response row → cart item ── */
+function _mapCartItem(item) {
+    return {
+        id: item.ordId || '',          // PK ใช้ ordId ตลอด
+        code: item.stkcod || '—',
+        name: item.stkdes || '—',
+        price: parseFloat(item.price) || 0,
+        qty: parseInt(item.qty) || 1,
+        img: item.imagePath || '',
+        brand: item.stkgrp || '—',
+        isBO: item.backOrder === '1',
+        uom: item.uom || '',
+        amt: parseFloat(item.amt) || 0
+    };
+}
+
+/* ── Fetch cart จาก server แล้ว render ทุก view ── */
+async function _fetchCartFromServer(forceRefresh = false) {
+    try {
+        const url = forceRefresh
+            ? `/Product/GetProductToCart?t=${Date.now()}`  // ✅ bust cache
+            : '/Product/GetProductToCart';
+
+        const res = await fetch(url, { method: 'GET' });
+        const json = await res.json();
+
+        if (json.IsSuccess && Array.isArray(json.Data) && json.Data.length > 0) {
+            cart = json.Data.map(_mapCartItem);
+        } else {
+            cart = [];
+        }
+    } catch (err) {
+        console.warn('_fetchCartFromServer failed:', err);
+    }
+
+    updateCart();
+}
+/* ── Delete สินค้าจาก server แล้ว re-fetch ── */
+async function _deleteCartItem(ordId) {
+    if (!ordId) return;
+    try {
+        const res = await fetch('/Product/DeleteProductToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                ordId,
+                username: window.APP_SESSION?.username || ''
+            })
         });
-     }
+        const json = await res.json();
+        if (!json.IsSuccess) {
+            toast(`❌ ลบไม่สำเร็จ: ${json.Message || ''}`, 'warn');
+            await _fetchCartFromServer();
+            return;
+        }
+        // ✅ ลบสำเร็จ → fetch ใหม่โดยไม่ใช้ cache
+        await _fetchCartFromServer(true);
+
+    } catch (err) {
+        console.error('_deleteCartItem error:', err);
+        toast('❌ เกิดข้อผิดพลาดในการลบสินค้า', 'warn');
+        await _fetchCartFromServer();
+    }
+}
+
+function TestAPIADD() {
+    $.ajax({
+        //url: 'AddProductToCart, Product',
+        url: '/Product/AddProductToCart',
+        data: {
+            Cuscode: '110Z0001O',
+            Stkcode: 'DF7163',
+            Company: 'TAC',
+            Price: '50',
+            Qty: '6'
+        },
+        type: "POST",
+        dataType: "JSON",
+        success: function (data) {
+            console.log('succ:'+ data.IsSuccess);
+            console.log('succ:' + data.Data);
+            console.log('succ:' + data.ResponseString);
+            console.log('succ:'+ data.IsSuccess);
+        }
+    });
+    }

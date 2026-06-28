@@ -12,7 +12,6 @@
     <link href="~/Content/bootstrap.min.css" rel="stylesheet">
     <link href="~/Content/fonts.css" rel="stylesheet">
     <link href="~/Content/bootstrap-icons.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="~/Content/bootstrap-icons.css">
     <link rel="stylesheet" href="~/Content/Site.css">
 </head>
@@ -45,9 +44,9 @@
                                 <button class="clear-filter ms-auto" onclick="clearAllFilters()">
                                     <i class="bi bi-x-circle"></i> Clear Filter
                                 </button>
-                                <button class="clear-filter ms-auto" onclick="TestAPIADD()">
+                                @*<button class="clear-filter ms-auto" onclick="TestAPIADD()">
                                     <i class="bi bi-x-circle"></i> Test data
-                                </button>
+                                </button>*@
                             </div>
 
                             <div class="veh-pills" id="vehSummary">
@@ -134,13 +133,35 @@
 
     <!-- TOASTS -->
     <div class="toasts" id="toastRack"></div>
-    <script src="~/Scripts/bootstrap.bundle.min.js"></script>
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
     <script src="~/Scripts/bootstrap.bundle.min.js"></script>
     <script src="@Url.Content("~/Scripts/truscripts.js")"></script>
     <script src="@Url.Content("~/Scripts/productSearch.js")"></script>
     <script src="@Url.Content("~/Scripts/productTabLoader.js")"></script>
+    <script>
+    window.APP_SESSION = {
+        cuscode : '@Session["cuscode"]',
+        company : '@Session["company"]',
+        username: '@Session["username"]'
+    };
+    </script>
+    <script>
+        $(document).ready(async function () {
+            // โหลด dropdown
+            await Promise.all([
+                loadMasterMarketDefault(1),
+                loadMasterMarketDefault(2),
+                loadMasterMarketDefault(3)
+            ]);
 
-   
+            // ✅ ย้ายเข้ามาอยู่ใน ready ด้วย
+            $('#yearTo').on('input', function () {
+                const currentYear = new Date().getFullYear();
+                if (this.value > currentYear) {
+                    this.value = currentYear;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

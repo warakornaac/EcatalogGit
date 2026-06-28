@@ -14,7 +14,7 @@ namespace Ecatalog.Models
     }
     public class ResultCartItemList
     {
-        public string id { get; set; }
+        public string ordId { get; set; }
         public string company { get; set; }
         public string cuscod { get; set; }
         public string orddat { get; set; }

@@ -170,38 +170,22 @@ function switchModalTab(btn, tabId) {
     }
 }
 
-//function addCartFromModal(e) {
-//    e.stopPropagation();
-//    const qty = parseInt($("#mQty").val()) || 1;
-//    if (!currentSpecProduct) return;
-//    const p = currentSpecProduct;
-//    const pid = p.stkcode || p.code || p.id;
-//    const ex = cart.find(c => c.code === pid || c.id === pid);
-//    const cartItem = {
-//        id: pid,
-//        code: p.stkcode || p.code || '—',
-//        name: p.stkcodeDescription || p.name || '—',
-//        price: parseFloat(p.price) || 0,
-//        stock: parseInt(p.qtyReady) || 0,
-//        img: p.imagePath || p.img || '',
-//        brand: p.brand || '—',
-//        isBO: (parseInt(p.qtyReady) || 0) === 0
-//    };
-//    if (ex) ex.qty += qty; else cart.push({ ...cartItem, qty });
-//    updateCart();
-//    toast(`?? เพิ่ม "${cartItem.name.substring(0, 30)}…"`);
-//}
+/* จาก Desktop Modal — ใช้ currentSpecProduct (normalized) */
+async function addCartFromModal(e) {
+    // e อาจเป็น MouseEvent หรือ undefined
+    if (e && typeof e.stopPropagation === 'function') {
+        e.stopPropagation();
+    }
 
-function addCartFromModal(e) {
-    e.stopPropagation();
     const p = currentSpecProduct;
     if (!p) return;
+
     const qty = parseInt($("#mQty").val()) || 1;
-    const ex = cart.find(c => c.code === p.code);
-    if (ex) { ex.qty += qty; }
-    else { cart.push({ ...p, qty }); }
-    updateCart();
-    toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…"`);
+    const btn = (e?.currentTarget instanceof HTMLElement)
+        ? e.currentTarget
+        : document.querySelector('#specModalContent .dr-add-btn');
+
+    await _callAddToCartAPI(p, qty, btn);
 }
 
 /* ??? Mobile drawer ??? */
@@ -257,38 +241,6 @@ function closeDrawerJQ() {
     document.body.style.overflow = "";
 }
 
-//function addCartFromDrawer(e) {
-//    if (e) e.stopPropagation();
-//    const qty = parseInt($("#drQty").val()) || 1;
-//    const p = currentSpecProduct;
-//    if (!p) return;
-//    const pid = p.stkcode || p.code || p.id;
-//    const cartItem = {
-//        id: pid,
-//        code: p.stkcode || '—',
-//        name: p.stkcodeDescription || p.name || '—',
-//        price: parseFloat(p.price) || 0,
-//        img: p.imagePath || '',
-//        brand: p.brand || '—',
-//        isBO: (parseInt(p.qtyReady) || 0) === 0
-//    };
-//    const ex = cart.find(c => c.id === pid);
-//    if (ex) ex.qty += qty; else cart.push({ ...cartItem, qty });
-//    updateCart();
-//    toast(`?? เพิ่ม "${cartItem.name.substring(0, 30)}…"`);
-//}
-
-function addCartFromDrawer(e) {
-    if (e) e.stopPropagation();
-    const p = currentSpecProduct;
-    if (!p) return;
-    const qty = parseInt($("#drQty").val()) || 1;
-    const ex = cart.find(c => c.code === p.code);
-    if (ex) { ex.qty += qty; }
-    else { cart.push({ ...p, qty }); }
-    updateCart();
-    toast(`🛒 เพิ่ม "${p.name.substring(0, 30)}…"`);
-}
 
 /* RENDER FLAT PRODUCT GRID (jQuery) ใช้สำหรับกรณีที่ต้องการ flat list แทน Netflix rows */
 function renderProductGrid(products) {
@@ -374,4 +326,110 @@ function _normalizeProduct(p) {
         line: p.productLine || p.line || '—',
         isBO: (parseInt(p.qtyReady ?? p.stock ?? 99)) === 0
     };
+}
+
+/* ═══════════════════════════════════════════════════════
+   CART — SHARED API HELPER  (Single Source of Truth)
+   ทุก path ที่ Add to Cart ผ่านมาที่นี่ทั้งหมด
+═══════════════════════════════════════════════════════ */
+async function _callAddToCartAPI(p, qty, btnEl) {
+    const cuscode = window.APP_SESSION?.cuscode || '';
+    const company = window.APP_SESSION?.company || 'TAC';
+    const isBO = p.isBO ?? ((parseInt(p.stock ?? p.qtyReady ?? 99)) === 0);
+    const stkcode = p.code || p.stkcode || '';
+    const price = parseFloat(p.price) || 0;
+
+    /* ── loading state ── */
+    if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> กำลังเพิ่ม…';
+    }
+
+    try {
+        const res = await fetch('/Product/AddProductToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                Cuscode: cuscode,
+                Stkcode: stkcode,
+                Company: company,
+                Price: price.toString(),
+                Qty: qty.toString(),
+                BackOrder: isBO ? '1' : '0'
+            })
+        });
+
+        // ✅ เช็ค HTTP status ก่อน parse JSON
+        if (!res.ok) {
+            toast('❌ ไม่สามารถเชื่อมต่อ API ได้', 'warn');
+            _resetAddBtn(btnEl, isBO, false);
+            return false;
+        }
+
+        const json = await res.json().catch(() => null);
+
+        // ✅ เช็ค json null ก่อน
+        if (!json) {
+            toast('❌ Response ไม่ถูกต้อง', 'warn');
+            _resetAddBtn(btnEl, isBO, false);
+            return false;
+        }
+
+        if (!json.IsSuccess) {
+            toast(`❌ ${json.Message || 'ไม่สามารถเพิ่มสินค้าได้'}`, 'warn');
+            _resetAddBtn(btnEl, isBO, false);
+            return false;
+        }
+
+        /* ── Single Source of Truth: fetch cart จาก server ── */
+        await _fetchCartFromServer();   // อยู่ใน truscripts.js
+
+        toast(`🛒 เพิ่ม "${(p.name || p.stkcodeDescription || stkcode).substring(0, 30)}…"`);
+        _resetAddBtn(btnEl, isBO, true);
+        return true;
+
+    } catch (err) {
+        console.error('AddToCart API error:', err);
+        toast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่', 'warn');
+        _resetAddBtn(btnEl, isBO, false);
+        return false;
+    }
+}
+
+/* ── reset button state หลัง API call ── */
+function _resetAddBtn(btnEl, isBO, success) {
+    if (!btnEl) return;
+    btnEl.disabled = false;
+
+    if (success) {
+        btnEl.classList.add('added');
+        btnEl.innerHTML = '<i class="bi bi-check-lg"></i> Added';
+        setTimeout(() => {
+            btnEl.classList.remove('added');
+            btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
+                               ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+        }, 1500);
+    } else {
+        btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
+                           ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+    }
+}
+
+/* ── reset button state หลัง API call ── */
+function _resetAddBtn(btnEl, isBO, success) {
+    if (!btnEl) return;
+    btnEl.disabled = false;
+
+    if (success) {
+        btnEl.classList.add('added');
+        btnEl.innerHTML = '<i class="bi bi-check-lg"></i> Added';
+        setTimeout(() => {
+            btnEl.classList.remove('added');
+            btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
+                               ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+        }, 1500);
+    } else {
+        btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
+                           ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+    }
 }
