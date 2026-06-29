@@ -102,11 +102,11 @@
                 <button class="search-btn" id="btnSearchProductVio" onclick="loadSearchProductVio()">
                     <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
                 </button>
-                <div class="mb-1">
+                @*<div class="mb-1">
                     <div>
                         <span id="cacheStatus">-</span>
                     </div>
-                </div>
+                </div>*@
             </div>
         </div>
 
@@ -136,11 +136,11 @@
                 <button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
                     <i class="bi bi-lightning-charge-fill"></i> Search Parts
                 </button>
-                <div class="mb-1">
+                @*<div class="mb-1">
                     <div>
                         <span id="cacheStatusField">-</span>
                     </div>
-                </div>
+                </div>*@
             </div>
         </div>
 
@@ -389,9 +389,10 @@
         return request;
     }
     //get search by field data by value
-    async function loadSearchProductField() {
+   async function loadSearchProductField() {
         const btn = $("#btnSearchProductField");
         btn.prop("disabled", true);
+        showSkel();
         try {
             const request = await getSearchFieldObject();
             if (!request.searchText) {
@@ -406,9 +407,7 @@
                 '@Url.Action("GetProductBySearchField","Product")',
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(request)
                 });
 
@@ -416,21 +415,24 @@
             if (!result.IsSuccess) {
                 throw new Error(result.Message || "Search Error");
             }
-            console.log(result);
+
             $("#cacheStatusField").html(
-                (result.IsFromCache
-                    ? "Cache Hit"
-                    : "API Call")
-                +
-                " (" +
-                result.ExecutionTime + " ms)"
+                (result.IsFromCache ? "Cache Hit" : "API Call") +
+                " (" + result.ExecutionTime + " ms)"
             );
-            // renderProduct(result.Data);
+
+            // ✅ กรอง group ที่ไม่มี productGroupNameMain ออก แล้ว map เป็น PRODUCTS
+            const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
+            PRODUCTS = mapApiResponseToProducts(filteredData);
+
+            applyAllFilters();
+            updateFilterCounts();
 
         } catch (ex) {
             console.error(ex);
             alert(ex.message);
         } finally {
+            hideSkel();
             btn.prop("disabled", false);
         }
     }

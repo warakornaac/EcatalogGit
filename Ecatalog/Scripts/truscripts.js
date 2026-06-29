@@ -50,6 +50,9 @@ function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
     (groups || []).forEach(group => {
+        // ✅ ข้าม group ที่ไม่มี productGroupNameMain
+        if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
+
         (group.productList || []).forEach(item => {
             const qty = parseInt(item.qtyReady, 10);
             list.push({
@@ -74,6 +77,7 @@ function mapApiResponseToProducts(groups) {
 function syncSearch(source) {
     const headerQ = gEl('headerQ');
     const partQ = gEl('partQ');
+    if (!headerQ || !partQ) return;   // ✅ guard
     if (source === 'header') {
         partQ.value = headerQ.value;
     } else {
@@ -593,7 +597,7 @@ function renderProducts(list) {
 
 /* ══════════════ APPLY ALL FILTERS ══════════════════ */
 function applyAllFilters() {
-    const q = gEl('partQ').value.toLowerCase().trim();
+    const q = (gEl('partQ')?.value || '').toLowerCase().trim();
     const plK = Object.keys(chkState.pl);
     const brK = Object.keys(chkState.br);
     const fitK = [...fitState];
@@ -841,20 +845,15 @@ function updateCart() {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const count = cart.reduce((s, c) => s + c.qty, 0);
 
-    // badge / counter
     const cartCountEl = g('cartCount');
     if (cartCountEl) cartCountEl.textContent = count;
-
     const cpCountEl = g('cpCount');
     if (cpCountEl) cpCountEl.textContent = `${cart.length} ชิ้น`;
-
     const cpTotalEl = g('cpTotal');
     if (cpTotalEl) cpTotalEl.textContent = fmt(total);
-
     const qsCartEl = g('qs-cart');
     if (qsCartEl) qsCartEl.textContent = cart.length;
 
-    // render cpBody
     const cpBody = g('cpBody');
     if (!cpBody) return;
 
@@ -895,9 +894,9 @@ function updateCart() {
             </button>
         </div>`).join('');
 
-    // ถ้า Order Summary เปิดอยู่ ให้ re-render ด้วย
+    // ✅ ไม่ re-render osProductList ถ้ากำลัง changeQty อยู่
     const osOverlay = g('osOverlay');
-    if (osOverlay && osOverlay.classList.contains('open')) {
+    if (osOverlay && osOverlay.classList.contains('open') && !_isChangingQty) {
         renderOrderSummary();
         updateOsSelection();
     }
@@ -960,41 +959,6 @@ function acInput(inp) {
     if (!q) { acClose(); return; }
     acItems = buildSuggestions(q);
     renderAcDropdown(q);
-}
-
-function renderAcDropdown(q) {
-    const dd = gEl('acDropdown');
-    if (!acItems.length) {
-        dd.innerHTML = `<div class="ac-empty"><i class="bi bi-search"></i>ไม่พบคำแนะนำสำหรับ "<strong>${q}</strong>"</div>`;
-        dd.classList.add('open'); return;
-    }
-    const products = acItems.filter(i => i.type === 'product');
-    const cats = acItems.filter(i => i.type === 'category');
-    let html = '';
-    products.forEach((item, idx) => {
-        html += `<div class="ac-item" role="option" data-idx="${idx}" data-val="${item.name}" data-code="${item.code}"
-                      onmousedown="acSelect(event,'${item.name.replace(/'/g, "\\'")}','${item.code.replace(/'/g, "\\'")}')">
-                     <div class="ac-text">
-                         <div class="ac-name">${highlightMatch(item.name, q)}</div>
-                         <div class="ac-meta">${highlightMatch(item.code, q)}${item.brand ? ' · ' + item.brand : ''}${item.cat ? ' · ' + item.cat : ''}</div>
-                     </div>
-                 </div>`;
-    });
-    if (cats.length) {
-        html += `<div class="ac-header"><i class="bi bi-tag me-1"></i>หมวดหมู่</div>`;
-        cats.forEach(item => {
-            html += `<div class="ac-item" role="option" data-val="${item.name}"
-                          onmousedown="acSelect(event,'${item.name.replace(/'/g, "\\'")}','')">
-                         <div class="ac-text">
-                             <div class="ac-name">${highlightMatch(item.name, q)}</div>
-                             <div class="ac-meta">ดูสินค้าในหมวด "${item.name}"</div>
-                         </div>
-                     </div>`;
-        });
-    }
-    dd.innerHTML = html;
-    dd.classList.add('open');
-    gEl('headerQ').setAttribute('aria-expanded', 'true');
 }
 
 function acSelect(event, val, code) {
@@ -1062,7 +1026,10 @@ document.addEventListener('click', e => {
     const wrap = gEl('hSearchWrap');
     if (wrap && !wrap.contains(e.target)) acClose();
     const swrap = gEl('sidebarSearchWrap');
-    if (swrap && !swrap.contains(e.target)) acCloseSidebar();
+    if (swrap && !swrap.contains(e.target)) {
+        const dd = gEl('acDropdownSidebar');
+        if (dd) acCloseSidebar();   // ✅ guard ก่อนเรียก
+    }
 });
 
 /* ── Sidebar AC ── */
@@ -1078,10 +1045,12 @@ function acInputSidebar(inp) {
     renderAcDropdownSidebar(q);
 }
 
+// ── ตัวที่ 2 (เก็บตัวนี้ไว้) แก้เป็น ──
 function renderAcDropdownSidebar(q) {
     const dd = gEl('acDropdownSidebar');
+    const partQ = gEl('partQ');
+    if (!dd || !partQ) return;   // ✅ guard
     if (!acSbItems.length) {
-        dd.innerHTML = `<div class="ac-empty"><i class="bi bi-search"></i>ไม่พบคำแนะนำสำหรับ "<strong>${q}</strong>"</div>`;
         dd.classList.add('open'); return;
     }
     const products = acSbItems.filter(i => i.type === 'product');
@@ -1110,12 +1079,14 @@ function renderAcDropdownSidebar(q) {
     }
     dd.innerHTML = html;
     dd.classList.add('open');
-    gEl('partQ').setAttribute('aria-expanded', 'true');
+    partQ.setAttribute('aria-expanded', 'true');   // ✅ ใช้ partQ ที่ guard แล้ว
 }
 
 function acSelectSidebar(event, val) {
     if (event) event.preventDefault();
-    gEl('partQ').value = val;
+    const partQ = gEl('partQ');
+    if (!partQ) return;   // ✅ guard
+    partQ.value = val;
     syncSearch('sidebar');
     acSbSelected = val;
     acCloseSidebar();
@@ -1123,8 +1094,11 @@ function acSelectSidebar(event, val) {
 }
 
 function acCloseSidebar() {
-    gEl('acDropdownSidebar').classList.remove('open');
-    gEl('partQ').setAttribute('aria-expanded', 'false');
+    const dd = gEl('acDropdownSidebar');
+    const partQ = gEl('partQ');
+    if (!dd || !partQ) return;   // ✅ guard
+    dd.classList.remove('open');
+    partQ.setAttribute('aria-expanded', 'false');
     acSbFocusIdx = -1;
     acUpdateFocusSidebar();
 }
@@ -1147,10 +1121,12 @@ function acKeyNavSidebar(event) {
 
 function acUpdateFocusSidebar(items) {
     const dd = gEl('acDropdownSidebar');
+    const partQ = gEl('partQ');
+    if (!dd || !partQ) return;   // ✅ guard
     const all = items || dd.querySelectorAll('.ac-item');
     all.forEach((el, i) => el.classList.toggle('ac-focused', i === acSbFocusIdx));
     if (acSbFocusIdx >= 0 && all[acSbFocusIdx]) {
-        gEl('partQ').value = all[acSbFocusIdx].getAttribute('data-val');
+        partQ.value = all[acSbFocusIdx].getAttribute('data-val');
         all[acSbFocusIdx].scrollIntoView({ block: 'nearest' });
     }
 }
@@ -1179,8 +1155,11 @@ document.querySelectorAll('.sec-hd').forEach(hd => {
     }
 });
 
-gEl('partQ').addEventListener('focus', () => { if (gEl('partQ').value.trim()) acInputSidebar(gEl('partQ')); });
-gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()) acInput(gEl('headerQ')); });
+// ── หลังแก้ ──
+const _partQ = gEl('partQ');
+const _headerQ = gEl('headerQ');
+if (_partQ) _partQ.addEventListener('focus', () => { if (_partQ.value.trim()) acInputSidebar(_partQ); });
+if (_headerQ) _headerQ.addEventListener('focus', () => { if (_headerQ.value.trim()) acInput(_headerQ); });
 
 /* ══════════════ ORDER SUMMARY ═══════════════ */
 const DISCOUNT_RATE = 0.075;
@@ -1251,7 +1230,7 @@ function renderOrderSummary() {
                 <div class="os-price">${fmt(c.price)}</div>
             </div>
             <div class="os-stepper">
-                <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)" disabled style="opacity:0.3">−</button>
+                <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)">−</button>
                 <input class="os-step-input" type="number" value="${c.qty}" min="1"
                        onchange="osSetQty('${c.id}',this.value)"
                        oninput="osSetQty('${c.id}',this.value)">
@@ -1265,10 +1244,6 @@ function renderOrderSummary() {
     updateOsSelection();
 }
 function osChangeQty(ordId, delta) {
-    if (delta < 0) {
-        toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
-        return;
-    }
     changeQty(ordId, delta);
 }
 function updateOsSelection() {
@@ -1307,23 +1282,26 @@ function osToggleSelectAll(chk) {
 }
 /* changeQty — อัปเดตใน local แล้ว re-add ผ่าน API
    หมายเหตุ: ถ้า backend มี UpdateQty endpoint ให้เปลี่ยนตรงนี้ */
+let _isChangingQty = false; // ✅ flag ป้องกัน re-render ระหว่าง changeQty
+
 async function changeQty(ordId, delta) {
+    _isChangingQty = true;
     const item = cart.find(c => c.id === ordId);
     if (!item) return;
 
     const newQty = Math.max(1, item.qty + delta);
     if (newQty === item.qty) return;
 
-    // optimistic update UI
+    // ✅ optimistic update เฉพาะตัวเลข ไม่ re-render ทั้งหมด
     item.qty = newQty;
-    updateCart();
+    _updateQtyUI(ordId, newQty, item.price);
 
     try {
         const cuscode = window.APP_SESSION?.cuscode || '';
         const company = window.APP_SESSION?.company || 'TAC';
+        const username = window.APP_SESSION?.username || '';
 
         if (delta > 0) {
-            // ✅ เพิ่ม → ส่งแค่ delta ที่ต้องการเพิ่ม
             await fetch('/Product/AddProductToCart', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1332,26 +1310,73 @@ async function changeQty(ordId, delta) {
                     Stkcode: item.code,
                     Company: company,
                     Price: item.price.toString(),
-                    Qty: Math.abs(delta).toString(), // ✅ ส่งแค่จำนวนที่เพิ่ม
+                    Qty: Math.abs(delta).toString(),
                     BackOrder: item.isBO ? '1' : '0'
                 })
             });
+
         } else {
-            // ลด → รอ Delete API พร้อม
-            toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
-            item.qty = item.qty - delta; // rollback
-            updateCart();
-            return;
+            const delRes = await fetch('/Product/DeleteProductToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ ordId, username })
+            });
+            const delJson = await delRes.json();
+
+            if (!delJson.IsSuccess) {
+                // rollback
+                item.qty = item.qty - delta;
+                _updateQtyUI(ordId, item.qty, item.price);
+                toast(`❌ ลดจำนวนไม่สำเร็จ: ${delJson.Message || ''}`, 'warn');
+                return;
+            }
+
+            await fetch('/Product/AddProductToCart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    Cuscode: cuscode,
+                    Stkcode: item.code,
+                    Company: company,
+                    Price: item.price.toString(),
+                    Qty: newQty.toString(),
+                    BackOrder: item.isBO ? '1' : '0'
+                })
+            });
         }
 
     } catch (err) {
         console.error('changeQty error:', err);
-        // rollback
         item.qty = item.qty - delta;
-        updateCart();
+        _updateQtyUI(ordId, item.qty, item.price);
+        toast('❌ เกิดข้อผิดพลาด', 'warn');
+        return;
     }
 
+    // ✅ fetch จาก server เพื่อ sync ordId ใหม่ (กรณีลด) แต่ไม่ทำให้กระตุก
     await _fetchCartFromServer(true);
+}
+
+/* ── อัปเดตเฉพาะตัวเลข qty และ price ใน UI ── */
+function _updateQtyUI(ordId, newQty, price) {
+    // cpBody
+    const crQval = document.querySelector(`#cr-${ordId} .cr-qval`);
+    if (crQval) crQval.textContent = newQty;
+    const crPrice = document.querySelector(`#cr-${ordId} .cr-price`);
+    if (crPrice) crPrice.textContent = fmt(price * newQty);
+
+    // osProductList
+    const osInput = document.querySelector(`#osItem-${ordId} .os-step-input`);
+    if (osInput) osInput.value = newQty;
+
+    // อัปเดต total/badge
+    updateOsSelection();
+    const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const count = cart.reduce((s, c) => s + c.qty, 0);
+    const cartCountEl = g('cartCount');
+    if (cartCountEl) cartCountEl.textContent = count;
+    const cpTotalEl = g('cpTotal');
+    if (cpTotalEl) cpTotalEl.textContent = fmt(total);
 }
 /* osSetQty — set ค่า qty โดยตรง */
 async function osSetQty(ordId, val) {
@@ -1852,25 +1877,3 @@ async function _deleteCartItem(ordId) {
         await _fetchCartFromServer();
     }
 }
-
-function TestAPIADD() {
-    $.ajax({
-        //url: 'AddProductToCart, Product',
-        url: '/Product/AddProductToCart',
-        data: {
-            Cuscode: '110Z0001O',
-            Stkcode: 'DF7163',
-            Company: 'TAC',
-            Price: '50',
-            Qty: '6'
-        },
-        type: "POST",
-        dataType: "JSON",
-        success: function (data) {
-            console.log('succ:'+ data.IsSuccess);
-            console.log('succ:' + data.Data);
-            console.log('succ:' + data.ResponseString);
-            console.log('succ:'+ data.IsSuccess);
-        }
-    });
-    }
