@@ -878,7 +878,7 @@ function updateCart() {
                     ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
                 </div>
                 <div class="cr-code">${c.code}</div>
-                <div class="cr-price">${fmt(c.price * c.qty)}</div>
+                <div class="cr-price">${fmt(c.price) }</div>
             </div>
             <div class="cr-qty-ctrl">
                 <button class="qty-btn" onclick="changeQty('${c.id}',-1)">
