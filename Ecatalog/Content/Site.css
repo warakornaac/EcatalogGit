@@ -72,7 +72,7 @@ body {
 /* ─── HEADER ─── */
 .site-header {
     height: var(--header-h);
-    background: #fd152f;
+    background: var(--primary);
     position: sticky;
     top: 0;
     z-index: 1050;
@@ -96,7 +96,7 @@ body {
 .brand-icon {
     width: 32px;
     height: 32px;
-    background: #fd152f;
+    background: var(--primary);
     border-radius: 7px;
     display: flex;
     align-items: center;
@@ -523,7 +523,7 @@ body {
     height: 42px;
     border: none;
     border-radius: 10px;
-    background: #fd152f;
+    background: var(--primary);
     box-shadow: var(--sh);
     cursor: pointer;
     transition: all .2s ease;
@@ -718,13 +718,13 @@ body {
     }
 
     .sb-tab:hover {
-        color: #fd152f;
+        color: var(--primary);
         background: #f5f6ff;
     }
 
     .sb-tab.active {
-        color: #fd152f;
-        border-bottom-color: #fd152f;
+        color: var(--primary);
+        border-bottom-color: var(--primary);
     }
 
 .sb-tab-badge {
@@ -840,7 +840,7 @@ body {
     .sb-select:focus,
     .sb-input:focus {
         outline: none;
-        border-color: #fd152f;
+        border-color: var(--primary);
         background: #fff;
         box-shadow: 0 0 0 3px rgba(91,106,244,.10);
     }
@@ -927,7 +927,7 @@ body {
     font-weight: 700;
     text-transform: none;
     letter-spacing: .03em;
-    color: #fd152f;
+    color: var(--primary);
     background: #f3e8fe;
     border-radius: 4px;
     padding: 1px 5px;
@@ -959,14 +959,14 @@ body {
 }
 
     .smode-btn:hover {
-        border-color: #fd152f;
+        border-color: var(--primary);
         color: #5b6af4;
         background: #f0f1ff;
     }
 
     .smode-btn.active {
-        border-color: #fd152f;
-        background: #fd152f;
+        border-color: var(--primary);
+        background: var(--primary);
         color: #fff;
     }
 
@@ -1015,9 +1015,9 @@ body {
 
 
     .fit-chip.active {
-        border-color: #fd152f;
+        border-color: var(--primary);
         background: #fff;
-        color: #fd152f;
+        color: var(--primary);
     }
 
 /* ── Checkbox list ── */
@@ -1058,7 +1058,7 @@ body {
     gap: 4px;
     background: none;
     border: none;
-    color: #fd152f;
+    color: var(--primary);
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
@@ -1096,7 +1096,7 @@ body {
     padding: 9px;
     border: none;
     border-radius: 8px;
-    background: #fd152f;
+    background: var(--primary);
     color: #fff;
     font-size: 13px;
     font-weight: 600;
@@ -1476,7 +1476,7 @@ body {
     width: 100%;
     margin-top: 9px;
     border: none;
-    background: #fd152f;
+    background: var(--primary);
     color: #fff;
     border-radius: var(--r-sm);
     padding: .48rem;
@@ -1497,7 +1497,7 @@ body {
 
 .clear-filter {
     border: none;
-    background: #fd152f;
+    background: var(--primary);
     color: #fff;
     border-radius: var(--r-sm);
     padding: 5px 10px;
@@ -1743,6 +1743,11 @@ body {
     color: #92400e;
 }
 
+.af-group {
+    background: #fedada;
+    color: #92400e;
+}
+
 .af-chip i {
     font-size: 9px;
 }
@@ -1877,7 +1882,7 @@ body {
     font-family: 'Noto Sans Thai', sans-serif;
     font-size: 15px;
     font-weight: 700;
-    color: #fd152f;
+    color: var(--primary);
 }
 
     .pprice span {
@@ -1927,7 +1932,7 @@ body {
 
 .acart {
     flex: 1;
-    background: #fd152f;
+    background: var(--primary);
     color: #fff;
     border: none;
     border-radius: var(--r-sm);
@@ -2786,13 +2791,13 @@ body {
 
     .bb-item:hover {
         background: #eef1ff;
-        border-color: #fd152f;
+        border-color: var(--primary);
         color: var(--primary);
     }
 
     .bb-item.active {
-        background: #fd152f;
-        border-color: #fd152f;
+        background: var(--primary);
+        border-color: var(--primary);
         color: #fff;
         box-shadow: 0 4px 14px rgba(26,86,219,.3);
         transform: translateY(-1px);
@@ -3049,9 +3054,9 @@ body {
 .cp-close {
     width: 32px;
     height: 32px;
-    border: 1.5px solid #fd152f;
+    border: 1.5px solid var(--primary);
     border-radius: var(--r-sm);
-    background: #fd152f;
+    background: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3061,8 +3066,8 @@ body {
 }
 
     .cp-close:hover {
-        border-color: #fd152f;
-        color: #fd152f;
+        border-color: var(--primary);
+        color: var(--primary);
     }
 
 .cp-body {
@@ -3176,7 +3181,7 @@ body {
 
     .cr-del:hover {
         background: #fee2e2;
-        color: #fd152f;
+        color: var(--primary);
     }
 
 .cp-footer {
@@ -3205,7 +3210,7 @@ body {
 
 .cp-checkout {
     width: 100%;
-    background: #fd152f;
+    background: var(--primary);
     color: #fff;
     border: none;
     border-radius: var(--r);
@@ -3231,7 +3236,7 @@ body {
     background: transparent;
     border: 1.5px dashed var(--border);
     border-radius: var(--r);
-    color: #fd152f;
+    color: var(--primary);
     padding: .45rem;
     font-size: 13px;
     font-weight: 600;
@@ -3241,7 +3246,7 @@ body {
 }
 
     .cp-clear:hover {
-        border-color: #fd152f;
+        border-color: var(--primary);
         background: #fee2e2;
     }
 
@@ -3274,7 +3279,7 @@ body {
 }
 
     .toast-item.warn {
-        border-left-color: #fd152f;
+        border-left-color: var(--primary);
     }
 
 @keyframes toastIn {
@@ -3481,7 +3486,7 @@ body {
 
 .os-section-badge {
     background: var(--red-light);
-    color: #fd152f;
+    color: var(--primary);
     font-size: 10.5px;
     font-weight: 700;
     padding: 2px 9px;
@@ -3584,7 +3589,7 @@ body {
 .os-price {
     font-size: 13px;
     font-weight: 700;
-    color: #fd152f;
+    color: var(--primary);
     font-family: 'Noto Sans Thai', sans-serif;
 }
 
@@ -3618,7 +3623,7 @@ body {
 
     .os-step-btn:hover {
         background: var(--surface);
-        color: #fd152f;
+        color: var(--primary);
     }
 
 .os-step-input {
@@ -3660,7 +3665,7 @@ body {
 
     .os-del-btn:hover {
         background: var(--red-light);
-        color: #fd152f;
+        color: var(--primary);
         border-color: #fca5a5;
     }
 
@@ -3734,7 +3739,7 @@ body {
     font-family: 'Noto Sans Thai', sans-serif;
     font-size: 19px;
     font-weight: 700;
-    color: #fd152f;
+    color: var(--primary);
 }
 
 .os-right {
@@ -3859,7 +3864,7 @@ body {
 
     .os-change-btn:hover {
         border-color: #fca5a5;
-        color: #fd152f;
+        color: var(--primary);
         background: var(--red-light);
     }
 
@@ -3939,7 +3944,7 @@ body {
 
     .os-addr-item.selected {
         background: #fff5f5;
-        border-left: 3px solid #fd152f;
+        border-left: 3px solid var(--primary);
     }
 
     .os-addr-item .os-addr-name {
@@ -3959,7 +3964,7 @@ body {
 .os-checkout-btn {
     width: 100%;
     padding: 14px;
-    background: #fd152f;
+    background: var(--primary);
     color: #fff;
     border: none;
     border-radius: 10px;
@@ -4036,7 +4041,7 @@ body {
     .os-chk-wrap input[type=checkbox] {
         width: 16px;
         height: 16px;
-        accent-color: #fd152f;
+        accent-color: var(--primary);
         cursor: pointer;
     }
 
@@ -4257,18 +4262,6 @@ body {
         display: flex;
     }
 
-.no-image {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    min-height: 100px;
-    background: var(--surface-2);
-    border-radius: var(--r);
-}
-
 .rbac-page {
     padding: 78px 24px 32px;
     color: #2c1a1a;
@@ -4367,3 +4360,36 @@ body {
     display: inline-block;
     animation: spin .6s linear infinite;
 }
+/* ════════════════════════════════
+   THEME SWITCH (ลบ block นี้ทิ้งได้ทั้งหมดถ้าเลิกใช้)
+════════════════════════════════ */
+body.theme-blue {
+    --primary: #0d6efd;
+    --primary-dark: #3f6fe0;
+    --primary-light: #e8eefe;
+    --primary-glow: rgba(101,146,252,.18);
+}
+
+.theme-switch-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background .15s, transform .15s;
+    flex-shrink: 0;
+}
+
+    .theme-switch-btn:hover {
+        background: rgba(255,255,255,.32);
+    }
+
+    .theme-switch-btn:active {
+        transform: scale(.92);
+    }

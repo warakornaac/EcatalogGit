@@ -620,7 +620,7 @@ namespace Ecatalog.Controllers
             try
             {
                 var result = await Utils.CallApiAsyncMemory<DeleteProductToCart>(
-                            $"Ecatalog/DeleteProductToCart?ordid={ordId}&username={username}&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
+                            "Ecatalog/DeleteProductToCart",
                             "POST",
                             null,
                             false,
@@ -636,6 +636,52 @@ namespace Ecatalog.Controllers
                 {
                     IsSuccess = true;
                     ResponseString = "Added Item";
+                }
+
+                return Json(new
+                {
+                    IsSuccess = IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = result.Data?.result,
+                    Message = ResponseString
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+        public async Task<ActionResult> EditProductToCart(string ordId, string cuscode, int qty, decimal price, string username)
+        {
+            Boolean IsSuccess = false;
+            string ResponseString = "";
+            cuscode = Session["cuscode"].ToString();
+            username = Session["username"].ToString();
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<EditProductToCartModel>(
+                            "Ecatalog/EditProductToCart",
+                            "POST",
+                            null,
+                            false,
+                            10);
+
+                if (result.StatusCode != 200)
+                {
+                    ResponseString = result.Data?.errorMessage ?? "เกิดข้อผิดพลาดจาก API";
+                    //ResponseString = result.Data.errorMessage.ToString();
+                    //StatusResponse = "N";
+                }
+                else
+                {
+                    IsSuccess = true;
+                    ResponseString = "Edited Item";
                 }
 
                 return Json(new

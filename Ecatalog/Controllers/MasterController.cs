@@ -355,5 +355,47 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
+        public async Task<ActionResult> GetShiptoByCuscode()
+        {
+            string cuscode = Session["cuscode"].ToString();
+            string username = Session["username"].ToString();
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                    ShiptoByCuscodeModel>(
+                    $"Ecatalog/GetShiptoByCuscode?cuscode={cuscode}&username={username}",
+                    "GET",
+                    new
+                    {
+                        cuscode,
+                        username
+                    },
+                    true,
+                    30);
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+
+
+                    Debug_DataIsNull = result.Data == null,
+                    Debug_ResultIsNull = result.Data?.result == null,
+                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
+
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
     }
 }

@@ -40,14 +40,22 @@ async function loadSearchProductVio() {
             );
 
             PRODUCTS = mapApiResponseToProducts(result.Data || []);
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];
+
+            // ✅ reset checkbox filters เมื่อเริ่ม vehicle search ใหม่
+            chkState = { pl: {}, br: {} };
+            document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
+            fitState = new Set();
+            document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
 
             activeGroup = '0';
             window.selectedGroupId = '0';
             document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
             document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
 
-            applyAllFilters();      // filter + render products
-            updateFilterCounts();   // อัปเดต count ใน sidebar
+            applyAllFilters();
+            updateFilterCounts();
+            renderActiveFilterChips();   // ✅ เพิ่มบรรทัดนี้
 
         } else {
             toast(result.Message || "Search Error", "warn");
@@ -61,7 +69,6 @@ async function loadSearchProductVio() {
         btn.prop("disabled", false);
     }
 }
-
 /* OPEN SPEC — desktop modal หรือ mobile drawer เรียกจาก card ใน renderProductGrid (jQuery grid) */
 function showProductSpec(idx) {
     // รองรับทั้ง currentProducts (raw) และ PRODUCTS (mapped)

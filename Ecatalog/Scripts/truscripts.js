@@ -18,6 +18,7 @@ let currentSort = 'carModel';
 let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
+let PRODUCTS_FOR_COUNT = [];   // ✅ snapshot ของกลุ่มปัจจุบัน ไม่ถูก filter ตาม checkbox
 const currentAllowed = {
     pl: [],
     br: []
@@ -55,6 +56,10 @@ function mapApiResponseToProducts(groups) {
 
         (group.productList || []).forEach(item => {
             const qty = parseInt(item.qtyReady, 10);
+            const PLACEHOLDER = ['makername', 'modelname'];
+            const maker = (item.makerName || '').trim();
+            const model = (item.modelName || '').trim();
+            const carParts = [maker, model].filter(v => v && !PLACEHOLDER.includes(v.toLowerCase()));
             list.push({
                 id: autoId++,
                 code: item.stkcode || '',
@@ -65,7 +70,7 @@ function mapApiResponseToProducts(groups) {
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
                 fit: [],
-                carModel: [item.makerName, item.modelName].filter(Boolean).join(' ') || 'Universal',
+                carModel: carParts.join(' ') || '',   // ✅ ว่างถ้าเป็น placeholder
                 img: item.imagePath || item.imageUrl || ''
             });
         });
@@ -125,8 +130,8 @@ function clearAllFilters() {
     fitState = new Set();
     document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
 
-    gEl('partQ').value = '';
-    gEl('headerQ').value = '';
+    const pq = gEl('partQ'); if (pq) pq.value = '';
+    const hq = gEl('headerQ'); if (hq) hq.value = '';
 
     currentSort = 'carModel';
     gEl('sortSelect').value = 'carModel';
@@ -136,12 +141,19 @@ function clearAllFilters() {
         btn.classList.toggle('active', btn.dataset.mode === 'description');
     });
 
-    gEl('activeFilters').innerHTML = '';
+    // ✅ reset group กลับเป็น "สินค้าทุกประเภท"
+    activeGroup = '0';
+    window.selectedGroupId = '0';
+    document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
+    document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
+
+    gEl('activeFilters').innerHTML = '';   // ✅ ล้าง chips ทั้งหมด
 
     closeSpecModal({ target: gEl('specModalBackdrop') });
     closeDrawer();
 
     PRODUCTS = [];
+    PRODUCTS_FOR_COUNT = [];
     showSkel();
     setTimeout(() => { hideSkel(); renderProducts(PRODUCTS); }, 350);
 
@@ -152,7 +164,6 @@ function clearAllFilters() {
     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 }
-
 /* ═══════════════ §4 — SORTING ════════════════ */
 function switchSortbyPart() {
     // toggle ระหว่าง carModel (default) และ part
@@ -210,6 +221,7 @@ function scrollBottom(dx) {
     gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
 } 
 
+// ── ใน selectGroup (truscripts.js) ──
 function selectGroup(id) {
     activeGroup = id;
     window.selectedGroupId = id;
@@ -229,7 +241,11 @@ function selectGroup(id) {
     setTimeout(() => {
         hideSkel();
         applyAllFilters();
-        searchProductByCategory(); // ✅ เพิ่มตรงนี้
+        searchProductByCategory().then(() => {
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];   // snapshot หลังเปลี่ยน group
+            updateFilterCounts();
+            renderActiveFilterChips();             // ✅ เพิ่มบรรทัดนี้
+        });
     }, 500);
 }
 
@@ -525,16 +541,17 @@ function renderProducts(list) {
                          white-space:nowrap;flex-shrink:0">${p.brand}</div>
                 </div>
                 <div class="pname">${p.name}</div>
+                ${p.carModel ? `
                 <div style="display:flex;align-items:center;gap:5px;margin-top:4px;margin-bottom:2px">
                     ${p.carModel === 'Universal'
-            ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
-                               color:#92400e;border:1px solid #f59e0b;border-radius:20px;padding:1px 9px;
-                               display:inline-flex;align-items:center;gap:3px">
-                               <i class="bi bi-stars" style="font-size:9px"></i> Universal</span>`
-            : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
+                                ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
+                                       color:#92400e;border:1px solid #f59e0b;border-radius:20px;padding:1px 9px;
+                                       display:inline-flex;align-items:center;gap:3px">
+                                       <i class="bi bi-stars" style="font-size:9px"></i> Universal</span>`
+                                : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
                            <span style="font-size:11px;color:var(--text-2);font-weight:500">${p.carModel}</span>`
-        }
-                </div>
+                            }
+                </div>` : ''}
                 ${p.fit && p.fit.length
             ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">
                            ${p.fit.map(f => `<span style="font-size:10px;border:1px solid var(--border);
@@ -623,22 +640,68 @@ function applyAllFilters() {
 }
 
 /* ══════════════ ACTIVE FILTER CHIPS ══════════════════ */
-function renderActiveChips() {
+/* ══════════════ ACTIVE FILTER CHIPS (รวม group + line + brand) ══════════════════ */
+function renderActiveFilterChips() {
     const chips = [];
+
+    // group chip (ถ้าไม่ใช่ "สินค้าทุกประเภท")
+    if (activeGroup && activeGroup !== '0') {
+        const groupObj = GROUPS.find(g => g.id === activeGroup);
+        if (groupObj) {
+            chips.push({ t: 'group', v: groupObj.label, id: groupObj.id, cls: 'af-group' });
+        }
+    }
+
+    // product line chips
     Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
-    [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+    // brand chips
     Object.keys(chkState.br).forEach(v => chips.push({ t: 'br', v, cls: 'af-br' }));
-    gEl('activeFilters').innerHTML = chips.map(c =>
-        `<span class="af-chip ${c.cls}" onclick="removeChip('${c.t}','${c.v}')">${c.v} <i class="bi bi-x-circle"></i></span>`
+
+    // fitting chips
+    [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+    const container = gEl('activeFilters');
+    if (!container) return;
+
+    if (!chips.length) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = chips.map(c =>
+        `<span class="af-chip ${c.cls}" onclick="removeActiveChip('${c.t}','${(c.v || '').replace(/'/g, "\\'")}')">${c.v} <i class="bi bi-x-circle"></i></span>`
     ).join('');
 }
 
-function removeChip(t, v) {
-    if (t === 'pl') { delete chkState.pl[v]; document.querySelectorAll('#plList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
-    else if (t === 'br') { delete chkState.br[v]; document.querySelectorAll('#brList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
-    else if (t === 'fi') { fitState.delete(v); document.querySelectorAll('.fit-chip').forEach(c => { if (c.textContent.trim() === v) c.classList.remove('active'); }); }
-    renderActiveChips();
-    applyAllFilters();
+/* ── ลบ chip ตัวเดียว แล้ว re-fetch ── */
+function removeActiveChip(t, v) {
+    if (t === 'group') {
+        // กลับไปกลุ่ม "สินค้าทุกประเภท"
+        selectGroup('0');
+        return;
+    }
+    if (t === 'pl') {
+        delete chkState.pl[v];
+        document.querySelectorAll('#plList .chk-item').forEach(l => {
+            if (l.getAttribute('data-name') === v) l.classList.remove('checked');
+        });
+    } else if (t === 'br') {
+        delete chkState.br[v];
+        document.querySelectorAll('#brList .chk-item').forEach(l => {
+            if (l.getAttribute('data-name') === v) l.classList.remove('checked');
+        });
+    } else if (t === 'fi') {
+        fitState.delete(v);
+        document.querySelectorAll('.fit-chip').forEach(c => {
+            if (c.textContent.trim() === v) c.classList.remove('active');
+        });
+    }
+
+    showSkel();
+    searchProductByCategory().finally(() => {
+        hideSkel();
+    });
 }
 
 /* ═════════════ §1 — VEHICLE FILTER ═════════════════════ */
@@ -723,16 +786,16 @@ function toggleChk(label, type, val) {
     activateSec(3);
     showSkel();
 
-    // ✅ ถ้าเป็น pl ให้ sync ClickedMatchData ก่อน แล้วค่อย search
     if (type === 'pl') {
         ClickedMatchData();
     }
 
     searchProductByCategory().finally(() => {
         hideSkel();
-        renderActiveChips();
+        renderActiveFilterChips();   // ✅ เปลี่ยนจาก renderActiveChips
     });
 }
+
 function toggleFit(chip, val) {
     chip.classList.toggle('active');
     if (chip.classList.contains('active')) { fitState.add(val); }
@@ -742,7 +805,7 @@ function toggleFit(chip, val) {
 
     searchProductByCategory().finally(() => {
         hideSkel();
-        renderActiveChips();
+        renderActiveFilterChips();   // ✅ เปลี่ยนจาก renderActiveChips
     });
 }
 
@@ -1757,21 +1820,20 @@ document.addEventListener('keydown', e => {
 });
 
 function updateFilterCounts() {
-    // อัปเดต count Brand
+    const source = PRODUCTS_FOR_COUNT.length ? PRODUCTS_FOR_COUNT : PRODUCTS;  // ✅ ใช้ snapshot
+
     $("#brList .chk-item").each(function () {
         const brandName = $(this).attr('data-name');
-        const count = PRODUCTS.filter(p => p.brand === brandName).length;
+        const count = source.filter(p => p.brand === brandName).length;  // ✅ source ไม่ใช่ PRODUCTS
         $(this).find('.chk-count').text(count);
     });
 
-    // อัปเดต count Product Line
     $("#plList .chk-item").each(function () {
         const lineName = $(this).attr('data-name');
-        const count = PRODUCTS.filter(p => p.line === lineName).length;
+        const count = source.filter(p => p.line === lineName).length;  // ✅ source ไม่ใช่ PRODUCTS
         $(this).find('.chk-count').text(count);
     });
 
-    // ✅ Sort Brand จากมากไปน้อย
     const $brList = $("#brList");
     $brList.find('.chk-item').sort(function (a, b) {
         const countA = parseInt($(a).find('.chk-count').text()) || 0;
@@ -1779,7 +1841,6 @@ function updateFilterCounts() {
         return countB - countA;
     }).appendTo($brList);
 
-    // ✅ Sort Product Line จากมากไปน้อย
     const $plList = $("#plList");
     $plList.find('.chk-item').sort(function (a, b) {
         const countA = parseInt($(a).find('.chk-count').text()) || 0;
@@ -1787,7 +1848,6 @@ function updateFilterCounts() {
         return countB - countA;
     }).appendTo($plList);
 
-    // ✅ Re-apply SHOW_LIMIT หลัง sort — แสดงแค่ 5 อันดับแรกที่มี count > 0
     const SHOW_LIMIT = 5;
 
     [
@@ -1796,12 +1856,19 @@ function updateFilterCounts() {
     ].forEach(({ listId, extraClass }) => {
         let visible = 0;
         $(`${listId} .chk-item`).each(function () {
-            const count = parseInt($(this).find('.chk-count').text()) || 0;
-            if (visible < SHOW_LIMIT && count > 0) {
-                $(this).show().removeClass(extraClass);
+            const $item = $(this);
+            const isChecked = $item.hasClass('checked');
+
+            if (isChecked) {
+                $item.show().removeClass(extraClass);
+                return;
+            }
+
+            if (visible < SHOW_LIMIT) {
+                $item.show().removeClass(extraClass);
                 visible++;
             } else {
-                $(this).hide().addClass(extraClass);
+                $item.hide().addClass(extraClass);
             }
         });
     });
@@ -1877,3 +1944,22 @@ async function _deleteCartItem(ordId) {
         await _fetchCartFromServer();
     }
 }
+
+/* ════════════════════════════════
+   THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)
+════════════════════════════════ */
+const THEME_KEY = 'truTheme';
+
+function toggleTheme() {
+    const isBlue = document.body.classList.toggle('theme-blue');
+    localStorage.setItem(THEME_KEY, isBlue ? 'blue' : 'default');
+}
+
+function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'blue') {
+        document.body.classList.add('theme-blue');
+    }
+}
+
+initTheme();
