@@ -14,14 +14,14 @@ namespace Ecatalog.Models
     }
     public class ResultEditProductToCart
     {
-        public string ordId { get; set; }
+        public string ordid { get; set; }
         public string username { get; set; }
         public string company { get; set; }
 
-        public string cuscod { get; set; }
+        public string cuscode { get; set; }
         public string stkcod { get; set; }
-        public int qty { get; set; }
-        public decimal price { get; set; }
-        public int backorder { get; set; }
+        public string qty { get; set; }
+        public string price { get; set; }
+        public string backorder { get; set; }
     }
 }

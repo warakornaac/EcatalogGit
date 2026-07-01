@@ -18,7 +18,17 @@ let currentSort = 'carModel';
 let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
-let PRODUCTS_FOR_COUNT = [];   // ✅ snapshot ของกลุ่มปัจจุบัน ไม่ถูก filter ตาม checkbox
+let PRODUCTS_FOR_COUNT = [];
+let _shipToList = []; // ✅ snapshot ของกลุ่มปัจจุบัน ไม่ถูก filter ตาม checkbox
+let acSelected = null;
+let acFocusIdx = -1;
+let acItems = [];
+let acSbSelected = null;
+let acSbFocusIdx = -1;
+let acSbItems = [];
+let _osSetQtyTimer = null;
+let _isChangingQty = false;
+
 const currentAllowed = {
     pl: [],
     br: []
@@ -897,13 +907,6 @@ async function clearCart() {
     toast('🗑️ ล้างตะกร้าแล้ว', 'warn');
 }
 
-function changeQty(id, delta) {
-    const item = cart.find(c => c.id === id);
-    if (!item) return;
-    item.qty = Math.max(1, item.qty + delta);
-    updateCart();
-}
-
 function updateCart() {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const count = cart.reduce((s, c) => s + c.qty, 0);
@@ -1011,9 +1014,6 @@ function highlightMatch(text, q) {
     return text.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
 }
 
-let acSelected = null;
-let acFocusIdx = -1;
-let acItems = [];
 
 function acInput(inp) {
     const q = inp.value.trim();
@@ -1096,9 +1096,7 @@ document.addEventListener('click', e => {
 });
 
 /* ── Sidebar AC ── */
-let acSbSelected = null;
-let acSbFocusIdx = -1;
-let acSbItems = [];
+
 
 function acInputSidebar(inp) {
     const q = inp.value.trim();
@@ -1234,18 +1232,26 @@ const VAT_RATE = 0.07;
 async function openOrderSummary(clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     if (!cart.length) {
-        // ลองดึงจาก server ก่อน เผื่อ badge ยังไม่ sync
         await _fetchCartFromServer();
         if (!cart.length) {
             toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn');
             return;
         }
     } else {
-        // เปิด OS → fetch ล่าสุดเสมอ
         await _fetchCartFromServer();
     }
 
     renderOrderSummary();
+
+    // ✅ โหลด ship-to list ทุกครั้งที่เปิด (ใช้ cache ถ้ามีแล้ว)
+    if (!_shipToList.length) {
+        await loadShipToList();
+    } else {
+        _renderShipToList(_shipToList);
+        const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
+        if (firstItem) _selectAddrItem(firstItem);
+    }
+
     closeCart();
     g('osOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1345,78 +1351,55 @@ function osToggleSelectAll(chk) {
 }
 /* changeQty — อัปเดตใน local แล้ว re-add ผ่าน API
    หมายเหตุ: ถ้า backend มี UpdateQty endpoint ให้เปลี่ยนตรงนี้ */
-let _isChangingQty = false; // ✅ flag ป้องกัน re-render ระหว่าง changeQty
+
 
 async function changeQty(ordId, delta) {
     _isChangingQty = true;
     const item = cart.find(c => c.id === ordId);
-    if (!item) return;
+    if (!item) { _isChangingQty = false; return; }
 
     const newQty = Math.max(1, item.qty + delta);
-    if (newQty === item.qty) return;
+    if (newQty === item.qty) { _isChangingQty = false; return; }
 
-    // ✅ optimistic update เฉพาะตัวเลข ไม่ re-render ทั้งหมด
+    // optimistic update UI ก่อน เพื่อความลื่นไหล
+    const prevQty = item.qty;
     item.qty = newQty;
     _updateQtyUI(ordId, newQty, item.price);
 
     try {
-        const cuscode = window.APP_SESSION?.cuscode || '';
-        const company = window.APP_SESSION?.company || 'TAC';
-        const username = window.APP_SESSION?.username || '';
+        const res = await fetch('/Product/EditProductToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                ordid: ordId,
+                qty: newQty.toString(),
+                price: item.price.toString()
+            })
+        });
 
-        if (delta > 0) {
-            await fetch('/Product/AddProductToCart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    Cuscode: cuscode,
-                    Stkcode: item.code,
-                    Company: company,
-                    Price: item.price.toString(),
-                    Qty: Math.abs(delta).toString(),
-                    BackOrder: item.isBO ? '1' : '0'
-                })
-            });
+        const json = await res.json().catch(() => null);
 
-        } else {
-            const delRes = await fetch('/Product/DeleteProductToCart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ ordId, username })
-            });
-            const delJson = await delRes.json();
-
-            if (!delJson.IsSuccess) {
-                // rollback
-                item.qty = item.qty - delta;
-                _updateQtyUI(ordId, item.qty, item.price);
-                toast(`❌ ลดจำนวนไม่สำเร็จ: ${delJson.Message || ''}`, 'warn');
-                return;
-            }
-
-            await fetch('/Product/AddProductToCart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    Cuscode: cuscode,
-                    Stkcode: item.code,
-                    Company: company,
-                    Price: item.price.toString(),
-                    Qty: newQty.toString(),
-                    BackOrder: item.isBO ? '1' : '0'
-                })
-            });
+        if (!json || !json.IsSuccess) {
+            // rollback UI ถ้า API ล้มเหลว
+            item.qty = prevQty;
+            _updateQtyUI(ordId, prevQty, item.price);
+            toast(`❌ แก้ไขจำนวนไม่สำเร็จ: ${json?.Message || ''}`, 'warn');
+            return;
         }
+
+        toast(`✅ อัปเดตจำนวนเป็น ${newQty} แล้ว`);
 
     } catch (err) {
         console.error('changeQty error:', err);
-        item.qty = item.qty - delta;
-        _updateQtyUI(ordId, item.qty, item.price);
+        item.qty = prevQty;
+        _updateQtyUI(ordId, prevQty, item.price);
         toast('❌ เกิดข้อผิดพลาด', 'warn');
         return;
+    } finally {
+        _isChangingQty = false;
     }
 
-    // ✅ fetch จาก server เพื่อ sync ordId ใหม่ (กรณีลด) แต่ไม่ทำให้กระตุก
+    // sync ค่าจริงจาก DB กลับมาอีกที เพื่อความชัวร์ (bust cache)
     await _fetchCartFromServer(true);
 }
 
@@ -1442,6 +1425,8 @@ function _updateQtyUI(ordId, newQty, price) {
     if (cpTotalEl) cpTotalEl.textContent = fmt(total);
 }
 /* osSetQty — set ค่า qty โดยตรง */
+
+
 async function osSetQty(ordId, val) {
     const item = cart.find(c => c.id === ordId);
     if (!item) return;
@@ -1449,7 +1434,12 @@ async function osSetQty(ordId, val) {
     if (isNaN(n) || n < 1) return;
     const delta = n - item.qty;
     if (delta === 0) return;
-    await changeQty(ordId, delta);
+
+    // ✅ debounce 600ms ป้องกันยิง API ทุก keystroke
+    clearTimeout(_osSetQtyTimer);
+    _osSetQtyTimer = setTimeout(async () => {
+        await changeQty(ordId, delta);
+    }, 600);
 }
 /* osRemoveItem — animate แล้วเรียก delete API */
 function osRemoveItem(ordId) {
@@ -1504,12 +1494,6 @@ function osToggleAddrPicker() {
     gEl('osChangAddrBtn').style.background = 'var(--red-light)';
     const inp = picker.querySelector('.os-addr-search');
     if (inp) { inp.value = ''; osFilterAddr(''); }
-}
-function osUseInvoiceAddr() {
-    const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
-    if (firstItem) osSelectAddr(firstItem);
-    osCloseAddrPicker();
-    toast('✅ ใช้ที่อยู่ในใบกำกับภาษี');
 }
 function osCloseAddrPicker() {
     gEl('osAddrPicker').style.display = 'none';
@@ -1945,6 +1929,104 @@ async function _deleteCartItem(ordId) {
     }
 }
 
+/* ════════════════════════════════════════════════════════
+   SHIP-TO LIST — fetch from API, render dynamically
+   Called once when OS modal opens
+════════════════════════════════════════════════════════ */
+
+  // cache so we don't re-fetch every open
+
+async function loadShipToList() {
+    try {
+        const cuscode = window.APP_SESSION?.cuscode || '';
+        const res = await fetch(`/Master/GetShiptoByCuscode?cuscode=${cuscode}`, {
+            method: 'GET'
+        });
+        const json = await res.json();
+
+        if (!json.IsSuccess || !Array.isArray(json.Data) || !json.Data.length) {
+            const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
+            if (firstItem) _selectAddrItem(firstItem);
+            return;
+        }
+
+        _shipToList = json.Data;
+        _renderShipToList(_shipToList);
+
+    } catch (err) {
+        console.error('loadShipToList error:', err);
+    }
+}
+
+function _renderShipToList(list) {
+    const container = gEl('osAddrList');
+    if (!container) return;
+
+    container.innerHTML = list.map((s, idx) => {
+        const fullAddr = [s.address, s.address2, s.city, s.postCode]
+            .filter(Boolean).join(' ');
+        const isMain = idx === 0;
+        const phone = s.phone || s.contact || '—';
+
+        return `
+        <div class="os-addr-item${isMain ? ' selected' : ''}"
+             data-shipto="${s.shipCode}"
+             onclick="osSelectAddr(this)">
+            <div class="os-addr-name">
+                ${s.name}
+                ${isMain ? `<span style="font-size:9px;background:#fd152f;color:#fff;
+                    border-radius:4px;padding:1px 6px;margin-left:4px;
+                    vertical-align:middle">ที่อยู่หลัก</span>` : ''}
+            </div>
+            <div>${fullAddr}</div>
+            <div class="os-addr-phone">${phone}</div>
+        </div>`;
+    }).join('');
+
+    // ✅ update badge จำนวน
+    const totalEl = gEl('totalAddr');
+    if (totalEl) totalEl.innerText = list.length + ' ที่อยู่';
+
+    // ✅ default เลือก item แรกเสมอ
+    const firstItem = container.querySelector('.os-addr-item');
+    if (firstItem) _selectAddrItem(firstItem);
+}
+/* ── Select an address item (shared logic) ── */
+function _selectAddrItem(el) {
+    gEl('osAddrList')?.querySelectorAll('.os-addr-item')
+        .forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+
+    const name = el.querySelector('.os-addr-name')?.textContent?.trim() || '';
+    const lines = [...el.children]
+        .filter(n => !n.classList.contains('os-addr-name') && !n.classList.contains('os-addr-phone'))
+        .map(n => n.textContent.trim())
+        .filter(Boolean);
+    const phone = el.querySelector('.os-addr-phone')?.textContent?.trim() || '';
+
+    const display = gEl('osAddrDisplay');
+    if (display) {
+        display.innerHTML = `<strong>${name}</strong><br>${lines.join('<br>')}${phone && phone !== '—' ? '<br>' + phone : ''}`;
+    }
+
+    const shortEl = gEl('osCurrentAddrShort');
+    if (shortEl) shortEl.textContent = lines[0] || '';
+}
+
+/* ── Override osSelectAddr to use shared logic ── */
+function osSelectAddr(el) {
+    _selectAddrItem(el);
+    osCloseAddrPicker();
+}
+
+/* ── osUseInvoiceAddr → always default to first item ── */
+function osUseInvoiceAddr() {
+    const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
+    if (firstItem) _selectAddrItem(firstItem);
+    osCloseAddrPicker();
+    toast('✅ ใช้ที่อยู่ในใบกำกับภาษี');
+}
+
 /* ════════════════════════════════
    THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)
 ════════════════════════════════ */
@@ -1963,3 +2045,4 @@ function initTheme() {
 }
 
 initTheme();
+//-----------------------------------//

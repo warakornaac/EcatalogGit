@@ -1,15 +1,16 @@
-﻿using System;
+﻿using Ecatalog.Library;
+using Ecatalog.Models;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
-using Ecatalog.Models;
-using Ecatalog.Library;
 namespace Ecatalog.Controllers
 {
     public class ProductController : Controller
@@ -657,50 +658,42 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> EditProductToCart(string ordId, string cuscode, int qty, decimal price, string username)
+        public async Task<ActionResult> EditProductToCart(int ordid, string cuscod, int qty, decimal price, string username)
         {
-            Boolean IsSuccess = false;
+            bool IsSuccess = false;
             string ResponseString = "";
-            cuscode = Session["cuscode"].ToString();
+            cuscod = Session["cuscode"].ToString();
             username = Session["username"].ToString();
             try
             {
                 var result = await Utils.CallApiAsyncMemory<EditProductToCartModel>(
-                            "Ecatalog/EditProductToCart",
+                            $"Ecatalog/EditProductToCart?ordid={ordid}&cuscode={cuscod}&qty={qty}&price={price}&username={username}",
                             "POST",
-                            null,
+                            null,        // ✅ ไม่ต้องส่ง body แล้ว
                             false,
                             10);
 
-                if (result.StatusCode != 200)
+                if (result.StatusCode != 200 || result.Data?.result == null)
                 {
-                    ResponseString = result.Data?.errorMessage ?? "เกิดข้อผิดพลาดจาก API";
-                    //ResponseString = result.Data.errorMessage.ToString();
-                    //StatusResponse = "N";
+                    IsSuccess = false;
+                    ResponseString = result.Data?.errorMessage ?? "อัปเดตจำนวนไม่สำเร็จ (ไม่พบรายการ)";
                 }
                 else
                 {
                     IsSuccess = true;
                     ResponseString = "Edited Item";
                 }
-
                 return Json(new
                 {
-                    IsSuccess = IsSuccess,
+                    IsSuccess,
                     IsFromCache = result.IsFromCache,
                     Data = result.Data?.result,
                     Message = ResponseString
-                },
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    IsSuccess = false,
-                    Message = ex.Message
-                },
-                JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
     }

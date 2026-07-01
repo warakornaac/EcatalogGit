@@ -1,4 +1,11 @@
-﻿<!-- ════════════════════════════════════════
+﻿<script>
+    window.APP_SESSION = {
+        cuscode : '@Session["cuscode"]',
+        company : '@Session["company"]',
+        username: '@Session["username"]'
+    };
+</script>
+<!-- ════════════════════════════════════════
      ORDER SUMMARY MODAL
 ════════════════════════════════════════ -->
 <div class="os-overlay" id="osOverlay" onclick="osOverlayClick(event)">
@@ -74,12 +81,7 @@
                         <i class="bi bi-house-door"></i> เปลี่ยนที่อยู่ในการจัดส่ง (<a id="totalAddr"></a>)
                     </button>
                 </div>
-                <div class="os-addr-display" id="osAddrDisplay">
-                    <strong>ร้าน:เอ แอนด์ เอ ออโตโมทีฟ เซลส์ จำกัด</strong><br>
-                    (รหัสร้าน:110A0107)<br>
-                    ที่อยู่จัดส่งสินค้า 54-56 ถ.พะเนียง แขวงวัดโสมนัส
-                    เขตป้อมปราบศัตรูพ่าย กรุงเทพมหานคร 10100
-                </div>
+                <div class="os-addr-display" id="osAddrDisplay"></div>
             </div>
 
             <div id="osAddrPicker" style="display:none;flex-direction:column;gap:7px;flex:1;min-height:0">
@@ -98,41 +100,13 @@
                     </button>
                 </div>
                 <div class="os-addr-list" id="osAddrList">
-                    <div class="os-addr-item selected" onclick="osSelectAddr(this)">
-                        <div class="os-addr-name">ร้าน:เอ แอนด์ เอ ออโตโมทีฟ เซลส์ จำกัด (รหัสร้าน:110A0107) <span style="font-size:9px;background:#fd152f;color:#fff;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle">ที่อยู่หลัก</span></div>
-                        <div>ที่อยู่จัดส่งสินค้า 54-56 ถ.พะเนียง แขวงวัดโสมนัส เขตป้อมปราบศัตรูพ่าย กรุงเทพมหานคร 10100</div>
-                        <div class="os-addr-phone">—</div>
-                    </div>
-                    <div class="os-addr-item" onclick="osSelectAddr(this)">
-                        <div class="os-addr-name">อู่สามชัยยนต์</div>
-                        <div>101/1-2 ซอยโชคชัยร่วมมิตร แขวงจอมพล เขตจตุจักร กรุงเทพมหานคร</div>
-                        <div class="os-addr-phone">0-2277-2150, 0-2277-5382</div>
-                    </div>
-                    <div class="os-addr-item" onclick="osSelectAddr(this)">
-                        <div class="os-addr-name">นวมินทร์การาจ</div>
-                        <div>19/41 ซอยนวมินทร์ 103 ถ.นวมินทร์ แขวงคลองกุ่ม เขตบึงกุ่ม กรุงเทพมหานคร</div>
-                        <div class="os-addr-phone">02-9497223-5</div>
-                    </div>
-                    <div class="os-addr-item" onclick="osSelectAddr(this)">
-                        <div class="os-addr-name">สุริยะยนต์ ออโต้ บอดี้</div>
-                        <div>2824-2826 ถ.กรุงเทพฯ-นนทบุรี แขวงบางซื่อ เขตบางซื่อ กรุงเทพมหานคร</div>
-                        <div class="os-addr-phone">0-2585-3408, 0-2912-1136</div>
-                    </div>
-                    <div class="os-addr-item" onclick="osSelectAddr(this)">
-                        <div class="os-addr-name">ศูนย์บริการ Toyota พระราม 2</div>
-                        <div>88/8 ถ.พระราม 2 แขวงแสมดำ เขตบางขุนเทียน กรุงเทพมหานคร</div>
-                        <div class="os-addr-phone">0-2415-0070</div>
-                    </div>
+                    <div class="os-addr-item selected" onclick="osSelectAddr(this)"></div>
                 </div>
             </div>
 
             <button class="os-checkout-btn" id="osCheckoutBtn" onclick="osCheckout()">
                 <i class="bi bi-credit-card-2-front me-2"></i> CHECKOUT
             </button>
-
         </div>
     </div>
 </div>
-
-<!-- TOASTS -->
-@*<div class="toasts" id="toastRack"></div>*@

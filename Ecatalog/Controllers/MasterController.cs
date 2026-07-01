@@ -355,35 +355,26 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> GetShiptoByCuscode()
+        public async Task<ActionResult> GetShiptoByCuscode(string cusCode)
         {
-            string cuscode = Session["cuscode"].ToString();
-            string username = Session["username"].ToString();
             try
             {
-                var result = await Utils.CallApiAsyncMemory<
-                    ShiptoByCuscodeModel>(
-                    $"Ecatalog/GetShiptoByCuscode?cuscode={cuscode}&username={username}",
-                    "GET",
-                    new
-                    {
-                        cuscode,
-                        username
-                    },
-                    true,
-                    30);
+                var result = await Utils.CallApiAsyncMemory<ShiptoByCuscodeModel>(
+                "Ecatalog/GetShiptoByCuscode",
+                "GET",
+                new { cusCode },   // ← ให้ BuildQueryString จัดการ
+                true,
+                30);
+                var raw = Newtonsoft.Json.JsonConvert.SerializeObject(result.Data);
                 return Json(new
                 {
                     IsSuccess = result.IsSuccess,
-                    IsFromCache = result.IsFromCache,
-                    ExecutionTime = result.ExecutionTime,
-
-
-                    Debug_DataIsNull = result.Data == null,
-                    Debug_ResultIsNull = result.Data?.result == null,
-                    Debug_ResultCount = result.Data?.result?.Count ?? 0,
-
-                    Data = result.Data?.result
+                    DataIsNull = result.Data == null,
+                    ResultIsNull = result.Data?.result == null,
+                    ResultCount = result.Data?.result?.Count ?? 0,
+                    StatusCode = result.Data?.statusCode,
+                    ErrorMessage = result.Data?.errorMessage,
+                    Data = result.Data?.result ?? new List<ResultShiptoByCuscode>()
                 },
                 JsonRequestBehavior.AllowGet);
             }
