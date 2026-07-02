@@ -1,41 +1,46 @@
 ﻿@{
-    Layout = null;
-    var SessionslmCode = ViewBag.slmCode;
-    var SessioncusCode = ViewBag.cusCode;
+    var sessionUserType = Session["UserType"] != null ? (int)Session["UserType"] : 0;
+    var sessionSlmCode = Session["slmcode"]?.ToString() ?? "";
+    var sessionCusCode = Session["cusCode"]?.ToString() ?? "";
 }
+
+<div id="appConfig"
+     data-usertype="@sessionUserType"
+     data-slmcode="@sessionSlmCode"
+     data-cuscode="@sessionCusCode">
+</div>
 
 <!-- ════ SIDEBAR ════ -->
 <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
     <div class="sidebar-inner mb-7">
-        @if (this.Session["UserType"] != null && (int)this.Session["UserType"] == 1)
+
+        @if (sessionUserType == 1 && !string.IsNullOrEmpty(sessionSlmCode))
         {
-            if (this.Session["slmcode"] != null)
-            {
-        <div class="sb-sc-bar">
-            <div class="sb-sc-row">
-                <div class="sb-sc-field">
-                    <label class="sb-sc-label" for="salesmanId">Salesman</label>
-                    <select class="sb-select sb-select-sm" id="salesmanId">
-                        <option value="">@ViewBag.slmCode</option>
-                    </select>
+            <div class="sb-sc-bar">
+                <div class="sb-sc-row">
+                    <div class="sb-sc-field">
+                        <label class="sb-sc-label" for="salesmanId">Salesman</label>
+                        <select class="sb-select sb-select-sm" id="salesmanId">
+                            <option value="">-- เลือก Salesman --</option>
+                        </select>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(sessionCusCode))
+                    {
+                        <div class="sb-sc-field">
+                            <label class="sb-sc-label" for="customerId">Customer</label>
+                            <select class="sb-select sb-select-sm" id="customerId">
+                                <option value="">-- เลือก Customer --</option>
+                            </select>
+                        </div>
+                    }
                 </div>
-                @if (this.Session["cusCode"] != null)
-                        {
-                <div class="sb-sc-field">
-                    <label class="sb-sc-label" for="customerId">Customer</label>
-                    <select class="sb-select sb-select-sm" id="customerId">
-                        <option value="">@ViewBag.cusCode</option>
-                    </select>
+                <div class="company-group" role="group" aria-label="Company">
+                    <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
+                    <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
+                    <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
                 </div>
-                        }
             </div>
-            <div class="company-group" role="group" aria-label="Company">
-                <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
-                <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
-                <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
-            </div>
-        </div>
-            }
         }
 
         <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
@@ -103,10 +108,10 @@
                     <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
                 </button>
                 @*<div class="mb-1">
-                    <div>
-                        <span id="cacheStatus">-</span>
-                    </div>
-                </div>*@
+                        <div>
+                            <span id="cacheStatus">-</span>
+                        </div>
+                    </div>*@
             </div>
         </div>
 
@@ -137,10 +142,10 @@
                     <i class="bi bi-lightning-charge-fill"></i> Search Parts
                 </button>
                 @*<div class="mb-1">
-                    <div>
-                        <span id="cacheStatusField">-</span>
-                    </div>
-                </div>*@
+                        <div>
+                            <span id="cacheStatusField">-</span>
+                        </div>
+                    </div>*@
             </div>
         </div>
 

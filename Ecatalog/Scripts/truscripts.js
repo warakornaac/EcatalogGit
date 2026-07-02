@@ -1790,11 +1790,6 @@ function toggleSec(hd, targetId) {
         setTimeout(() => { body.style.maxHeight = ''; }, 260);
     }
 }
-function toggleCompany(btn) {
-    btn.classList.toggle('active');
-    const isActive = btn.classList.contains('active');
-    btn.style.opacity = isActive ? '1' : '0.5';
-}
 
 /* Extend the existing keydown listener to also close sidebar */
 document.addEventListener('keydown', e => {
@@ -2027,9 +2022,188 @@ function osUseInvoiceAddr() {
     toast('✅ ใช้ที่อยู่ในใบกำกับภาษี');
 }
 
-/* ════════════════════════════════
-   THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)
-════════════════════════════════ */
+// =================  INIT ===========================
+document.addEventListener('DOMContentLoaded', function () {
+    const config = document.getElementById('appConfig');
+    const userType = parseInt(config?.dataset.usertype ?? '0');
+    const sessionSlm = config?.dataset.slmcode ?? '';
+    const sessionCus = config?.dataset.cuscode ?? '';
+
+    console.log('Session →', { userType, sessionSlm, sessionCus });
+
+    if (userType === 1 && sessionSlm) {
+        getSalesmanAll(sessionSlm, sessionCus);
+    } else if (sessionCus) {
+        getInfomantionCustomer(sessionCus);
+    } else if (sessionSlm) {
+        getCustomerbySalesman(sessionSlm, '');
+    }
+});
+
+// ================ 1. GET SALESMAN ALL ========================
+function getSalesmanAll(sessionSlm, sessionCus) {
+    $.ajax({
+        url: '/Master/GetSalesmanAll',
+        method: 'GET',
+        success: function (data) {
+            console.log('GetSalesmanAll →', data);
+            if (!data.IsSuccess) return;
+
+            const select = $('#salesmanId');
+            select.empty().append('<option value="">-- เลือก Salesman --</option>');
+
+            $.each(data.Data, function (i, slm) {
+                select.append(`<option value="${slm.slmCode}">${slm.slmCode} - ${slm.slmName}</option>`);
+            });
+
+            if (sessionSlm) {
+                select.val(sessionSlm);
+                console.log('salesmanId.value after set →', select.val());
+                getCustomerbySalesman(sessionSlm, sessionCus);
+            }
+
+            select.off('change').on('change', function () {
+                if ($(this).val()) {
+                    getCustomerbySalesman($(this).val(), '');
+                } else {
+                    clearCustomerSelect();
+                    clearCustomerCard();
+                }
+            });
+        },
+        error: function (xhr, status, error) {
+            console.error('getSalesmanAll error:', error);
+        }
+    });
+}
+
+// ================== 2. GET CUSTOMER BY SALESMAN ===========================
+function getCustomerbySalesman(slmcode, sessionCus) {
+    $.ajax({
+        url: '/Master/GetCustomerbySalesman',
+        method: 'GET',
+        data: { slmcode: slmcode },
+        success: function (data) {
+            console.log('GetCustomerbySalesman →', data);
+            if (!data.IsSuccess) return;
+
+            const select = $('#customerId');
+            if (!select.length) return;
+
+            const activeCompanies = getActiveCompanies();
+
+            select.empty().append('<option value="">-- เลือก Customer --</option>');
+
+            $.each(data.Data, function (i, cus) {
+                if (cus.inactive === 'Y' || cus.block === 1) return;
+                if (activeCompanies.length > 0 && !activeCompanies.includes(cus.company)) return;
+
+                select.append(
+                    $('<option>', {
+                        value: cus.cuscode,
+                        text: `${cus.cuscode} - ${cus.cusname}`,
+                        'data-company': cus.company
+                    })
+                );
+            });
+
+            if (sessionCus) {
+                select.val(sessionCus);
+                console.log('customerId.value after set →', select.val());
+                getInfomantionCustomer(sessionCus);
+            }
+
+            select.off('change').on('change', function () {
+                if ($(this).val()) {
+                    getInfomantionCustomer($(this).val());
+                } else {
+                    clearCustomerCard();
+                }
+            });
+        },
+        error: function (xhr, status, error) {
+            console.error('getCustomerbySalesman error:', error);
+        }
+    });
+}
+
+// ================ 3. GET INFORMATION CUSTOMER ==========================
+function getInfomantionCustomer(cuscode) {
+    console.log('getInfomantionCustomer called with →', cuscode);
+    $.ajax({
+        url: '/Master/GetInfomantionCustomer',
+        method: 'GET',
+        data: { cuscode: cuscode },
+        success: function (data) {
+            console.log('GetInfomantionCustomer →', data);
+            if (!data.IsSuccess || !data.Data || data.Data.length === 0) {
+                console.warn('No customer data found for →', cuscode);
+                return;
+            }
+            renderCustomerCard(data.Data[0]);
+        },
+        error: function (xhr, status, error) {
+            console.error('getInfomantionCustomer error:', error);
+        }
+    });
+}
+
+// ==========================================
+// RENDER: Customer Card (ขนาดไม่ยุบ)
+// ==========================================
+function renderCustomerCard(cus) {
+    const info = document.querySelector('#customerCard .customer-info');
+    if (!info) return;
+
+    info.innerHTML = `
+        <div class="mb-2"><strong>${cus.cusname ?? '-'}</strong></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
+            <div><span class="text-muted">Salesman: </span><strong>${cus.slmcode ?? '-'}</strong></div>
+            <div><span class="text-muted">Customer Code: </span><strong>${cus.cuscode ?? '-'}</strong></div>
+            <div><span class="text-muted">Company: </span><strong>${cus.custype ?? '-'}</strong></div>
+            <div><span class="text-muted">Payment term: </span><strong>${cus.pro ?? '-'}</strong></div>
+        </div>
+    `;
+}
+
+function clearCustomerCard() {
+    // ใส่ placeholder แทน เพื่อไม่ให้ card ยุบ
+    const info = document.querySelector('#customerCard .customer-info');
+    if (!info) return;
+
+    info.innerHTML = `
+        <div class="mb-2"><strong>-</strong></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
+            <div><span class="text-muted">Salesman: </span><strong>-</strong></div>
+            <div><span class="text-muted">Customer Code: </span><strong>-</strong></div>
+            <div><span class="text-muted">Rating: </span><strong>-</strong></div>
+            <div><span class="text-muted">Payment term: </span><strong>-</strong></div>
+        </div>
+    `;
+}
+
+function clearCustomerSelect() {
+    const select = document.getElementById('customerId');
+    if (select) select.innerHTML = '<option value="">-- เลือก Customer --</option>';
+}
+
+// ==========================================
+// HELPER: Company Toggle
+// ==========================================
+function getActiveCompanies() {
+    return [...document.querySelectorAll('.company-btn[aria-pressed="true"]')]
+        .map(btn => btn.dataset.company);
+}
+
+function toggleCompany(btn) {
+    const isPressed = btn.getAttribute('aria-pressed') === 'true';
+    btn.setAttribute('aria-pressed', String(!isPressed));
+
+    const selectedSlm = document.getElementById('salesmanId')?.value;
+    if (selectedSlm) getCustomerbySalesman(selectedSlm, '');
+}
+
+/* ════════════ THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)════════════ */
 const THEME_KEY = 'truTheme';
 
 function toggleTheme() {
