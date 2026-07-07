@@ -28,7 +28,8 @@ let acSbFocusIdx = -1;
 let acSbItems = [];
 let _osSetQtyTimer = null;
 let _isChangingQty = false;
-
+var PRODUCTS_FOR_PL_COUNT = [];
+var PRODUCTS_FOR_BR_COUNT = [];
 const currentAllowed = {
     pl: [],
     br: []
@@ -285,9 +286,10 @@ function buildSpecHTML(p) {
             <p style="font-size:12px;color:var(--text-3);margin-top:3px">${p.brand}</p>
             <div class="mt-2 d-flex align-items-center gap-3">
                 <div class="spec-price">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
-                <input type="number" class="qty" value="1" min="1" max="99" onclick="event.stopPropagation()">
+                <input type="number" class="qty" value="1" min="1" max="99"
+                       id="modalQty-${p.id}" onclick="event.stopPropagation()">
                 <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
-                        style="max-width:160px" onclick="addCartFromModal(${p.id}, event)">
+                        style="max-width:160px" onclick="addCartFromSpecModal(${p.id}, event)">
                     <i class="bi ${(p.stock ?? 99) === 0 ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
                     ${(p.stock ?? 99) === 0 ? 'จอง (BO)' : 'เพิ่ม'}
                 </button>
@@ -310,6 +312,21 @@ function buildSpecHTML(p) {
         <div class="stab-pane" id="itab-comp-${p.id}"></div>
         <div class="stab-pane" id="itab-veh-${p.id}"></div>
     </div>`;
+}
+
+/* ── Add to cart จาก spec modal ที่เปิดผ่าน openDrawer (card click) ── */
+async function addCartFromSpecModal(productId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    const p = PRODUCTS.find(x => x.id === productId);
+    if (!p) return;
+
+    const qty = parseInt(gEl('modalQty-' + productId)?.value) || 1;
+    const btn = clickEvent?.currentTarget instanceof HTMLElement
+        ? clickEvent.currentTarget
+        : document.querySelector('#specModalContent .acart');
+
+    await _callAddToCartAPI(p, qty, btn);
 }
 
 const s = window.getComputedStyle(drawer); 
@@ -796,13 +813,12 @@ function toggleChk(label, type, val) {
     activateSec(3);
     showSkel();
 
-    if (type === 'pl') {
-        ClickedMatchData();
-    }
-
     searchProductByCategory().finally(() => {
         hideSkel();
-        renderActiveFilterChips();   // ✅ เปลี่ยนจาก renderActiveChips
+        updateFilterCounts();
+        renderActiveFilterChips();
+        // ✅ scroll to product area
+        gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 }
 
@@ -1372,6 +1388,7 @@ async function changeQty(ordId, delta) {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 ordid: ordId,
+                cuscod: window.APP_SESSION?.cuscode || '',   // ✅ เพิ่มบรรทัดนี้
                 qty: newQty.toString(),
                 price: item.price.toString()
             })
@@ -1648,8 +1665,9 @@ const FIXED_GROUPS = [
 
 function GetProductGroup() {
     $.ajax({
-        url: '/Master/GeProductGroups',
+        url: '/Master/GetProductGroups',
         method: 'GET',
+        // ✅ ไม่ส่ง prodgrpid เลย ให้ API ตัดสินใจเอง
         success: function (result) {
             if (result.IsSuccess) {
                 const apiGroups = (result.Data || []).map(function (g) {
@@ -1659,7 +1677,6 @@ function GetProductGroup() {
                         label: g.prodgrpname
                     };
                 });
-
                 GROUPS = [...FIXED_GROUPS, ...apiGroups];
                 renderBottomBar();
             } else {
@@ -1677,7 +1694,7 @@ function GetProductGroup() {
 //----------- ProductLine ----------------//
 function GetProductionLine() {
     $.ajax({
-        url: '/Master/GeProductLines',
+        url: '/Master/GetProductLines',
         method: 'GET',
         success: function (result) {
             if (result.IsSuccess) {
@@ -1799,58 +1816,76 @@ document.addEventListener('keydown', e => {
 });
 
 function updateFilterCounts() {
-    const source = PRODUCTS_FOR_COUNT.length ? PRODUCTS_FOR_COUNT : PRODUCTS;  // ✅ ใช้ snapshot
+    const plSource = PRODUCTS_FOR_PL_COUNT.length ? PRODUCTS_FOR_PL_COUNT : PRODUCTS;
+    const brSource = PRODUCTS_FOR_BR_COUNT.length ? PRODUCTS_FOR_BR_COUNT : PRODUCTS;
 
     $("#brList .chk-item").each(function () {
         const brandName = $(this).attr('data-name');
-        const count = source.filter(p => p.brand === brandName).length;  // ✅ source ไม่ใช่ PRODUCTS
+        const count = brSource.filter(p => p.brand === brandName).length;
         $(this).find('.chk-count').text(count);
     });
 
     $("#plList .chk-item").each(function () {
         const lineName = $(this).attr('data-name');
-        const count = source.filter(p => p.line === lineName).length;  // ✅ source ไม่ใช่ PRODUCTS
+        const count = plSource.filter(p => p.line === lineName).length;
         $(this).find('.chk-count').text(count);
     });
 
+    const hasBrChecked = Object.keys(chkState.br).length > 0;
+    const hasPlChecked = Object.keys(chkState.pl).length > 0;
+
     const $brList = $("#brList");
-    $brList.find('.chk-item').sort(function (a, b) {
-        const countA = parseInt($(a).find('.chk-count').text()) || 0;
-        const countB = parseInt($(b).find('.chk-count').text()) || 0;
-        return countB - countA;
-    }).appendTo($brList);
+    if (!hasBrChecked) {
+        $brList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($brList);
+    } else {
+        const $checked = $brList.find('.chk-item.checked').detach();
+        $brList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($brList);
+        $brList.prepend($checked);
+    }
 
     const $plList = $("#plList");
-    $plList.find('.chk-item').sort(function (a, b) {
-        const countA = parseInt($(a).find('.chk-count').text()) || 0;
-        const countB = parseInt($(b).find('.chk-count').text()) || 0;
-        return countB - countA;
-    }).appendTo($plList);
+    if (!hasPlChecked) {
+        $plList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($plList);
+    } else {
+        const $checked = $plList.find('.chk-item.checked').detach();
+        $plList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($plList);
+        $plList.prepend($checked);
+    }
 
     const SHOW_LIMIT = 5;
 
-    [
-        { listId: '#brList', extraClass: 'br-extra' },
-        { listId: '#plList', extraClass: 'pl-extra' }
-    ].forEach(({ listId, extraClass }) => {
+    if (!hasBrChecked) {
         let visible = 0;
-        $(`${listId} .chk-item`).each(function () {
-            const $item = $(this);
-            const isChecked = $item.hasClass('checked');
-
-            if (isChecked) {
-                $item.show().removeClass(extraClass);
-                return;
-            }
-
+        $("#brList .chk-item").each(function () {
             if (visible < SHOW_LIMIT) {
-                $item.show().removeClass(extraClass);
+                $(this).show().removeClass('br-extra');
                 visible++;
             } else {
-                $item.hide().addClass(extraClass);
+                $(this).hide().addClass('br-extra');
             }
         });
-    });
+    }
+
+    if (!hasPlChecked) {
+        let visible = 0;
+        $("#plList .chk-item").each(function () {
+            if ($(this).css('display') === 'none' && !$(this).hasClass('pl-extra')) return;
+            if (visible < SHOW_LIMIT) {
+                $(this).show().removeClass('pl-extra');
+                visible++;
+            } else {
+                $(this).hide().addClass('pl-extra');
+            }
+        });
+    }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1878,9 +1913,10 @@ function _mapCartItem(item) {
 /* ── Fetch cart จาก server แล้ว render ทุก view ── */
 async function _fetchCartFromServer(forceRefresh = false) {
     try {
+        const cuscode = window.APP_SESSION?.cuscode || '';
         const url = forceRefresh
-            ? `/Product/GetProductToCart?t=${Date.now()}`  // ✅ bust cache
-            : '/Product/GetProductToCart';
+            ? `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}&t=${Date.now()}`
+            : `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}`;
 
         const res = await fetch(url, { method: 'GET' });
         const json = await res.json();
@@ -2025,18 +2061,22 @@ function osUseInvoiceAddr() {
 // =================  INIT ===========================
 document.addEventListener('DOMContentLoaded', function () {
     const config = document.getElementById('appConfig');
-    const userType = parseInt(config?.dataset.usertype ?? '0');
+    const userType = config?.dataset.usertype ?? '';
     const sessionSlm = config?.dataset.slmcode ?? '';
     const sessionCus = config?.dataset.cuscode ?? '';
 
     console.log('Session →', { userType, sessionSlm, sessionCus });
 
-    if (userType === 1 && sessionSlm) {
+    if (userType === '1') {
+        // admin → ดึง salesman ทั้งหมดมาให้เลือกเสมอ (ไม่ว่าจะมี sessionSlm หรือไม่)
         getSalesmanAll(sessionSlm, sessionCus);
     } else if (sessionCus) {
         getInfomantionCustomer(sessionCus);
     } else if (sessionSlm) {
         getCustomerbySalesman(sessionSlm, '');
+    } else {
+        // ไม่มีทั้ง slmcode/cuscode ผูกมากับ user นี้ → โหลด customer ทั้งหมด
+        getCustomerbySalesman('', '');
     }
 });
 
@@ -2046,30 +2086,41 @@ function getSalesmanAll(sessionSlm, sessionCus) {
         url: '/Master/GetSalesmanAll',
         method: 'GET',
         success: function (data) {
-            console.log('GetSalesmanAll →', data);
             if (!data.IsSuccess) return;
 
             const select = $('#salesmanId');
             select.empty().append('<option value="">-- เลือก Salesman --</option>');
 
             $.each(data.Data, function (i, slm) {
-                select.append(`<option value="${slm.slmCode}">${slm.slmCode} - ${slm.slmName}</option>`);
+                const fullText = `${slm.slmCode} - ${slm.slmName}`;
+                select.append(
+                    $('<option>', {
+                        value: slm.slmCode,
+                        text: fullText,
+                        'data-full': fullText,
+                        'data-name': slm.slmName
+                    })
+                );
             });
 
             if (sessionSlm) {
                 select.val(sessionSlm);
-                console.log('salesmanId.value after set →', select.val());
-                getCustomerbySalesman(sessionSlm, sessionCus);
             }
+            _shortenSelected('salesmanId');   // ✅ ตอน init ให้เหลือแค่ชื่อทันทีถ้ามีค่าอยู่แล้ว
+            getCustomerbySalesman(sessionSlm || '', sessionCus);
 
             select.off('change').on('change', function () {
+                _shortenSelected('salesmanId');
                 if ($(this).val()) {
                     getCustomerbySalesman($(this).val(), '');
                 } else {
                     clearCustomerSelect();
                     clearCustomerCard();
+                    getCustomerbySalesman('', '');
                 }
             });
+
+            _bindSelectToggle('salesmanId');   // ✅ bind mousedown/focus/blur ครั้งเดียวพอ
         },
         error: function (xhr, status, error) {
             console.error('getSalesmanAll error:', error);
@@ -2077,31 +2128,31 @@ function getSalesmanAll(sessionSlm, sessionCus) {
     });
 }
 
-// ================== 2. GET CUSTOMER BY SALESMAN ===========================
 function getCustomerbySalesman(slmcode, sessionCus) {
     $.ajax({
         url: '/Master/GetCustomerbySalesman',
         method: 'GET',
         data: { slmcode: slmcode },
         success: function (data) {
-            console.log('GetCustomerbySalesman →', data);
             if (!data.IsSuccess) return;
 
-            const select = $('#customerId');
+            const select = $('#customerId');   // ← ตรงนี้มี select ประกาศจริง
             if (!select.length) return;
 
             const activeCompanies = getActiveCompanies();
-
             select.empty().append('<option value="">-- เลือก Customer --</option>');
 
             $.each(data.Data, function (i, cus) {
                 if (cus.inactive === 'Y' || cus.block === 1) return;
                 if (activeCompanies.length > 0 && !activeCompanies.includes(cus.company)) return;
 
+                const fullText = `${cus.cuscode} - ${cus.cusname}`;
                 select.append(
                     $('<option>', {
                         value: cus.cuscode,
-                        text: `${cus.cuscode} - ${cus.cusname}`,
+                        text: fullText,
+                        'data-full': fullText,
+                        'data-name': cus.cusname,
                         'data-company': cus.company
                     })
                 );
@@ -2109,45 +2160,88 @@ function getCustomerbySalesman(slmcode, sessionCus) {
 
             if (sessionCus) {
                 select.val(sessionCus);
-                console.log('customerId.value after set →', select.val());
+                if (window.APP_SESSION) window.APP_SESSION.cuscode = sessionCus;
                 getInfomantionCustomer(sessionCus);
+                _fetchCartFromServer();   // ✅ ดึง cart ของลูกค้านี้ตั้งแต่โหลดหน้า
             }
+            _shortenSelected('customerId');
 
             select.off('change').on('change', function () {
-                if ($(this).val()) {
-                    getInfomantionCustomer($(this).val());
+                _shortenSelected('customerId');
+                const selectedCus = $(this).val();
+
+                if (window.APP_SESSION) window.APP_SESSION.cuscode = selectedCus || '';
+
+                if (selectedCus) {
+                    getInfomantionCustomer(selectedCus);
+                    _fetchCartFromServer(true);   // ✅ ดึง cart เดิมของลูกค้าคนนี้ขึ้นมาทันที (bust cache)
                 } else {
                     clearCustomerCard();
+                    cart = [];                    // ✅ ยกเลิกเลือกลูกค้า → เคลียร์ cart ที่แสดงด้วย
+                    updateCart();
                 }
             });
+
+            _bindSelectToggle('customerId');
         },
         error: function (xhr, status, error) {
             console.error('getCustomerbySalesman error:', error);
         }
     });
 }
+/* ── คืนค่าเต็ม (code - name) ให้ทุก option ก่อนเปิด list ── */
+function _restoreFullText(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    Array.from(select.options).forEach(opt => {
+        const full = opt.getAttribute('data-full');
+        if (full) opt.textContent = full;
+    });
+}
 
+/* ── ย่อ text ของ option ที่ถูกเลือกอยู่ ให้เหลือแค่ชื่อ (ใช้ตอนปิด/เลือกเสร็จ) ── */
+function _shortenSelected(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const opt = select.options[select.selectedIndex];
+    if (opt && opt.value) {
+        const name = opt.getAttribute('data-name');
+        if (name) opt.textContent = name;
+    }
+}
+
+/* ── bind event ครั้งเดียวต่อ select: เปิด → คืน full, ปิด/blur → ย่อกลับ ── */
+function _bindSelectToggle(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select || select.dataset.toggleBound) return;   // กัน bind ซ้ำ
+    select.dataset.toggleBound = '1';
+
+    select.addEventListener('mousedown', () => _restoreFullText(selectId));
+    select.addEventListener('focus', () => _restoreFullText(selectId));
+    select.addEventListener('blur', () => _shortenSelected(selectId));
+}
 // ================ 3. GET INFORMATION CUSTOMER ==========================
 function getInfomantionCustomer(cuscode) {
-    console.log('getInfomantionCustomer called with →', cuscode);
     $.ajax({
         url: '/Master/GetInfomantionCustomer',
         method: 'GET',
         data: { cuscode: cuscode },
         success: function (data) {
-            console.log('GetInfomantionCustomer →', data);
             if (!data.IsSuccess || !data.Data || data.Data.length === 0) {
                 console.warn('No customer data found for →', cuscode);
                 return;
             }
-            renderCustomerCard(data.Data[0]);
+            const cus = data.Data[0];
+
+            if (window.APP_SESSION) window.APP_SESSION.cuscode = cus.cuscode || cuscode;
+
+            renderCustomerCard(cus);
         },
         error: function (xhr, status, error) {
             console.error('getInfomantionCustomer error:', error);
         }
     });
 }
-
 // ==========================================
 // RENDER: Customer Card (ขนาดไม่ยุบ)
 // ==========================================
@@ -2160,8 +2254,8 @@ function renderCustomerCard(cus) {
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
             <div><span class="text-muted">Salesman: </span><strong>${cus.slmcode ?? '-'}</strong></div>
             <div><span class="text-muted">Customer Code: </span><strong>${cus.cuscode ?? '-'}</strong></div>
-            <div><span class="text-muted">Company: </span><strong>${cus.custype ?? '-'}</strong></div>
-            <div><span class="text-muted">Payment term: </span><strong>${cus.pro ?? '-'}</strong></div>
+            <div><span class="text-muted">Tel: </span><strong>${cus.phone ?? '-'}</strong></div>
+            <div><span class="text-muted">Payment term: </span><strong>${cus.rating ?? '-'}</strong></div>
         </div>
     `;
 }
@@ -2199,6 +2293,10 @@ function toggleCompany(btn) {
     const isPressed = btn.getAttribute('aria-pressed') === 'true';
     btn.setAttribute('aria-pressed', String(!isPressed));
 
+    // ✅ sync company ตัวแรกที่ active เข้า APP_SESSION (ถ้ามีมากกว่า 1 ตัว active ให้ใช้ตัวแรก)
+    const active = getActiveCompanies();
+    if (window.APP_SESSION) window.APP_SESSION.company = active[0] || 'TAC';
+
     const selectedSlm = document.getElementById('salesmanId')?.value;
     if (selectedSlm) getCustomerbySalesman(selectedSlm, '');
 }
@@ -2210,7 +2308,6 @@ function toggleTheme() {
     const isBlue = document.body.classList.toggle('theme-blue');
     localStorage.setItem(THEME_KEY, isBlue ? 'blue' : 'default');
 }
-
 function initTheme() {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === 'blue') {

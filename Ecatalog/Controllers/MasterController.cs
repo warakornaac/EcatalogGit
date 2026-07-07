@@ -181,19 +181,18 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> GeProductGroups(string prodgrpid)
+        public async Task<ActionResult> GetProductGroups(string prodgrpid)
         {
+            // ❌ ลบ fallback "All" ออก เพราะ API ไม่รู้จัก
+            // if (string.IsNullOrWhiteSpace(prodgrpid)) prodgrpid = "All";
+
             try
             {
-                var result = await Utils.CallApiAsyncMemory<
-                    ModelProductionGroupFilterModel>(
+                var result = await Utils.CallApiAsyncMemory<ModelProductionGroupFilterModel>(
                     "Ecatalog/GetProductGroup",
                     "GET",
-                    new
-                    {
-                        prodgrpid
-                    },
-                    true,
+                    new { prodgrpid },   // ส่งค่าว่างตามที่รับมา
+                    false,               // ยังคงปิด cache ไว้ก่อน
                     10);
 
                 return Json(new
@@ -202,22 +201,15 @@ namespace Ecatalog.Controllers
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
                     Data = result.Data?.result
-                },
-
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    IsSuccess = false,
-                    Message = ex.Message
-                },
-                JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
-        public async Task<ActionResult> GeProductLines(string prodlineid)
+        public async Task<ActionResult> GetProductLines(string prodlineid)
         {
             try
             {
@@ -289,18 +281,16 @@ namespace Ecatalog.Controllers
         }
         public async Task<ActionResult> GetSalesmanAll(string slmcode)
         {
-            slmcode = Session["slmcode"].ToString();
-            //string sessionSlmCode = Utils.SessionSlmCode;
+            // ✅ ใช้ค่าจาก Session เป็นหลัก ถ้าว่างให้ fallback เป็น "All"
+            slmcode = Session["slmcode"]?.ToString() ?? "";
+            if (string.IsNullOrWhiteSpace(slmcode)) slmcode = "All";
+
             try
             {
-                var result = await Utils.CallApiAsyncMemory<
-                    GetSalesmanAllModel>(
+                var result = await Utils.CallApiAsyncMemory<GetSalesmanAllModel>(
                     "Ecatalog/GetSalesmanName",
                     "GET",
-                    new
-                    {
-                        slmcode
-                    },
+                    new { slmcode },
                     true,
                     10);
 
@@ -310,32 +300,25 @@ namespace Ecatalog.Controllers
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
                     Data = result.Data?.result
-                },
-
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    IsSuccess = false,
-                    Message = ex.Message
-                },
-                JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
         public async Task<ActionResult> GetCustomerbySalesman(string slmcode)
         {
+            // ✅ guard: ถ้า caller ส่งค่าว่างมา (ไม่มี slmcode เจาะจง) ให้ดึงลูกค้าทั้งหมด
+            if (string.IsNullOrWhiteSpace(slmcode)) slmcode = "All";
+
             try
             {
-                var result = await Utils.CallApiAsyncMemory<
-                    GetCustomerbySalesmanModel>(
+                var result = await Utils.CallApiAsyncMemory<GetCustomerbySalesmanModel>(
                     "Ecatalog/CustomerbySalesman",
                     "GET",
-                    new
-                    {
-                        slmcode
-                    },
+                    new { slmcode },
                     true,
                     10);
 
@@ -345,18 +328,11 @@ namespace Ecatalog.Controllers
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
                     Data = result.Data?.result
-                },
-
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    IsSuccess = false,
-                    Message = ex.Message
-                },
-                JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
         public async Task<ActionResult> GetInfomantionCustomer(string cuscode)
