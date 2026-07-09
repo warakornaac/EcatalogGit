@@ -1816,6 +1816,11 @@ body {
     justify-content: center;
     height: 115px;
     position: relative;
+
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
 }
 
     .pimg img {
@@ -2199,6 +2204,11 @@ body {
         height: 78px;
         object-fit: contain;
         flex-shrink: 0;
+
+        -webkit-user-drag: none;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: none;
     }
 
 .spec-hero-meta h5 {
@@ -2413,6 +2423,11 @@ body {
         padding: 8px;
         flex-shrink: 0;
         box-shadow: var(--sh-sm);
+
+        -webkit-user-drag: none;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: none;
     }
 
 .dr-meta {
@@ -2691,6 +2706,11 @@ body {
     font-size: 12px;
     cursor: pointer;
     transition: border-color var(--tr);
+
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
 }
 
     .img-ph i {
@@ -3104,6 +3124,11 @@ body {
         background: var(--surface-2);
         padding: 4px;
         flex-shrink: 0;
+
+        -webkit-user-drag: none;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: none;
     }
 
 .cr-info {
@@ -3547,6 +3572,11 @@ body {
     border: 1px solid var(--border);
     padding: 4px;
     flex-shrink: 0;
+
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none;
 }
 
 .os-thumb-ph {

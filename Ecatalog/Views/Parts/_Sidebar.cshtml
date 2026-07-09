@@ -62,33 +62,33 @@
         </div>
         <div class="mb-2">
             <div class="flabel">Model Range</div>
-            <select class="fselect" id="rangeId" onchange="loadBody();">
+            <select class="fselect" id="rangeId" onchange="loadBody();" disabled>
                 <option value="">— Select Range —</option>
             </select>
         </div>
         <div class="mb-2">
             <div class="flabel">Model Body</div>
-            <select class="fselect" id="bodyId" onchange="loadEngine();">
+            <select class="fselect" id="bodyId" onchange="loadEngine();" disabled>
                 <option value="">— Select Body —</option>
             </select>
         </div>
         <div class="mb-2">
             <div class="flabel">Engine</div>
-            <select class="fselect" id="engineId" onchange="updateVehSummary()">
+            <select class="fselect" id="engineId" onchange="updateVehSummary()" disabled>
                 <option value="">— Select Engine —</option>
             </select>
         </div>
         <div class="mb-2">
             <div class="flabel">Year Range</div>
             <div class="yr-range">
-                <input type="number" id="yearFrom" placeholder="Date From" onchange="activateSec(1)">
+                <input type="number" id="yearFrom" placeholder="Date From" onchange="activateSec(1)" disabled>
                 <span>–</span>
-                <input type="number" id="yearTo" placeholder="Date To" onchange="activateSec(1)">
+                <input type="number" id="yearTo" placeholder="Date To" onchange="activateSec(1)" disabled>
             </div>
         </div>
         <div class="mb-1">
             <div class="flabel">Drive System</div>
-            <select class="fselect" id="driveId" onchange="updateVehSummary()">
+            <select class="fselect" id="driveId" onchange="updateVehSummary()" disabled>
                 <option value="">— Select Drive —</option>
                 <option value="FWD">FWD</option>
                 <option value="RWD">RWD</option>
@@ -101,10 +101,10 @@
             <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
         </button>
         @*<div class="mb-1">
-                <div>
-                    <span id="cacheStatus">-</span>
-                </div>
-            </div>*@
+            <div>
+                <span id="cacheStatus">-</span>
+            </div>
+        </div>*@
     </div>
 </div>
 
@@ -225,8 +225,15 @@
             const marketSegmentId = $("#marketsegId").val();
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
+            const allThreeSelected = marketSegmentId && segmentId && makerId;
 
-            if (!marketSegmentId || !segmentId || !makerId) {
+            // ✅ enable/disable dropdown ที่ต้องรอครบ 3 ตัว
+            ['rangeId', 'bodyId', 'engineId', 'yearFrom', 'yearTo', 'driveId'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !allThreeSelected;
+            });
+
+            if (!allThreeSelected) {
                 $("#rangeId").empty().append('<option value="">— Select Range —</option>');
                 updateVehSummary();
                 return;

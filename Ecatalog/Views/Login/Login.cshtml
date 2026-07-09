@@ -11,13 +11,10 @@
     <link rel="stylesheet" href="~/Content/Login.css">
 </head>
 <body>
-
     <header class="header">
         <img src="~/Images/logo-white.png" style="width: 60px; height: 40px;">
     </header>
-
     <div class="page">
-        <!-- LEFT -->
         <div class="left-panel">
             <div class="left-content">
                 <p class="left-tagline">Smart Parts Finder</p>
@@ -28,21 +25,17 @@
                     <div class="feature-item"><i class="bi bi-check-circle-fill"></i> รองรับผู้ใช้หลายสาขา / หลาย User</div>
                     <div class="feature-item"><i class="bi bi-check-circle-fill"></i> มีสินค้าให้เลือกหลายแบรนด์</div>
                     <div class="feature-item"><i class="bi bi-check-circle-fill"></i> รองรับการสั่งซื้อออนไลน์</div>
-
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT -->
         <div class="right-panel">
             <div class="login-card">
                 <div class="card-top">
                     <img src="~/Images/partspro.png" style="width: 250px; height: 60px; margin-bottom: 10px;">
-                    @*<h1 class="card-title">Parts Pro</h1>*@
                     <h2 class="card-title">เข้าสู่ระบบ</h2>
                     <p class="card-sub">TRW Parts Pro — Smart Parts Finder</p>
                 </div>
-
                 <form id="loginForm">
                     <div class="form-group" id="fgUser">
                         <label class="form-label" for="username">ชื่อผู้ใช้ / รหัสพนักงาน</label>
@@ -52,7 +45,6 @@
                         </div>
                         <p class="form-error" id="errUser">กรุณากรอกชื่อผู้ใช้</p>
                     </div>
-
                     <div class="form-group" id="fgPass">
                         <label class="form-label" for="password">รหัสผ่าน</label>
                         <div class="input-wrap">
@@ -64,15 +56,13 @@
                         </div>
                         <p class="form-error" id="errPass">กรุณากรอกรหัสผ่าน</p>
                     </div>
-
                     <!-- <div class="options-row">
                       <label class="remember">
                         <input type="checkbox" id="remember"> จดจำการเข้าสู่ระบบ
                       </label>
                       <a href="#" class="forgot">ลืมรหัสผ่าน?</a>
                     </div> -->
-
-                    <button type="button" class="btn-login" onclick="AuthenUser();">
+                    <button type="submit" class="btn-login" onclick="AuthenUser();">
                         <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
                     </button>
                 </form>
@@ -89,9 +79,10 @@
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
     <script>
 
-    document.getElementById("loginBtn").onclick = function () {
-        window.location.href = '@Url.Action("Index","Home")';
-    };
+    document.getElementById("loginForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // ป้องกันไม่ให้หน้าเว็บรีเฟรชแบบปกติ
+        AuthenUser(); // เรียกฟังก์ชั่นเข้าสู่ระบบ
+    });
         function togglePwd() {
             const inp = document.getElementById('txtPassword');
             const ico = document.getElementById('eyeIcon');
@@ -125,7 +116,6 @@
                 btn.style.background = '#1a9e52';
             }, 1400);
         }
-
         //function handleGuest() {
         //    const btn = event.currentTarget;
         //    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังโหลด...';
@@ -133,8 +123,6 @@
         //}
         //Btn login
         async function AuthenUser() {
-        //let Username = $("#txtUsername").val() || "";
-        //let Password = $("#txtPassword").val() || "";
         let Username = document.getElementById("txtUsername").value || "";
         let Password = document.getElementById("txtPassword").value || "";
         try {

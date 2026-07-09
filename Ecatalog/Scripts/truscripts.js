@@ -46,7 +46,68 @@ document.getElementById('totalAddr').innerText = totalAddress + ' ที่อ�
 
 const drawer = document.getElementById('specDrawer');
 const overlay = document.getElementById('drawerOverlay');
+//-----------กันคลิกขวา----------------//
+document.addEventListener('contextmenu', function (e) {
+    const target = e.target;
+    if (
+        target.tagName === 'IMG' ||
+        target.closest('.pimg') ||
+        target.closest('.spec-hero') ||
+        target.closest('.dr-hero') ||
+        target.closest('.os-thumb') ||
+        target.closest('.pcard') ||
+        target.closest('.img-ph') ||
+        target.closest('.img-grid') ||
+        target.closest('.cart-row') ||
+        target.closest('.os-item')
+    ) {
+        e.preventDefault();
+        return false;
+    }
+});
+document.addEventListener("keydown", function (e) {
 
+    // Ctrl + S
+    if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + C
+    if (e.ctrlKey && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+    }
+
+    // Ctrl + U
+    if (e.ctrlKey && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+    }
+
+    // F12
+    if (e.key === "F12") {
+        e.preventDefault();
+        return false;
+    } 
+
+    // Ctrl + Shift + I
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + Shift + J
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + U
+    if (e.ctrlKey && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+        return false;
+    }
+
+});
 /* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
     renderBottomBar();
@@ -2316,4 +2377,4 @@ function initTheme() {
 }
 
 initTheme();
-//-----------------------------------//
+//-----------------กันคลิกขวา คัดลอกรูป save img และคีย์ลัด------------------//
