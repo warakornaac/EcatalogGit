@@ -1,33 +1,33 @@
 ﻿@{
-    Layout = null;
-    var SessionslmCode = ViewBag.slmCode;
-    var SessioncusCode = ViewBag.cusCode;
+    // ✅ แปลงเป็น string ให้ชัดเจนตั้งแต่ต้น กัน dynamic comparison พัง
+    var SessionUserType = ViewBag.UserType?.ToString() ?? "";
+    var sessionSlmCode = Session["slmcode"]?.ToString() ?? "";
+    var sessionCusCode = Session["cusCode"]?.ToString() ?? "";
 }
+
+<div id="appConfig"
+     data-usertype="@SessionUserType"
+     data-slmcode="@sessionSlmCode"
+     data-cuscode="@sessionCusCode">
+</div>
 
 <!-- ════ SIDEBAR ════ -->
 <aside class="sidebar" id="sidebar" role="complementary" aria-label="Filter sidebar">
     <div class="sidebar-inner mb-7">
-        @if (this.Session["UserType"] != null && (int)this.Session["UserType"] == 1)
-        {
-            if (this.Session["slmcode"] != null)
-            {
         <div class="sb-sc-bar">
             <div class="sb-sc-row">
                 <div class="sb-sc-field">
                     <label class="sb-sc-label" for="salesmanId">Salesman</label>
                     <select class="sb-select sb-select-sm" id="salesmanId">
-                        <option value="">@ViewBag.slmCode</option>
+                        <option value="">-- เลือก Salesman --</option>
                     </select>
                 </div>
-                @if (this.Session["cusCode"] != null)
-                        {
                 <div class="sb-sc-field">
                     <label class="sb-sc-label" for="customerId">Customer</label>
                     <select class="sb-select sb-select-sm" id="customerId">
-                        <option value="">@ViewBag.cusCode</option>
+                        <option value="">-- เลือก Customer --</option>
                     </select>
                 </div>
-                        }
             </div>
             <div class="company-group" role="group" aria-label="Company">
                 <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
@@ -35,146 +35,147 @@
                 <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
             </div>
         </div>
-            }
-        }
 
-        <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
-            <span class="sec-title">Vehicle Filter</span>
-            <i class="bi bi-chevron-down sec-chevron"></i>
+<div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
+    <span class="sec-title">Vehicle Filter</span>
+    <i class="bi bi-chevron-down sec-chevron"></i>
+</div>
+<div class="collapse show" id="vfBody">
+    <div class="filter-body mt-2">
+        <div class="mb-2">
+            <div class="flabel">Market Segment</div>
+            <select class="fselect" id="marketsegId" onchange="loadModelRange();">
+                <option value="">— Select Market —</option>
+            </select>
         </div>
-        <div class="collapse show" id="vfBody">
-            <div class="filter-body mt-2">
-                <div class="mb-2">
-                    <div class="flabel">Market Segment</div>
-                    <select class="fselect" id="marketsegId" onchange="loadModelRange();">
-                        <option value="">— Select Market —</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Vehicle Segment</div>
-                    <select class="fselect" id="segmentId" onchange="loadModelRange();">
-                        <option value="">— Select Segment —</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Maker</div>
-                    <select class="fselect" id="makerId" onchange="loadModelRange();">
-                        <option value="">— Select Maker —</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Model Range</div>
-                    <select class="fselect" id="rangeId" onchange="loadBody();">
-                        <option value="">— Select Range —</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Model Body</div>
-                    <select class="fselect" id="bodyId" onchange="loadEngine();">
-                        <option value="">— Select Body —</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Engine</div>
-                    <select class="fselect" id="engineId" onchange="updateVehSummary()">
-                        <option value="">— Select Engine —</option>
-                    </select>
-                </div>
-                <div class="mb-2">
-                    <div class="flabel">Year Range</div>
-                    <div class="yr-range">
-                        <input type="number" id="yearFrom" placeholder="Date From" onchange="activateSec(1)">
-                        <span>–</span>
-                        <input type="number" id="yearTo" placeholder="Date To" onchange="activateSec(1)">
-                    </div>
-                </div>
-                <div class="mb-1">
-                    <div class="flabel">Drive System</div>
-                    <select class="fselect" id="driveId" onchange="updateVehSummary()">
-                        <option value="">— Select Drive —</option>
-                        <option value="FWD">FWD</option>
-                        <option value="RWD">RWD</option>
-                        <option value="AWD">4WD / AWD</option>
-                        <option value="NA">NA</option>
-                    </select>
-                </div>
-                <div class="ftags" id="vfTags"></div>
-                <button class="search-btn" id="btnSearchProductVio" onclick="loadSearchProductVio()">
-                    <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
-                </button>
-                <div class="mb-1">
-                    <div>
-                        <span id="cacheStatus">-</span>
-                    </div>
-                </div>
+        <div class="mb-2">
+            <div class="flabel">Vehicle Segment</div>
+            <select class="fselect" id="segmentId" onchange="loadModelRange();">
+                <option value="">— Select Segment —</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Maker</div>
+            <select class="fselect" id="makerId" onchange="loadModelRange();">
+                <option value="">— Select Maker —</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Model Range</div>
+            <select class="fselect" id="rangeId" onchange="loadBody();" disabled>
+                <option value="">— Select Range —</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Model Body</div>
+            <select class="fselect" id="bodyId" onchange="loadEngine();" disabled>
+                <option value="">— Select Body —</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Engine</div>
+            <select class="fselect" id="engineId" onchange="updateVehSummary()" disabled>
+                <option value="">— Select Engine —</option>
+            </select>
+        </div>
+        <div class="mb-2">
+            <div class="flabel">Year Range</div>
+            <div class="yr-range">
+                <input type="number" id="yearFrom" placeholder="Date From" onchange="activateSec(1)" disabled>
+                <span>–</span>
+                <input type="number" id="yearTo" placeholder="Date To" onchange="activateSec(1)" disabled>
             </div>
         </div>
-
-        <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
-            <span class="sec-title">Part Search</span>
-            <i class="bi bi-chevron-down sec-chevron"></i>
+        <div class="mb-1">
+            <div class="flabel">Drive System</div>
+            <select class="fselect" id="driveId" onchange="updateVehSummary()" disabled>
+                <option value="">— Select Drive —</option>
+                <option value="FWD">FWD</option>
+                <option value="RWD">RWD</option>
+                <option value="AWD">4WD / AWD</option>
+                <option value="NA">NA</option>
+            </select>
         </div>
-        <div class="collapse show" id="spBody">
-            <div class="filter-body">
-                <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
-                <div class="smode-group" id="smodeGroup">
-                    <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
-                        <i class="bi bi-card-text"></i> Description
-                    </label>
-                    <label class="smode-btn" data-mode="oe" onclick="toggleMode(this)">
-                        <i class="bi bi-upc-scan"></i> OE
-                    </label>
-                    <label class="smode-btn" data-mode="competitor" onclick="toggleMode(this)">
-                        <i class="bi bi-arrows-collapse"></i> Competitor
-                    </label>
-                </div>
-                <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-                    <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
-                    <i class="bi bi-search"></i>
-                    <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
-                </div>
-                <button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
-                    <i class="bi bi-lightning-charge-fill"></i> Search Parts
-                </button>
-                <div class="mb-1">
-                    <div>
-                        <span id="cacheStatusField">-</span>
-                    </div>
-                </div>
+        <div class="ftags" id="vfTags"></div>
+        <button class="search-btn" id="btnSearchProductVio" onclick="loadSearchProductVio()">
+            <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
+        </button>
+        @*<div class="mb-1">
+            <div>
+                <span id="cacheStatus">-</span>
             </div>
+        </div>*@
+    </div>
+</div>
+
+<div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
+    <span class="sec-title">Part Search</span>
+    <i class="bi bi-chevron-down sec-chevron"></i>
+</div>
+<div class="collapse show" id="spBody">
+    <div class="filter-body">
+        <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
+        <div class="smode-group" id="smodeGroup">
+            <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
+                <i class="bi bi-card-text"></i> Description
+            </label>
+            <label class="smode-btn" data-mode="oe" onclick="toggleMode(this)">
+                <i class="bi bi-upc-scan"></i> OE
+            </label>
+            <label class="smode-btn" data-mode="competitor" onclick="toggleMode(this)">
+                <i class="bi bi-arrows-collapse"></i> Competitor
+            </label>
         </div>
-
-        <div class="collapse show" id="sfBody">
-            <div class="filter-body">
-                <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
-                <div class="chk-list" id="plList"></div>
-
-                <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
-                    <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
-                </button>
-
-                <div class="flabel mt-3">Fitting</div>
-                <div class="fit-grid" id="fitGrid">
-                    <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
-                    <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
-                    <div class="fit-chip" onclick="toggleFit(this,'ซ้าย')">ซ้าย</div>
-                    <div class="fit-chip" onclick="toggleFit(this,'ขวา')">ขวา</div>
-                    <div class="fit-chip" onclick="toggleFit(this,'บน')">บน</div>
-                    <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
+        <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
+            <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+            <i class="bi bi-search"></i>
+            <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
+        </div>
+        <button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
+            <i class="bi bi-lightning-charge-fill"></i> Search Parts
+        </button>
+        @*<div class="mb-1">
+                <div>
+                    <span id="cacheStatusField">-</span>
                 </div>
+            </div>*@
+    </div>
+</div>
 
-                <div class="flabel mt-3">Brand</div>
-                <div class="chk-list" id="brList"></div>
+<div class="collapse show" id="sfBody">
+    <div class="filter-body">
+        <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
+        <div class="chk-list" id="plList"></div>
 
-                <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
-                    <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
-                </button>
-            </div>
+        <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
+            <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
+        </button>
+
+        <div class="flabel mt-3">Fitting</div>
+        <div class="fit-grid" id="fitGrid">
+            <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
+            <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
+            <div class="fit-chip" onclick="toggleFit(this,'ซ้าย')">ซ้าย</div>
+            <div class="fit-chip" onclick="toggleFit(this,'ขวา')">ขวา</div>
+            <div class="fit-chip" onclick="toggleFit(this,'บน')">บน</div>
+            <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
         </div>
+
+        <div class="flabel mt-3">Brand</div>
+        <div class="chk-list" id="brList"></div>
+
+        <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
+            <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
+        </button>
+    </div>
+</div>
     </div>
 </aside>
 
 <script>
+    // เพิ่ม global variables
+    var PRODUCTS_FOR_PL_COUNT = [];   // snapshot ก่อนกรอง pl → ใช้นับ pl count
+    var PRODUCTS_FOR_BR_COUNT = [];   // snapshot ก่อนกรอง brand → ใช้นับ brand count
     //get master
     async function loadMasterMarketDefault(moduleId) {
         let selectId = "marketsegId";
@@ -224,8 +225,15 @@
             const marketSegmentId = $("#marketsegId").val();
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
+            const allThreeSelected = marketSegmentId && segmentId && makerId;
 
-            if (!marketSegmentId || !segmentId || !makerId) {
+            // ✅ enable/disable dropdown ที่ต้องรอครบ 3 ตัว
+            ['rangeId', 'bodyId', 'engineId', 'yearFrom', 'yearTo', 'driveId'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !allThreeSelected;
+            });
+
+            if (!allThreeSelected) {
                 $("#rangeId").empty().append('<option value="">— Select Range —</option>');
                 updateVehSummary();
                 return;
@@ -315,14 +323,15 @@
     }
     //set params obj by select catagory
     function getSearchCatagoryObject() {
+        const activeGroupIds = $(".bb-item.active")
+            .map(function () {
+                return $(this).data("id");
+            })
+            .get()
+            .filter(id => id !== '0' && id !== 0);   // ✅ ตัด placeholder "ทั้งหมด" ออก
 
         const filterObj = {
-            productGroupId:
-                $(".bb-item.active")
-                    .map(function () {
-                        return $(this).data("id");
-                    })
-                    .get(),
+            productGroupId: activeGroupIds,
             productLineId:
                 $(".chk-item.checked[data-filter='filterProductLineId']")
                     .map(function () {
@@ -336,41 +345,68 @@
                     })
                     .get()
         };
-        /*console.log(filterObj);*/
         return filterObj;
     }
     //send params send to controller searchByCategory
-   async function searchProductByCategory() {
-    try {
-        const filters = getSearchCatagoryObject();
-        //console.log('searchProductByCategory START, filters:', filters);
+    async function searchProductByCategory() {
+        try {
+            const filters = getSearchCatagoryObject();
+            const response = await fetch(
+                '@Url.Action("GetProductBySearchCatagory","Product")',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filters)
+                });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.Message || "API Error");
+            if (result.IsSuccess) {
+                PRODUCTS = mapApiResponseToProducts(result.Data || []);
 
-        const response = await fetch(
-            '@Url.Action("GetProductBySearchCatagory","Product")',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(filters)
-            });
+                const hasPlFilter = Object.keys(chkState.pl).length > 0;
+                const hasBrFilter = Object.keys(chkState.br).length > 0;
 
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.Message || "API Error");
+                if (!hasPlFilter && !hasBrFilter) {
+                    // ✅ ไม่มี filter เลย → reset snapshot ทั้งคู่
+                    PRODUCTS_FOR_PL_COUNT = [...PRODUCTS];
+                    PRODUCTS_FOR_BR_COUNT = [...PRODUCTS];
+                } else if (hasPlFilter && !hasBrFilter) {
+                    // ✅ มีแค่ pl filter → update snapshot brand (ผลหลังกรอง pl)
+                    PRODUCTS_FOR_BR_COUNT = [...PRODUCTS];
+                } else if (!hasPlFilter && hasBrFilter) {
+                    // ✅ มีแค่ brand filter → update snapshot pl (ผลหลังกรอง brand)
+                    PRODUCTS_FOR_PL_COUNT = [...PRODUCTS];
+                }
+                // ✅ มีทั้ง pl + brand → คง snapshot ทั้งคู่ไว้
 
-        if (result.IsSuccess) {
-            //console.log('✅ IsSuccess, Data:', (result.Data || []).length);
-            PRODUCTS = mapApiResponseToProducts(result.Data || []);
-            //console.log('✅ PRODUCTS mapped:', PRODUCTS.length);
-            applyAllFilters();
-            //console.log('✅ applyAllFilters done');
-            updateFilterCounts();
-            //console.log('✅ updateFilterCounts done');
-        } else {
-            alert(result.Message || "Search Error");
+                const q = (gEl('partQ')?.value || '').toLowerCase().trim();
+                const fitK = [...fitState];
+
+                const list = PRODUCTS.filter(p => {
+                    if (q) {
+                        let match = false;
+                        if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
+                        if (activeModes.has('oe') && p.code.toLowerCase().includes(q)) match = true;
+                        if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
+                        if (!match) return false;
+                    }
+                    if (fitK.length && !fitK.some(f => p.fit.includes(f))) return false;
+                    return true;
+                });
+
+                renderProducts(list);
+                updateFilterCounts();
+                renderActiveFilterChips();
+
+                gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } else {
+                alert(result.Message || "Search Error");
+            }
+        } catch (ex) {
+            console.error("searchProductByCategory Error:", ex);
+            alert(ex.message || "System Error");
         }
-    } catch (ex) {
-        console.error("searchProductByCategory Error:", ex);
-        alert(ex.message || "System Error");
-    }
     }
     //get value text, checkbox
     async function getSearchFieldObject() {
@@ -389,9 +425,10 @@
         return request;
     }
     //get search by field data by value
-    async function loadSearchProductField() {
+   async function loadSearchProductField() {
         const btn = $("#btnSearchProductField");
         btn.prop("disabled", true);
+        showSkel();
         try {
             const request = await getSearchFieldObject();
             if (!request.searchText) {
@@ -406,9 +443,7 @@
                 '@Url.Action("GetProductBySearchField","Product")',
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(request)
                 });
 
@@ -416,21 +451,24 @@
             if (!result.IsSuccess) {
                 throw new Error(result.Message || "Search Error");
             }
-            console.log(result);
+
             $("#cacheStatusField").html(
-                (result.IsFromCache
-                    ? "Cache Hit"
-                    : "API Call")
-                +
-                " (" +
-                result.ExecutionTime + " ms)"
+                (result.IsFromCache ? "Cache Hit" : "API Call") +
+                " (" + result.ExecutionTime + " ms)"
             );
-            // renderProduct(result.Data);
+
+            // ✅ กรอง group ที่ไม่มี productGroupNameMain ออก แล้ว map เป็น PRODUCTS
+            const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
+            PRODUCTS = mapApiResponseToProducts(filteredData);
+
+            applyAllFilters();
+            updateFilterCounts();
 
         } catch (ex) {
             console.error(ex);
             alert(ex.message);
         } finally {
+            hideSkel();
             btn.prop("disabled", false);
         }
     }

@@ -22,9 +22,13 @@
             <div class="ac-dropdown" id="acDropdown" role="listbox"></div>
         </div>
         <div class="ms-auto d-flex align-items-center gap-2">
+
+            <button class="theme-switch-btn" id="themeSwitchBtn" onclick="toggleTheme()" title="เปลี่ยนธีมสี" aria-label="สลับสีธีม">
+                <i class="bi bi-palette2"></i>
+            </button>
             @*<span class="d-none d-md-inline text-white" style="opacity:.7;font-size:12.5px">
-                    <i class="bi bi-person-circle me-1"></i>Account
-                </span>*@
+            <i class="bi bi-person-circle me-1"></i>Account
+        </span>*@
             <div class="nav-right">
                 <div class="dropdown-wrap" id="dw1">
                     <div class="avatar-trigger" id="trigger1" role="button" aria-haspopup="true" aria-expanded="false" tabindex="0">
@@ -40,16 +44,17 @@
                         </div>
                         @*<hr style="margin:0px;">*@
                         @*<div class="dropdown-section">
-                                <div class="dropdown-item" role="menuitem">
-                                    <i class="ti ti-user" aria-hidden="true"></i>
-                                    <span class="item-label">Profile</span>
-                                </div>
-                                <div class="dropdown-item" role="menuitem">
-                                    <i class="ti ti-settings" aria-hidden="true"></i>
-                                    <span class="item-label">Account settings</span>
-                                </div>
-                            </div>*@
-                        @if (Ecatalog.Security.PermissionHelper.HasPermission(Ecatalog.Security.PermissionCode.RbacManage)) {
+                        <div class="dropdown-item" role="menuitem">
+                            <i class="ti ti-user" aria-hidden="true"></i>
+                            <span class="item-label">Profile</span>
+                        </div>
+                        <div class="dropdown-item" role="menuitem">
+                            <i class="ti ti-settings" aria-hidden="true"></i>
+                            <span class="item-label">Account settings</span>
+                        </div>
+                    </div>*@
+                        @if (Ecatalog.Security.PermissionHelper.HasPermission(Ecatalog.Security.PermissionCode.RbacManage))
+                        {
                             <div class="dropdown-section">
                                 <a class="dropdown-item" role="menuitem" href="@Url.Action("Index", "Rbac")">
                                     <i class="bi bi-shield-lock"></i>

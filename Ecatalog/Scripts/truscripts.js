@@ -18,6 +18,18 @@ let currentSort = 'carModel';
 let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
+let PRODUCTS_FOR_COUNT = [];
+let _shipToList = []; // ✅ snapshot ของกลุ่มปัจจุบัน ไม่ถูก filter ตาม checkbox
+let acSelected = null;
+let acFocusIdx = -1;
+let acItems = [];
+let acSbSelected = null;
+let acSbFocusIdx = -1;
+let acSbItems = [];
+let _osSetQtyTimer = null;
+let _isChangingQty = false;
+var PRODUCTS_FOR_PL_COUNT = [];
+var PRODUCTS_FOR_BR_COUNT = [];
 const currentAllowed = {
     pl: [],
     br: []
@@ -34,7 +46,68 @@ document.getElementById('totalAddr').innerText = totalAddress + ' ที่อ�
 
 const drawer = document.getElementById('specDrawer');
 const overlay = document.getElementById('drawerOverlay');
+//-----------กันคลิกขวา----------------//
+document.addEventListener('contextmenu', function (e) {
+    const target = e.target;
+    if (
+        target.tagName === 'IMG' ||
+        target.closest('.pimg') ||
+        target.closest('.spec-hero') ||
+        target.closest('.dr-hero') ||
+        target.closest('.os-thumb') ||
+        target.closest('.pcard') ||
+        target.closest('.img-ph') ||
+        target.closest('.img-grid') ||
+        target.closest('.cart-row') ||
+        target.closest('.os-item')
+    ) {
+        e.preventDefault();
+        return false;
+    }
+});
+document.addEventListener("keydown", function (e) {
 
+    // Ctrl + S
+    if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + C
+    if (e.ctrlKey && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+    }
+
+    // Ctrl + U
+    if (e.ctrlKey && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+    }
+
+    // F12
+    if (e.key === "F12") {
+        e.preventDefault();
+        return false;
+    } 
+
+    // Ctrl + Shift + I
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + Shift + J
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        return false;
+    }
+
+    // Ctrl + U
+    if (e.ctrlKey && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+        return false;
+    }
+
+});
 /* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
     renderBottomBar();
@@ -50,8 +123,15 @@ function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
     (groups || []).forEach(group => {
+        // ✅ ข้าม group ที่ไม่มี productGroupNameMain
+        if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
+
         (group.productList || []).forEach(item => {
             const qty = parseInt(item.qtyReady, 10);
+            const PLACEHOLDER = ['makername', 'modelname'];
+            const maker = (item.makerName || '').trim();
+            const model = (item.modelName || '').trim();
+            const carParts = [maker, model].filter(v => v && !PLACEHOLDER.includes(v.toLowerCase()));
             list.push({
                 id: autoId++,
                 code: item.stkcode || '',
@@ -62,7 +142,7 @@ function mapApiResponseToProducts(groups) {
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
                 fit: [],
-                carModel: [item.makerName, item.modelName].filter(Boolean).join(' ') || 'Universal',
+                carModel: carParts.join(' ') || '',   // ✅ ว่างถ้าเป็น placeholder
                 img: item.imagePath || item.imageUrl || ''
             });
         });
@@ -74,6 +154,7 @@ function mapApiResponseToProducts(groups) {
 function syncSearch(source) {
     const headerQ = gEl('headerQ');
     const partQ = gEl('partQ');
+    if (!headerQ || !partQ) return;   // ✅ guard
     if (source === 'header') {
         partQ.value = headerQ.value;
     } else {
@@ -121,8 +202,8 @@ function clearAllFilters() {
     fitState = new Set();
     document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
 
-    gEl('partQ').value = '';
-    gEl('headerQ').value = '';
+    const pq = gEl('partQ'); if (pq) pq.value = '';
+    const hq = gEl('headerQ'); if (hq) hq.value = '';
 
     currentSort = 'carModel';
     gEl('sortSelect').value = 'carModel';
@@ -132,12 +213,19 @@ function clearAllFilters() {
         btn.classList.toggle('active', btn.dataset.mode === 'description');
     });
 
-    gEl('activeFilters').innerHTML = '';
+    // ✅ reset group กลับเป็น "สินค้าทุกประเภท"
+    activeGroup = '0';
+    window.selectedGroupId = '0';
+    document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
+    document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
+
+    gEl('activeFilters').innerHTML = '';   // ✅ ล้าง chips ทั้งหมด
 
     closeSpecModal({ target: gEl('specModalBackdrop') });
     closeDrawer();
 
     PRODUCTS = [];
+    PRODUCTS_FOR_COUNT = [];
     showSkel();
     setTimeout(() => { hideSkel(); renderProducts(PRODUCTS); }, 350);
 
@@ -148,7 +236,6 @@ function clearAllFilters() {
     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 }
-
 /* ═══════════════ §4 — SORTING ════════════════ */
 function switchSortbyPart() {
     // toggle ระหว่าง carModel (default) และ part
@@ -206,6 +293,7 @@ function scrollBottom(dx) {
     gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
 } 
 
+// ── ใน selectGroup (truscripts.js) ──
 function selectGroup(id) {
     activeGroup = id;
     window.selectedGroupId = id;
@@ -225,7 +313,11 @@ function selectGroup(id) {
     setTimeout(() => {
         hideSkel();
         applyAllFilters();
-        searchProductByCategory(); // ✅ เพิ่มตรงนี้
+        searchProductByCategory().then(() => {
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];   // snapshot หลังเปลี่ยน group
+            updateFilterCounts();
+            renderActiveFilterChips();             // ✅ เพิ่มบรรทัดนี้
+        });
     }, 500);
 }
 
@@ -255,9 +347,10 @@ function buildSpecHTML(p) {
             <p style="font-size:12px;color:var(--text-3);margin-top:3px">${p.brand}</p>
             <div class="mt-2 d-flex align-items-center gap-3">
                 <div class="spec-price">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
-                <input type="number" class="qty" value="1" min="1" max="99" onclick="event.stopPropagation()">
+                <input type="number" class="qty" value="1" min="1" max="99"
+                       id="modalQty-${p.id}" onclick="event.stopPropagation()">
                 <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
-                        style="max-width:160px" onclick="addCartFromModal(${p.id}, event)">
+                        style="max-width:160px" onclick="addCartFromSpecModal(${p.id}, event)">
                     <i class="bi ${(p.stock ?? 99) === 0 ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
                     ${(p.stock ?? 99) === 0 ? 'จอง (BO)' : 'เพิ่ม'}
                 </button>
@@ -280,6 +373,21 @@ function buildSpecHTML(p) {
         <div class="stab-pane" id="itab-comp-${p.id}"></div>
         <div class="stab-pane" id="itab-veh-${p.id}"></div>
     </div>`;
+}
+
+/* ── Add to cart จาก spec modal ที่เปิดผ่าน openDrawer (card click) ── */
+async function addCartFromSpecModal(productId, clickEvent) {
+    if (clickEvent) clickEvent.stopPropagation();
+
+    const p = PRODUCTS.find(x => x.id === productId);
+    if (!p) return;
+
+    const qty = parseInt(gEl('modalQty-' + productId)?.value) || 1;
+    const btn = clickEvent?.currentTarget instanceof HTMLElement
+        ? clickEvent.currentTarget
+        : document.querySelector('#specModalContent .acart');
+
+    await _callAddToCartAPI(p, qty, btn);
 }
 
 const s = window.getComputedStyle(drawer); 
@@ -521,16 +629,17 @@ function renderProducts(list) {
                          white-space:nowrap;flex-shrink:0">${p.brand}</div>
                 </div>
                 <div class="pname">${p.name}</div>
+                ${p.carModel ? `
                 <div style="display:flex;align-items:center;gap:5px;margin-top:4px;margin-bottom:2px">
                     ${p.carModel === 'Universal'
-            ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
-                               color:#92400e;border:1px solid #f59e0b;border-radius:20px;padding:1px 9px;
-                               display:inline-flex;align-items:center;gap:3px">
-                               <i class="bi bi-stars" style="font-size:9px"></i> Universal</span>`
-            : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
+                                ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
+                                       color:#92400e;border:1px solid #f59e0b;border-radius:20px;padding:1px 9px;
+                                       display:inline-flex;align-items:center;gap:3px">
+                                       <i class="bi bi-stars" style="font-size:9px"></i> Universal</span>`
+                                : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
                            <span style="font-size:11px;color:var(--text-2);font-weight:500">${p.carModel}</span>`
-        }
-                </div>
+                            }
+                </div>` : ''}
                 ${p.fit && p.fit.length
             ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">
                            ${p.fit.map(f => `<span style="font-size:10px;border:1px solid var(--border);
@@ -593,7 +702,7 @@ function renderProducts(list) {
 
 /* ══════════════ APPLY ALL FILTERS ══════════════════ */
 function applyAllFilters() {
-    const q = gEl('partQ').value.toLowerCase().trim();
+    const q = (gEl('partQ')?.value || '').toLowerCase().trim();
     const plK = Object.keys(chkState.pl);
     const brK = Object.keys(chkState.br);
     const fitK = [...fitState];
@@ -619,22 +728,68 @@ function applyAllFilters() {
 }
 
 /* ══════════════ ACTIVE FILTER CHIPS ══════════════════ */
-function renderActiveChips() {
+/* ══════════════ ACTIVE FILTER CHIPS (รวม group + line + brand) ══════════════════ */
+function renderActiveFilterChips() {
     const chips = [];
+
+    // group chip (ถ้าไม่ใช่ "สินค้าทุกประเภท")
+    if (activeGroup && activeGroup !== '0') {
+        const groupObj = GROUPS.find(g => g.id === activeGroup);
+        if (groupObj) {
+            chips.push({ t: 'group', v: groupObj.label, id: groupObj.id, cls: 'af-group' });
+        }
+    }
+
+    // product line chips
     Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
-    [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+    // brand chips
     Object.keys(chkState.br).forEach(v => chips.push({ t: 'br', v, cls: 'af-br' }));
-    gEl('activeFilters').innerHTML = chips.map(c =>
-        `<span class="af-chip ${c.cls}" onclick="removeChip('${c.t}','${c.v}')">${c.v} <i class="bi bi-x-circle"></i></span>`
+
+    // fitting chips
+    [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+    const container = gEl('activeFilters');
+    if (!container) return;
+
+    if (!chips.length) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = chips.map(c =>
+        `<span class="af-chip ${c.cls}" onclick="removeActiveChip('${c.t}','${(c.v || '').replace(/'/g, "\\'")}')">${c.v} <i class="bi bi-x-circle"></i></span>`
     ).join('');
 }
 
-function removeChip(t, v) {
-    if (t === 'pl') { delete chkState.pl[v]; document.querySelectorAll('#plList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
-    else if (t === 'br') { delete chkState.br[v]; document.querySelectorAll('#brList .chk-item').forEach(l => { if (l.textContent.trim().startsWith(v)) l.classList.remove('checked'); }); }
-    else if (t === 'fi') { fitState.delete(v); document.querySelectorAll('.fit-chip').forEach(c => { if (c.textContent.trim() === v) c.classList.remove('active'); }); }
-    renderActiveChips();
-    applyAllFilters();
+/* ── ลบ chip ตัวเดียว แล้ว re-fetch ── */
+function removeActiveChip(t, v) {
+    if (t === 'group') {
+        // กลับไปกลุ่ม "สินค้าทุกประเภท"
+        selectGroup('0');
+        return;
+    }
+    if (t === 'pl') {
+        delete chkState.pl[v];
+        document.querySelectorAll('#plList .chk-item').forEach(l => {
+            if (l.getAttribute('data-name') === v) l.classList.remove('checked');
+        });
+    } else if (t === 'br') {
+        delete chkState.br[v];
+        document.querySelectorAll('#brList .chk-item').forEach(l => {
+            if (l.getAttribute('data-name') === v) l.classList.remove('checked');
+        });
+    } else if (t === 'fi') {
+        fitState.delete(v);
+        document.querySelectorAll('.fit-chip').forEach(c => {
+            if (c.textContent.trim() === v) c.classList.remove('active');
+        });
+    }
+
+    showSkel();
+    searchProductByCategory().finally(() => {
+        hideSkel();
+    });
 }
 
 /* ═════════════ §1 — VEHICLE FILTER ═════════════════════ */
@@ -719,16 +874,15 @@ function toggleChk(label, type, val) {
     activateSec(3);
     showSkel();
 
-    // ✅ ถ้าเป็น pl ให้ sync ClickedMatchData ก่อน แล้วค่อย search
-    if (type === 'pl') {
-        ClickedMatchData();
-    }
-
     searchProductByCategory().finally(() => {
         hideSkel();
-        renderActiveChips();
+        updateFilterCounts();
+        renderActiveFilterChips();
+        // ✅ scroll to product area
+        gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 }
+
 function toggleFit(chip, val) {
     chip.classList.toggle('active');
     if (chip.classList.contains('active')) { fitState.add(val); }
@@ -738,7 +892,7 @@ function toggleFit(chip, val) {
 
     searchProductByCategory().finally(() => {
         hideSkel();
-        renderActiveChips();
+        renderActiveFilterChips();   // ✅ เปลี่ยนจาก renderActiveChips
     });
 }
 
@@ -830,31 +984,19 @@ async function clearCart() {
     toast('🗑️ ล้างตะกร้าแล้ว', 'warn');
 }
 
-function changeQty(id, delta) {
-    const item = cart.find(c => c.id === id);
-    if (!item) return;
-    item.qty = Math.max(1, item.qty + delta);
-    updateCart();
-}
-
 function updateCart() {
     const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const count = cart.reduce((s, c) => s + c.qty, 0);
 
-    // badge / counter
     const cartCountEl = g('cartCount');
     if (cartCountEl) cartCountEl.textContent = count;
-
     const cpCountEl = g('cpCount');
     if (cpCountEl) cpCountEl.textContent = `${cart.length} ชิ้น`;
-
     const cpTotalEl = g('cpTotal');
     if (cpTotalEl) cpTotalEl.textContent = fmt(total);
-
     const qsCartEl = g('qs-cart');
     if (qsCartEl) qsCartEl.textContent = cart.length;
 
-    // render cpBody
     const cpBody = g('cpBody');
     if (!cpBody) return;
 
@@ -879,7 +1021,7 @@ function updateCart() {
                     ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
                 </div>
                 <div class="cr-code">${c.code}</div>
-                <div class="cr-price">${fmt(c.price * c.qty)}</div>
+                <div class="cr-price">${fmt(c.price) }</div>
             </div>
             <div class="cr-qty-ctrl">
                 <button class="qty-btn" onclick="changeQty('${c.id}',-1)">
@@ -895,9 +1037,9 @@ function updateCart() {
             </button>
         </div>`).join('');
 
-    // ถ้า Order Summary เปิดอยู่ ให้ re-render ด้วย
+    // ✅ ไม่ re-render osProductList ถ้ากำลัง changeQty อยู่
     const osOverlay = g('osOverlay');
-    if (osOverlay && osOverlay.classList.contains('open')) {
+    if (osOverlay && osOverlay.classList.contains('open') && !_isChangingQty) {
         renderOrderSummary();
         updateOsSelection();
     }
@@ -949,9 +1091,6 @@ function highlightMatch(text, q) {
     return text.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
 }
 
-let acSelected = null;
-let acFocusIdx = -1;
-let acItems = [];
 
 function acInput(inp) {
     const q = inp.value.trim();
@@ -960,41 +1099,6 @@ function acInput(inp) {
     if (!q) { acClose(); return; }
     acItems = buildSuggestions(q);
     renderAcDropdown(q);
-}
-
-function renderAcDropdown(q) {
-    const dd = gEl('acDropdown');
-    if (!acItems.length) {
-        dd.innerHTML = `<div class="ac-empty"><i class="bi bi-search"></i>ไม่พบคำแนะนำสำหรับ "<strong>${q}</strong>"</div>`;
-        dd.classList.add('open'); return;
-    }
-    const products = acItems.filter(i => i.type === 'product');
-    const cats = acItems.filter(i => i.type === 'category');
-    let html = '';
-    products.forEach((item, idx) => {
-        html += `<div class="ac-item" role="option" data-idx="${idx}" data-val="${item.name}" data-code="${item.code}"
-                      onmousedown="acSelect(event,'${item.name.replace(/'/g, "\\'")}','${item.code.replace(/'/g, "\\'")}')">
-                     <div class="ac-text">
-                         <div class="ac-name">${highlightMatch(item.name, q)}</div>
-                         <div class="ac-meta">${highlightMatch(item.code, q)}${item.brand ? ' · ' + item.brand : ''}${item.cat ? ' · ' + item.cat : ''}</div>
-                     </div>
-                 </div>`;
-    });
-    if (cats.length) {
-        html += `<div class="ac-header"><i class="bi bi-tag me-1"></i>หมวดหมู่</div>`;
-        cats.forEach(item => {
-            html += `<div class="ac-item" role="option" data-val="${item.name}"
-                          onmousedown="acSelect(event,'${item.name.replace(/'/g, "\\'")}','')">
-                         <div class="ac-text">
-                             <div class="ac-name">${highlightMatch(item.name, q)}</div>
-                             <div class="ac-meta">ดูสินค้าในหมวด "${item.name}"</div>
-                         </div>
-                     </div>`;
-        });
-    }
-    dd.innerHTML = html;
-    dd.classList.add('open');
-    gEl('headerQ').setAttribute('aria-expanded', 'true');
 }
 
 function acSelect(event, val, code) {
@@ -1062,13 +1166,14 @@ document.addEventListener('click', e => {
     const wrap = gEl('hSearchWrap');
     if (wrap && !wrap.contains(e.target)) acClose();
     const swrap = gEl('sidebarSearchWrap');
-    if (swrap && !swrap.contains(e.target)) acCloseSidebar();
+    if (swrap && !swrap.contains(e.target)) {
+        const dd = gEl('acDropdownSidebar');
+        if (dd) acCloseSidebar();   // ✅ guard ก่อนเรียก
+    }
 });
 
 /* ── Sidebar AC ── */
-let acSbSelected = null;
-let acSbFocusIdx = -1;
-let acSbItems = [];
+
 
 function acInputSidebar(inp) {
     const q = inp.value.trim();
@@ -1078,10 +1183,12 @@ function acInputSidebar(inp) {
     renderAcDropdownSidebar(q);
 }
 
+// ── ตัวที่ 2 (เก็บตัวนี้ไว้) แก้เป็น ──
 function renderAcDropdownSidebar(q) {
     const dd = gEl('acDropdownSidebar');
+    const partQ = gEl('partQ');
+    if (!dd || !partQ) return;   // ✅ guard
     if (!acSbItems.length) {
-        dd.innerHTML = `<div class="ac-empty"><i class="bi bi-search"></i>ไม่พบคำแนะนำสำหรับ "<strong>${q}</strong>"</div>`;
         dd.classList.add('open'); return;
     }
     const products = acSbItems.filter(i => i.type === 'product');
@@ -1110,12 +1217,14 @@ function renderAcDropdownSidebar(q) {
     }
     dd.innerHTML = html;
     dd.classList.add('open');
-    gEl('partQ').setAttribute('aria-expanded', 'true');
+    partQ.setAttribute('aria-expanded', 'true');   // ✅ ใช้ partQ ที่ guard แล้ว
 }
 
 function acSelectSidebar(event, val) {
     if (event) event.preventDefault();
-    gEl('partQ').value = val;
+    const partQ = gEl('partQ');
+    if (!partQ) return;   // ✅ guard
+    partQ.value = val;
     syncSearch('sidebar');
     acSbSelected = val;
     acCloseSidebar();
@@ -1123,8 +1232,11 @@ function acSelectSidebar(event, val) {
 }
 
 function acCloseSidebar() {
-    gEl('acDropdownSidebar').classList.remove('open');
-    gEl('partQ').setAttribute('aria-expanded', 'false');
+    const dd = gEl('acDropdownSidebar');
+    const partQ = gEl('partQ');
+    if (!dd || !partQ) return;   // ✅ guard
+    dd.classList.remove('open');
+    partQ.setAttribute('aria-expanded', 'false');
     acSbFocusIdx = -1;
     acUpdateFocusSidebar();
 }
@@ -1147,10 +1259,12 @@ function acKeyNavSidebar(event) {
 
 function acUpdateFocusSidebar(items) {
     const dd = gEl('acDropdownSidebar');
+    const partQ = gEl('partQ');
+    if (!dd || !partQ) return;   // ✅ guard
     const all = items || dd.querySelectorAll('.ac-item');
     all.forEach((el, i) => el.classList.toggle('ac-focused', i === acSbFocusIdx));
     if (acSbFocusIdx >= 0 && all[acSbFocusIdx]) {
-        gEl('partQ').value = all[acSbFocusIdx].getAttribute('data-val');
+        partQ.value = all[acSbFocusIdx].getAttribute('data-val');
         all[acSbFocusIdx].scrollIntoView({ block: 'nearest' });
     }
 }
@@ -1179,8 +1293,11 @@ document.querySelectorAll('.sec-hd').forEach(hd => {
     }
 });
 
-gEl('partQ').addEventListener('focus', () => { if (gEl('partQ').value.trim()) acInputSidebar(gEl('partQ')); });
-gEl('headerQ').addEventListener('focus', () => { if (gEl('headerQ').value.trim()) acInput(gEl('headerQ')); });
+// ── หลังแก้ ──
+const _partQ = gEl('partQ');
+const _headerQ = gEl('headerQ');
+if (_partQ) _partQ.addEventListener('focus', () => { if (_partQ.value.trim()) acInputSidebar(_partQ); });
+if (_headerQ) _headerQ.addEventListener('focus', () => { if (_headerQ.value.trim()) acInput(_headerQ); });
 
 /* ══════════════ ORDER SUMMARY ═══════════════ */
 const DISCOUNT_RATE = 0.075;
@@ -1192,18 +1309,26 @@ const VAT_RATE = 0.07;
 async function openOrderSummary(clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     if (!cart.length) {
-        // ลองดึงจาก server ก่อน เผื่อ badge ยังไม่ sync
         await _fetchCartFromServer();
         if (!cart.length) {
             toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn');
             return;
         }
     } else {
-        // เปิด OS → fetch ล่าสุดเสมอ
         await _fetchCartFromServer();
     }
 
     renderOrderSummary();
+
+    // ✅ โหลด ship-to list ทุกครั้งที่เปิด (ใช้ cache ถ้ามีแล้ว)
+    if (!_shipToList.length) {
+        await loadShipToList();
+    } else {
+        _renderShipToList(_shipToList);
+        const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
+        if (firstItem) _selectAddrItem(firstItem);
+    }
+
     closeCart();
     g('osOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1251,7 +1376,7 @@ function renderOrderSummary() {
                 <div class="os-price">${fmt(c.price)}</div>
             </div>
             <div class="os-stepper">
-                <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)" disabled style="opacity:0.3">−</button>
+                <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)">−</button>
                 <input class="os-step-input" type="number" value="${c.qty}" min="1"
                        onchange="osSetQty('${c.id}',this.value)"
                        oninput="osSetQty('${c.id}',this.value)">
@@ -1265,10 +1390,6 @@ function renderOrderSummary() {
     updateOsSelection();
 }
 function osChangeQty(ordId, delta) {
-    if (delta < 0) {
-        toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
-        return;
-    }
     changeQty(ordId, delta);
 }
 function updateOsSelection() {
@@ -1307,53 +1428,83 @@ function osToggleSelectAll(chk) {
 }
 /* changeQty — อัปเดตใน local แล้ว re-add ผ่าน API
    หมายเหตุ: ถ้า backend มี UpdateQty endpoint ให้เปลี่ยนตรงนี้ */
+
+
 async function changeQty(ordId, delta) {
+    _isChangingQty = true;
     const item = cart.find(c => c.id === ordId);
-    if (!item) return;
+    if (!item) { _isChangingQty = false; return; }
 
     const newQty = Math.max(1, item.qty + delta);
-    if (newQty === item.qty) return;
+    if (newQty === item.qty) { _isChangingQty = false; return; }
 
-    // optimistic update UI
+    // optimistic update UI ก่อน เพื่อความลื่นไหล
+    const prevQty = item.qty;
     item.qty = newQty;
-    updateCart();
+    _updateQtyUI(ordId, newQty, item.price);
 
     try {
-        const cuscode = window.APP_SESSION?.cuscode || '';
-        const company = window.APP_SESSION?.company || 'TAC';
+        const res = await fetch('/Product/EditProductToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                ordid: ordId,
+                cuscod: window.APP_SESSION?.cuscode || '',   // ✅ เพิ่มบรรทัดนี้
+                qty: newQty.toString(),
+                price: item.price.toString()
+            })
+        });
 
-        if (delta > 0) {
-            // ✅ เพิ่ม → ส่งแค่ delta ที่ต้องการเพิ่ม
-            await fetch('/Product/AddProductToCart', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    Cuscode: cuscode,
-                    Stkcode: item.code,
-                    Company: company,
-                    Price: item.price.toString(),
-                    Qty: Math.abs(delta).toString(), // ✅ ส่งแค่จำนวนที่เพิ่ม
-                    BackOrder: item.isBO ? '1' : '0'
-                })
-            });
-        } else {
-            // ลด → รอ Delete API พร้อม
-            toast('⚠️ ยังไม่รองรับการลดจำนวน', 'warn');
-            item.qty = item.qty - delta; // rollback
-            updateCart();
+        const json = await res.json().catch(() => null);
+
+        if (!json || !json.IsSuccess) {
+            // rollback UI ถ้า API ล้มเหลว
+            item.qty = prevQty;
+            _updateQtyUI(ordId, prevQty, item.price);
+            toast(`❌ แก้ไขจำนวนไม่สำเร็จ: ${json?.Message || ''}`, 'warn');
             return;
         }
 
+        toast(`✅ อัปเดตจำนวนเป็น ${newQty} แล้ว`);
+
     } catch (err) {
         console.error('changeQty error:', err);
-        // rollback
-        item.qty = item.qty - delta;
-        updateCart();
+        item.qty = prevQty;
+        _updateQtyUI(ordId, prevQty, item.price);
+        toast('❌ เกิดข้อผิดพลาด', 'warn');
+        return;
+    } finally {
+        _isChangingQty = false;
     }
 
+    // sync ค่าจริงจาก DB กลับมาอีกที เพื่อความชัวร์ (bust cache)
     await _fetchCartFromServer(true);
 }
+
+/* ── อัปเดตเฉพาะตัวเลข qty และ price ใน UI ── */
+function _updateQtyUI(ordId, newQty, price) {
+    // cpBody
+    const crQval = document.querySelector(`#cr-${ordId} .cr-qval`);
+    if (crQval) crQval.textContent = newQty;
+    const crPrice = document.querySelector(`#cr-${ordId} .cr-price`);
+    if (crPrice) crPrice.textContent = fmt(price * newQty);
+
+    // osProductList
+    const osInput = document.querySelector(`#osItem-${ordId} .os-step-input`);
+    if (osInput) osInput.value = newQty;
+
+    // อัปเดต total/badge
+    updateOsSelection();
+    const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const count = cart.reduce((s, c) => s + c.qty, 0);
+    const cartCountEl = g('cartCount');
+    if (cartCountEl) cartCountEl.textContent = count;
+    const cpTotalEl = g('cpTotal');
+    if (cpTotalEl) cpTotalEl.textContent = fmt(total);
+}
 /* osSetQty — set ค่า qty โดยตรง */
+
+
 async function osSetQty(ordId, val) {
     const item = cart.find(c => c.id === ordId);
     if (!item) return;
@@ -1361,7 +1512,12 @@ async function osSetQty(ordId, val) {
     if (isNaN(n) || n < 1) return;
     const delta = n - item.qty;
     if (delta === 0) return;
-    await changeQty(ordId, delta);
+
+    // ✅ debounce 600ms ป้องกันยิง API ทุก keystroke
+    clearTimeout(_osSetQtyTimer);
+    _osSetQtyTimer = setTimeout(async () => {
+        await changeQty(ordId, delta);
+    }, 600);
 }
 /* osRemoveItem — animate แล้วเรียก delete API */
 function osRemoveItem(ordId) {
@@ -1416,12 +1572,6 @@ function osToggleAddrPicker() {
     gEl('osChangAddrBtn').style.background = 'var(--red-light)';
     const inp = picker.querySelector('.os-addr-search');
     if (inp) { inp.value = ''; osFilterAddr(''); }
-}
-function osUseInvoiceAddr() {
-    const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
-    if (firstItem) osSelectAddr(firstItem);
-    osCloseAddrPicker();
-    toast('✅ ใช้ที่อยู่ในใบกำกับภาษี');
 }
 function osCloseAddrPicker() {
     gEl('osAddrPicker').style.display = 'none';
@@ -1576,8 +1726,9 @@ const FIXED_GROUPS = [
 
 function GetProductGroup() {
     $.ajax({
-        url: '/Master/GeProductGroups',
+        url: '/Master/GetProductGroups',
         method: 'GET',
+        // ✅ ไม่ส่ง prodgrpid เลย ให้ API ตัดสินใจเอง
         success: function (result) {
             if (result.IsSuccess) {
                 const apiGroups = (result.Data || []).map(function (g) {
@@ -1587,7 +1738,6 @@ function GetProductGroup() {
                         label: g.prodgrpname
                     };
                 });
-
                 GROUPS = [...FIXED_GROUPS, ...apiGroups];
                 renderBottomBar();
             } else {
@@ -1605,7 +1755,7 @@ function GetProductGroup() {
 //----------- ProductLine ----------------//
 function GetProductionLine() {
     $.ajax({
-        url: '/Master/GeProductLines',
+        url: '/Master/GetProductLines',
         method: 'GET',
         success: function (result) {
             if (result.IsSuccess) {
@@ -1718,11 +1868,6 @@ function toggleSec(hd, targetId) {
         setTimeout(() => { body.style.maxHeight = ''; }, 260);
     }
 }
-function toggleCompany(btn) {
-    btn.classList.toggle('active');
-    const isActive = btn.classList.contains('active');
-    btn.style.opacity = isActive ? '1' : '0.5';
-}
 
 /* Extend the existing keydown listener to also close sidebar */
 document.addEventListener('keydown', e => {
@@ -1732,54 +1877,76 @@ document.addEventListener('keydown', e => {
 });
 
 function updateFilterCounts() {
-    // อัปเดต count Brand
+    const plSource = PRODUCTS_FOR_PL_COUNT.length ? PRODUCTS_FOR_PL_COUNT : PRODUCTS;
+    const brSource = PRODUCTS_FOR_BR_COUNT.length ? PRODUCTS_FOR_BR_COUNT : PRODUCTS;
+
     $("#brList .chk-item").each(function () {
         const brandName = $(this).attr('data-name');
-        const count = PRODUCTS.filter(p => p.brand === brandName).length;
+        const count = brSource.filter(p => p.brand === brandName).length;
         $(this).find('.chk-count').text(count);
     });
 
-    // อัปเดต count Product Line
     $("#plList .chk-item").each(function () {
         const lineName = $(this).attr('data-name');
-        const count = PRODUCTS.filter(p => p.line === lineName).length;
+        const count = plSource.filter(p => p.line === lineName).length;
         $(this).find('.chk-count').text(count);
     });
 
-    // ✅ Sort Brand จากมากไปน้อย
+    const hasBrChecked = Object.keys(chkState.br).length > 0;
+    const hasPlChecked = Object.keys(chkState.pl).length > 0;
+
     const $brList = $("#brList");
-    $brList.find('.chk-item').sort(function (a, b) {
-        const countA = parseInt($(a).find('.chk-count').text()) || 0;
-        const countB = parseInt($(b).find('.chk-count').text()) || 0;
-        return countB - countA;
-    }).appendTo($brList);
+    if (!hasBrChecked) {
+        $brList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($brList);
+    } else {
+        const $checked = $brList.find('.chk-item.checked').detach();
+        $brList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($brList);
+        $brList.prepend($checked);
+    }
 
-    // ✅ Sort Product Line จากมากไปน้อย
     const $plList = $("#plList");
-    $plList.find('.chk-item').sort(function (a, b) {
-        const countA = parseInt($(a).find('.chk-count').text()) || 0;
-        const countB = parseInt($(b).find('.chk-count').text()) || 0;
-        return countB - countA;
-    }).appendTo($plList);
+    if (!hasPlChecked) {
+        $plList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($plList);
+    } else {
+        const $checked = $plList.find('.chk-item.checked').detach();
+        $plList.find('.chk-item').sort(function (a, b) {
+            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
+        }).appendTo($plList);
+        $plList.prepend($checked);
+    }
 
-    // ✅ Re-apply SHOW_LIMIT หลัง sort — แสดงแค่ 5 อันดับแรกที่มี count > 0
     const SHOW_LIMIT = 5;
 
-    [
-        { listId: '#brList', extraClass: 'br-extra' },
-        { listId: '#plList', extraClass: 'pl-extra' }
-    ].forEach(({ listId, extraClass }) => {
+    if (!hasBrChecked) {
         let visible = 0;
-        $(`${listId} .chk-item`).each(function () {
-            const count = parseInt($(this).find('.chk-count').text()) || 0;
-            if (visible < SHOW_LIMIT && count > 0) {
-                $(this).show().removeClass(extraClass);
+        $("#brList .chk-item").each(function () {
+            if (visible < SHOW_LIMIT) {
+                $(this).show().removeClass('br-extra');
                 visible++;
             } else {
-                $(this).hide().addClass(extraClass);
+                $(this).hide().addClass('br-extra');
             }
         });
-    });
+    }
+
+    if (!hasPlChecked) {
+        let visible = 0;
+        $("#plList .chk-item").each(function () {
+            if ($(this).css('display') === 'none' && !$(this).hasClass('pl-extra')) return;
+            if (visible < SHOW_LIMIT) {
+                $(this).show().removeClass('pl-extra');
+                visible++;
+            } else {
+                $(this).hide().addClass('pl-extra');
+            }
+        });
+    }
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1807,9 +1974,10 @@ function _mapCartItem(item) {
 /* ── Fetch cart จาก server แล้ว render ทุก view ── */
 async function _fetchCartFromServer(forceRefresh = false) {
     try {
+        const cuscode = window.APP_SESSION?.cuscode || '';
         const url = forceRefresh
-            ? `/Product/GetProductToCart?t=${Date.now()}`  // ✅ bust cache
-            : '/Product/GetProductToCart';
+            ? `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}&t=${Date.now()}`
+            : `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}`;
 
         const res = await fetch(url, { method: 'GET' });
         const json = await res.json();
@@ -1853,24 +2021,360 @@ async function _deleteCartItem(ordId) {
     }
 }
 
-function TestAPIADD() {
+/* ════════════════════════════════════════════════════════
+   SHIP-TO LIST — fetch from API, render dynamically
+   Called once when OS modal opens
+════════════════════════════════════════════════════════ */
+
+  // cache so we don't re-fetch every open
+
+async function loadShipToList() {
+    try {
+        const cuscode = window.APP_SESSION?.cuscode || '';
+        const res = await fetch(`/Master/GetShiptoByCuscode?cuscode=${cuscode}`, {
+            method: 'GET'
+        });
+        const json = await res.json();
+
+        if (!json.IsSuccess || !Array.isArray(json.Data) || !json.Data.length) {
+            const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
+            if (firstItem) _selectAddrItem(firstItem);
+            return;
+        }
+
+        _shipToList = json.Data;
+        _renderShipToList(_shipToList);
+
+    } catch (err) {
+        console.error('loadShipToList error:', err);
+    }
+}
+
+function _renderShipToList(list) {
+    const container = gEl('osAddrList');
+    if (!container) return;
+
+    container.innerHTML = list.map((s, idx) => {
+        const fullAddr = [s.address, s.address2, s.city, s.postCode]
+            .filter(Boolean).join(' ');
+        const isMain = idx === 0;
+        const phone = s.phone || s.contact || '—';
+
+        return `
+        <div class="os-addr-item${isMain ? ' selected' : ''}"
+             data-shipto="${s.shipCode}"
+             onclick="osSelectAddr(this)">
+            <div class="os-addr-name">
+                ${s.name}
+                ${isMain ? `<span style="font-size:9px;background:#fd152f;color:#fff;
+                    border-radius:4px;padding:1px 6px;margin-left:4px;
+                    vertical-align:middle">ที่อยู่หลัก</span>` : ''}
+            </div>
+            <div>${fullAddr}</div>
+            <div class="os-addr-phone">${phone}</div>
+        </div>`;
+    }).join('');
+
+    // ✅ update badge จำนวน
+    const totalEl = gEl('totalAddr');
+    if (totalEl) totalEl.innerText = list.length + ' ที่อยู่';
+
+    // ✅ default เลือก item แรกเสมอ
+    const firstItem = container.querySelector('.os-addr-item');
+    if (firstItem) _selectAddrItem(firstItem);
+}
+/* ── Select an address item (shared logic) ── */
+function _selectAddrItem(el) {
+    gEl('osAddrList')?.querySelectorAll('.os-addr-item')
+        .forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+
+    const name = el.querySelector('.os-addr-name')?.textContent?.trim() || '';
+    const lines = [...el.children]
+        .filter(n => !n.classList.contains('os-addr-name') && !n.classList.contains('os-addr-phone'))
+        .map(n => n.textContent.trim())
+        .filter(Boolean);
+    const phone = el.querySelector('.os-addr-phone')?.textContent?.trim() || '';
+
+    const display = gEl('osAddrDisplay');
+    if (display) {
+        display.innerHTML = `<strong>${name}</strong><br>${lines.join('<br>')}${phone && phone !== '—' ? '<br>' + phone : ''}`;
+    }
+
+    const shortEl = gEl('osCurrentAddrShort');
+    if (shortEl) shortEl.textContent = lines[0] || '';
+}
+
+/* ── Override osSelectAddr to use shared logic ── */
+function osSelectAddr(el) {
+    _selectAddrItem(el);
+    osCloseAddrPicker();
+}
+
+/* ── osUseInvoiceAddr → always default to first item ── */
+function osUseInvoiceAddr() {
+    const firstItem = gEl('osAddrList')?.querySelector('.os-addr-item');
+    if (firstItem) _selectAddrItem(firstItem);
+    osCloseAddrPicker();
+    toast('✅ ใช้ที่อยู่ในใบกำกับภาษี');
+}
+
+// =================  INIT ===========================
+document.addEventListener('DOMContentLoaded', function () {
+    const config = document.getElementById('appConfig');
+    const userType = config?.dataset.usertype ?? '';
+    const sessionSlm = config?.dataset.slmcode ?? '';
+    const sessionCus = config?.dataset.cuscode ?? '';
+
+    console.log('Session →', { userType, sessionSlm, sessionCus });
+
+    if (userType === '1') {
+        // admin → ดึง salesman ทั้งหมดมาให้เลือกเสมอ (ไม่ว่าจะมี sessionSlm หรือไม่)
+        getSalesmanAll(sessionSlm, sessionCus);
+    } else if (sessionCus) {
+        getInfomantionCustomer(sessionCus);
+    } else if (sessionSlm) {
+        getCustomerbySalesman(sessionSlm, '');
+    } else {
+        // ไม่มีทั้ง slmcode/cuscode ผูกมากับ user นี้ → โหลด customer ทั้งหมด
+        getCustomerbySalesman('', '');
+    }
+});
+
+// ================ 1. GET SALESMAN ALL ========================
+function getSalesmanAll(sessionSlm, sessionCus) {
     $.ajax({
-        //url: 'AddProductToCart, Product',
-        url: '/Product/AddProductToCart',
-        data: {
-            Cuscode: '110Z0001O',
-            Stkcode: 'DF7163',
-            Company: 'TAC',
-            Price: '50',
-            Qty: '6'
-        },
-        type: "POST",
-        dataType: "JSON",
+        url: '/Master/GetSalesmanAll',
+        method: 'GET',
         success: function (data) {
-            console.log('succ:'+ data.IsSuccess);
-            console.log('succ:' + data.Data);
-            console.log('succ:' + data.ResponseString);
-            console.log('succ:'+ data.IsSuccess);
+            if (!data.IsSuccess) return;
+
+            const select = $('#salesmanId');
+            select.empty().append('<option value="">-- เลือก Salesman --</option>');
+
+            $.each(data.Data, function (i, slm) {
+                const fullText = `${slm.slmCode} - ${slm.slmName}`;
+                select.append(
+                    $('<option>', {
+                        value: slm.slmCode,
+                        text: fullText,
+                        'data-full': fullText,
+                        'data-name': slm.slmName
+                    })
+                );
+            });
+
+            if (sessionSlm) {
+                select.val(sessionSlm);
+            }
+            _shortenSelected('salesmanId');   // ✅ ตอน init ให้เหลือแค่ชื่อทันทีถ้ามีค่าอยู่แล้ว
+            getCustomerbySalesman(sessionSlm || '', sessionCus);
+
+            select.off('change').on('change', function () {
+                _shortenSelected('salesmanId');
+                if ($(this).val()) {
+                    getCustomerbySalesman($(this).val(), '');
+                } else {
+                    clearCustomerSelect();
+                    clearCustomerCard();
+                    getCustomerbySalesman('', '');
+                }
+            });
+
+            _bindSelectToggle('salesmanId');   // ✅ bind mousedown/focus/blur ครั้งเดียวพอ
+        },
+        error: function (xhr, status, error) {
+            console.error('getSalesmanAll error:', error);
         }
     });
+}
+
+function getCustomerbySalesman(slmcode, sessionCus) {
+    $.ajax({
+        url: '/Master/GetCustomerbySalesman',
+        method: 'GET',
+        data: { slmcode: slmcode },
+        success: function (data) {
+            if (!data.IsSuccess) return;
+
+            const select = $('#customerId');   // ← ตรงนี้มี select ประกาศจริง
+            if (!select.length) return;
+
+            const activeCompanies = getActiveCompanies();
+            select.empty().append('<option value="">-- เลือก Customer --</option>');
+
+            $.each(data.Data, function (i, cus) {
+                if (cus.inactive === 'Y' || cus.block === 1) return;
+                if (activeCompanies.length > 0 && !activeCompanies.includes(cus.company)) return;
+
+                const fullText = `${cus.cuscode} - ${cus.cusname}`;
+                select.append(
+                    $('<option>', {
+                        value: cus.cuscode,
+                        text: fullText,
+                        'data-full': fullText,
+                        'data-name': cus.cusname,
+                        'data-company': cus.company
+                    })
+                );
+            });
+
+            if (sessionCus) {
+                select.val(sessionCus);
+                if (window.APP_SESSION) window.APP_SESSION.cuscode = sessionCus;
+                getInfomantionCustomer(sessionCus);
+                _fetchCartFromServer();   // ✅ ดึง cart ของลูกค้านี้ตั้งแต่โหลดหน้า
+            }
+            _shortenSelected('customerId');
+
+            select.off('change').on('change', function () {
+                _shortenSelected('customerId');
+                const selectedCus = $(this).val();
+
+                if (window.APP_SESSION) window.APP_SESSION.cuscode = selectedCus || '';
+
+                if (selectedCus) {
+                    getInfomantionCustomer(selectedCus);
+                    _fetchCartFromServer(true);   // ✅ ดึง cart เดิมของลูกค้าคนนี้ขึ้นมาทันที (bust cache)
+                } else {
+                    clearCustomerCard();
+                    cart = [];                    // ✅ ยกเลิกเลือกลูกค้า → เคลียร์ cart ที่แสดงด้วย
+                    updateCart();
+                }
+            });
+
+            _bindSelectToggle('customerId');
+        },
+        error: function (xhr, status, error) {
+            console.error('getCustomerbySalesman error:', error);
+        }
+    });
+}
+/* ── คืนค่าเต็ม (code - name) ให้ทุก option ก่อนเปิด list ── */
+function _restoreFullText(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    Array.from(select.options).forEach(opt => {
+        const full = opt.getAttribute('data-full');
+        if (full) opt.textContent = full;
+    });
+}
+
+/* ── ย่อ text ของ option ที่ถูกเลือกอยู่ ให้เหลือแค่ชื่อ (ใช้ตอนปิด/เลือกเสร็จ) ── */
+function _shortenSelected(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const opt = select.options[select.selectedIndex];
+    if (opt && opt.value) {
+        const name = opt.getAttribute('data-name');
+        if (name) opt.textContent = name;
     }
+}
+
+/* ── bind event ครั้งเดียวต่อ select: เปิด → คืน full, ปิด/blur → ย่อกลับ ── */
+function _bindSelectToggle(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select || select.dataset.toggleBound) return;   // กัน bind ซ้ำ
+    select.dataset.toggleBound = '1';
+
+    select.addEventListener('mousedown', () => _restoreFullText(selectId));
+    select.addEventListener('focus', () => _restoreFullText(selectId));
+    select.addEventListener('blur', () => _shortenSelected(selectId));
+}
+// ================ 3. GET INFORMATION CUSTOMER ==========================
+function getInfomantionCustomer(cuscode) {
+    $.ajax({
+        url: '/Master/GetInfomantionCustomer',
+        method: 'GET',
+        data: { cuscode: cuscode },
+        success: function (data) {
+            if (!data.IsSuccess || !data.Data || data.Data.length === 0) {
+                console.warn('No customer data found for →', cuscode);
+                return;
+            }
+            const cus = data.Data[0];
+
+            if (window.APP_SESSION) window.APP_SESSION.cuscode = cus.cuscode || cuscode;
+
+            renderCustomerCard(cus);
+        },
+        error: function (xhr, status, error) {
+            console.error('getInfomantionCustomer error:', error);
+        }
+    });
+}
+// ==========================================
+// RENDER: Customer Card (ขนาดไม่ยุบ)
+// ==========================================
+function renderCustomerCard(cus) {
+    const info = document.querySelector('#customerCard .customer-info');
+    if (!info) return;
+
+    info.innerHTML = `
+        <div class="mb-2"><strong>${cus.cusname ?? '-'}</strong></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
+            <div><span class="text-muted">Salesman: </span><strong>${cus.slmcode ?? '-'}</strong></div>
+            <div><span class="text-muted">Customer Code: </span><strong>${cus.cuscode ?? '-'}</strong></div>
+            <div><span class="text-muted">Tel: </span><strong>${cus.phone ?? '-'}</strong></div>
+            <div><span class="text-muted">Payment term: </span><strong>${cus.rating ?? '-'}</strong></div>
+        </div>
+    `;
+}
+
+function clearCustomerCard() {
+    // ใส่ placeholder แทน เพื่อไม่ให้ card ยุบ
+    const info = document.querySelector('#customerCard .customer-info');
+    if (!info) return;
+
+    info.innerHTML = `
+        <div class="mb-2"><strong>-</strong></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
+            <div><span class="text-muted">Salesman: </span><strong>-</strong></div>
+            <div><span class="text-muted">Customer Code: </span><strong>-</strong></div>
+            <div><span class="text-muted">Rating: </span><strong>-</strong></div>
+            <div><span class="text-muted">Payment term: </span><strong>-</strong></div>
+        </div>
+    `;
+}
+
+function clearCustomerSelect() {
+    const select = document.getElementById('customerId');
+    if (select) select.innerHTML = '<option value="">-- เลือก Customer --</option>';
+}
+
+// ==========================================
+// HELPER: Company Toggle
+// ==========================================
+function getActiveCompanies() {
+    return [...document.querySelectorAll('.company-btn[aria-pressed="true"]')]
+        .map(btn => btn.dataset.company);
+}
+
+function toggleCompany(btn) {
+    const isPressed = btn.getAttribute('aria-pressed') === 'true';
+    btn.setAttribute('aria-pressed', String(!isPressed));
+
+    // ✅ sync company ตัวแรกที่ active เข้า APP_SESSION (ถ้ามีมากกว่า 1 ตัว active ให้ใช้ตัวแรก)
+    const active = getActiveCompanies();
+    if (window.APP_SESSION) window.APP_SESSION.company = active[0] || 'TAC';
+
+    const selectedSlm = document.getElementById('salesmanId')?.value;
+    if (selectedSlm) getCustomerbySalesman(selectedSlm, '');
+}
+
+/* ════════════ THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)════════════ */
+const THEME_KEY = 'truTheme';
+
+function toggleTheme() {
+    const isBlue = document.body.classList.toggle('theme-blue');
+    localStorage.setItem(THEME_KEY, isBlue ? 'blue' : 'default');
+}
+function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'blue') {
+        document.body.classList.add('theme-blue');
+    }
+}
+
+initTheme();
+//-----------------กันคลิกขวา คัดลอกรูป save img และคีย์ลัด------------------//
