@@ -1995,7 +1995,11 @@ async function _fetchCartFromServer(forceRefresh = false) {
 }
 /* ── Delete สินค้าจาก server แล้ว re-fetch ── */
 async function _deleteCartItem(ordId) {
-    if (!ordId) return;
+    if (!ordId) {
+        console.warn('_deleteCartItem: ordId is empty');
+        return;
+    }
+    console.log('Deleting ordId:', ordId);   // ✅ debug ก่อน ดูว่าค่าถูกไหม
     try {
         const res = await fetch('/Product/DeleteProductToCart', {
             method: 'POST',
@@ -2011,9 +2015,7 @@ async function _deleteCartItem(ordId) {
             await _fetchCartFromServer();
             return;
         }
-        // ✅ ลบสำเร็จ → fetch ใหม่โดยไม่ใช้ cache
         await _fetchCartFromServer(true);
-
     } catch (err) {
         console.error('_deleteCartItem error:', err);
         toast('❌ เกิดข้อผิดพลาดในการลบสินค้า', 'warn');

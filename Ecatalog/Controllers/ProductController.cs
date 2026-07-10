@@ -529,25 +529,22 @@ namespace Ecatalog.Controllers
         [HttpPost]
         public async Task<ActionResult> DeleteProductToCart(string ordId, string username)
         {
-            Boolean IsSuccess = false;
-            string ResponseString = "";
-            username = Session["username"].ToString();
-            //string StatusResponse = "Y";
-
             if (Session["username"] == null)
-            {
                 return Json(new { IsSuccess = false, Message = "Session หมดอายุ กรุณา Login ใหม่" }, JsonRequestBehavior.AllowGet);
-            }
 
             username = Session["username"].ToString();
+
+            bool IsSuccess = false;
+            string ResponseString = "";
+
             try
             {
                 var result = await Utils.CallApiAsyncMemory<DeleteProductToCart>(
-                            "Ecatalog/DeleteProductToCart",
-                            "POST",
-                            null,
-                            false,
-                            10);
+                    $"Ecatalog/DeleteProductToCart?ordId={ordId}&username={username}",
+                    "POST",
+                    null,
+                    false,
+                    10);
 
                 if (result.StatusCode != 200)
                 {
@@ -556,26 +553,20 @@ namespace Ecatalog.Controllers
                 else
                 {
                     IsSuccess = true;
-                    ResponseString = "Added Item";
+                    ResponseString = "Delete Item";
                 }
 
                 return Json(new
                 {
-                    IsSuccess = IsSuccess,
+                    IsSuccess,
                     IsFromCache = result.IsFromCache,
                     Data = result.Data?.result,
                     Message = ResponseString
-                },
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    IsSuccess = false,
-                    Message = ex.Message
-                },
-                JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
         public async Task<ActionResult> EditProductToCart(int ordid, string cuscod, int qty, decimal price, string username)
