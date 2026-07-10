@@ -1673,7 +1673,7 @@ $(document).ready(function () {
 //----------- BrandS ----------------//
 function GetBrandS() {
     $.ajax({
-        url: '/Master/GetBrands',
+        url: urls.getBrands,
         method: 'GET',
         success: function (result) {
             if (result.IsSuccess) {
@@ -1726,7 +1726,7 @@ const FIXED_GROUPS = [
 
 function GetProductGroup() {
     $.ajax({
-        url: '/Master/GetProductGroups',
+        url: urls.getProductGroups,
         method: 'GET',
         // ✅ ไม่ส่ง prodgrpid เลย ให้ API ตัดสินใจเอง
         success: function (result) {
@@ -1805,7 +1805,7 @@ function ClickedMatchData() {
     const grpId = window.selectedGroupId || null;
 
     $.ajax({
-        url: '/Master/GetMatchProductionGroup',
+        url: urls.getMatchProductionGroup,
         method: 'GET',
         data: { prodgrpid: grpId },
         success: function (result) {
@@ -2146,7 +2146,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // ================ 1. GET SALESMAN ALL ========================
 function getSalesmanAll(sessionSlm, sessionCus) {
     $.ajax({
-        url: '/Master/GetSalesmanAll',
+        url: urls.getSalesmanAll,
         method: 'GET',
         success: function (data) {
             if (!data.IsSuccess) return;
@@ -2193,7 +2193,7 @@ function getSalesmanAll(sessionSlm, sessionCus) {
 
 function getCustomerbySalesman(slmcode, sessionCus) {
     $.ajax({
-        url: '/Master/GetCustomerbySalesman',
+        url: urls.getCustomerbySalesman,
         method: 'GET',
         data: { slmcode: slmcode },
         success: function (data) {
@@ -2286,7 +2286,8 @@ function _bindSelectToggle(selectId) {
 // ================ 3. GET INFORMATION CUSTOMER ==========================
 function getInfomantionCustomer(cuscode) {
     $.ajax({
-        url: '/Master/GetInfomantionCustomer',
+        //url: '/Master/GetInfomantionCustomer',
+        url: urls.getInfomantionCustomer,
         method: 'GET',
         data: { cuscode: cuscode },
         success: function (data) {

@@ -472,4 +472,24 @@
             btn.prop("disabled", false);
         }
     }
+
+    /*url: '/Master/GetProductGroups',
+    url: '/Master/GetProductLines',
+    url: '/Master/GetMatchProductionGroup',
+    url: '/Master/GetSalesmanAll',
+    url: '/Master/GetCustomerbySalesman',
+    url: '/Master/GetInfomantionCustomer',
+    */
+
+
+        const urls = {
+        getBrands: '@Url.Action("GetBrands", "Master")',
+        getProductGroups: '@Url.Action("GetProductGroups", "Master")',
+        getMatchProductionGroup: '@Url.Action("getMatchProductionGroup", "Master")',
+        getSalesmanAll: '@Url.Action("GetSalesmanAll", "Master")',
+        getCustomerbySalesman: '@Url.Action("GetCustomerbySalesman", "Master")',
+        getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',       
+
+    };
+
 </script>
