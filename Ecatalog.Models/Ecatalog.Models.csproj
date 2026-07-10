@@ -49,6 +49,7 @@
     <Compile Include="DeleteProductToCart.cs" />
     <Compile Include="EditProductToCartModel.cs" />
     <Compile Include="GetCustomerbySalesmanModel.cs" />
+    <Compile Include="GetInfomantionCustomerModel.cs" />
     <Compile Include="GetSalesmanAllModel.cs" />
     <Compile Include="MarketCarFilterModel.cs" />
     <Compile Include="MatchProductGroupModel.cs" />
