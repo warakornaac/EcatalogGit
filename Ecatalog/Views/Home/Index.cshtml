@@ -131,6 +131,8 @@
     <!-- ════════=ORDER SUMMARY MODAL ═════════════ -->
     @Html.Partial("~/Views/Parts/_OrderSummary.cshtml")
 
+
+
     <!-- TOASTS -->
     <div class="toasts" id="toastRack"></div>
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
@@ -162,6 +164,23 @@
                 }
             });
         });
+    const urls = {
+        getBrands: '@Url.Action("GetBrands", "Master")',
+        getProductGroups: '@Url.Action("GetProductGroups", "Master")',
+        getProductline: '@Url.Action("GetProductLines", "Master")',
+        getMatchProductionGroup: '@Url.Action("getMatchProductionGroup", "Master")',
+        getSalesmanAll: '@Url.Action("GetSalesmanAll", "Master")',
+        getCustomerbySalesman: '@Url.Action("GetCustomerbySalesman", "Master")',
+        getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',
+        getShiptoByCuscode: '@Url.Action("GetShiptoByCuscode", "Master")'
+    };
+
+    const urlsPro = {
+        getProductToCartUrl: '@Url.Action("GetProductToCart", "Product")',
+        editProductToCart: '@Url.Action("EditProductToCart", "Product")',
+        delProductToCart: '@Url.Action("DeleteProductToCart", "Product")'
+
+    };
     </script>
 </body>
 </html>

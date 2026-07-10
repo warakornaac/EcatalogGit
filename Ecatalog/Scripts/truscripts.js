@@ -971,7 +971,7 @@ async function clearCart() {
     const ids = cart.map(c => c.id);
     for (const ordId of ids) {
         try {
-            await fetch('/Product/DeleteProductToCart', {
+            await fetch(urlsPro.delProductToCart, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ ordId })
@@ -1444,7 +1444,7 @@ async function changeQty(ordId, delta) {
     _updateQtyUI(ordId, newQty, item.price);
 
     try {
-        const res = await fetch('/Product/EditProductToCart', {
+        const res = await fetch(urlsPro.editProductToCart, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -1755,7 +1755,7 @@ function GetProductGroup() {
 //----------- ProductLine ----------------//
 function GetProductionLine() {
     $.ajax({
-        url: '/Master/GetProductLines',
+        url: urls.getProductline,
         method: 'GET',
         success: function (result) {
             if (result.IsSuccess) {
@@ -1975,10 +1975,13 @@ function _mapCartItem(item) {
 async function _fetchCartFromServer(forceRefresh = false) {
     try {
         const cuscode = window.APP_SESSION?.cuscode || '';
-        const url = forceRefresh
-            ? `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}&t=${Date.now()}`
-            : `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}`;
+        // const url = forceRefresh
+        //     ? `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}&t=${Date.now()}`
+        //     : `/Product/GetProductToCart?cuscode=${encodeURIComponent(cuscode)}`;
 
+        const url = forceRefresh
+            ? `${urlsPro.getProductToCartUrl}?cuscode=${encodeURIComponent(cuscode)}&t=${Date.now()}`
+            : `${urlsPro.getProductToCartUrl}?cuscode=${encodeURIComponent(cuscode)}`;
         const res = await fetch(url, { method: 'GET' });
         const json = await res.json();
 
@@ -2001,7 +2004,7 @@ async function _deleteCartItem(ordId) {
     }
     console.log('Deleting ordId:', ordId);   // ✅ debug ก่อน ดูว่าค่าถูกไหม
     try {
-        const res = await fetch('/Product/DeleteProductToCart', {
+        const res = await fetch(urlsPro.delProductToCart, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -2033,7 +2036,7 @@ async function _deleteCartItem(ordId) {
 async function loadShipToList() {
     try {
         const cuscode = window.APP_SESSION?.cuscode || '';
-        const res = await fetch(`/Master/GetShiptoByCuscode?cuscode=${cuscode}`, {
+        const res = await fetch(`${urls.getShiptoByCuscode}?cuscode=${encodeURIComponent(cuscode)}`, {
             method: 'GET'
         });
         const json = await res.json();
