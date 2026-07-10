@@ -69,6 +69,7 @@
     <Compile Include="ProductTabOemModel.cs" />
     <Compile Include="ProductTabSpecModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SearchDictionaryModel.cs" />
     <Compile Include="UserSessionModel.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

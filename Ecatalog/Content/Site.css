@@ -4247,15 +4247,16 @@ body {
         padding: 2px 7px;
         border-radius: 999px;
     }
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
 
-    .spec-modal-backdrop.show {
-        display: flex;
-    }
+.spec-modal-backdrop.show {
+    display: flex;
+}
 
 .no-image {
     display: flex;
@@ -4282,16 +4283,16 @@ body {
     margin-bottom: 18px;
 }
 
-.rbac-header h1 {
-    margin: 0 0 4px;
-    font-size: 28px;
-    font-weight: 700;
-}
+    .rbac-header h1 {
+        margin: 0 0 4px;
+        font-size: 28px;
+        font-weight: 700;
+    }
 
-.rbac-header p {
-    margin: 0;
-    color: #6b4c4c;
-}
+    .rbac-header p {
+        margin: 0;
+        color: #6b4c4c;
+    }
 
 .rbac-grid {
     display: grid;
@@ -4307,17 +4308,17 @@ body {
     box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 
-.rbac-panel h2 {
-    margin: 0 0 14px;
-    font-size: 18px;
-    font-weight: 700;
-}
+    .rbac-panel h2 {
+        margin: 0 0 14px;
+        font-size: 18px;
+        font-weight: 700;
+    }
 
-.rbac-panel h3 {
-    margin: 18px 0 10px;
-    font-size: 14px;
-    font-weight: 700;
-}
+    .rbac-panel h3 {
+        margin: 18px 0 10px;
+        font-size: 14px;
+        font-weight: 700;
+    }
 
 .rbac-check-list {
     display: grid;
@@ -4336,18 +4337,18 @@ body {
     font-weight: 400;
 }
 
-.rbac-check input {
-    margin-top: 3px;
-}
+    .rbac-check input {
+        margin-top: 3px;
+    }
 
-.rbac-check span {
-    display: grid;
-    gap: 2px;
-}
+    .rbac-check span {
+        display: grid;
+        gap: 2px;
+    }
 
-.rbac-check small {
-    color: #6b4c4c;
-}
+    .rbac-check small {
+        color: #6b4c4c;
+    }
 
 .rbac-user-roles {
     max-height: 320px;
@@ -4363,6 +4364,7 @@ body {
         flex-direction: column;
     }
 }
+
 .spin {
     display: inline-block;
     animation: spin .6s linear infinite;

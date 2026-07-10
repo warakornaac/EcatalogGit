@@ -169,6 +169,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\MasterController.cs" />
+    <Compile Include="Controllers\MeiliSearchController.cs" />
     <Compile Include="Controllers\MemoryCacheManageController.cs" />
     <Compile Include="Controllers\ProductController.cs" />
     <Compile Include="Controllers\RbacController.cs" />
@@ -279,6 +280,7 @@
     <Folder Include="Images\" />
     <Folder Include="Views\Include\" />
     <Folder Include="Views\Master\" />
+    <Folder Include="Views\MeiliSearch\" />
     <Folder Include="Views\MemoryCacheManage\" />
     <Folder Include="Views\Product\" />
   </ItemGroup>
