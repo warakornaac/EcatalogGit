@@ -5,10 +5,10 @@
 let currentProducts = [];
 let currentGroups = [];
 let currentSpecProduct = null;
-const API_URLS = {
-    getProductBySearchVio: '/Product/GetProductBySearchVio',
-    getProductBySearchCatagory: '/Product/GetProductBySearchCatagory'
-}
+// const API_URLS = {
+//     getProductBySearchVio: '/Product/GetProductBySearchVio',
+//     getProductBySearchCatagory: '/Product/GetProductBySearchCatagory'
+// }
 
 /* SEARCH — เรียก API GetProductBySearchVio ถูก call จาก _Sidebar.cshtml (btnSearchProductVio) และจาก truscripts.js (loadSearchProductVio) */
 async function loadSearchProductVio() {
@@ -59,23 +59,12 @@ async function loadSearchProductVio() {
                 (result.IsFromCache ? "VIO Cache Hit" : "API Call") +
                 " (" + result.ExecutionTime + " ms)"
             );
-
-            PRODUCTS = mapApiResponseToProducts(result.Data || []);
-            PRODUCTS_FOR_COUNT = [...PRODUCTS];
-
-            chkState = { pl: {}, br: {} };
-            document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
-            fitState = new Set();
-            document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
-
             activeGroup = '0';
             window.selectedGroupId = '0';
             document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
             document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
 
-            applyAllFilters();
-            updateFilterCounts();
-            renderActiveFilterChips();
+            _setBaseProducts(result.Data, 'vehicle');
 
         } else {
             toast(result.Message || "Search Error", "warn");

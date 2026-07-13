@@ -3,6 +3,7 @@
    PRODUCTS ถูกเติมจาก loadSearchProductVio()
 ════════════════════════════════ */
 let PRODUCTS = [];
+let BASE_PRODUCTS = [];
 
 let GROUPS = [];
 
@@ -19,7 +20,9 @@ let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
 let PRODUCTS_FOR_COUNT = [];
-let _shipToList = []; // ✅ snapshot ของกลุ่มปัจจุบัน ไม่ถูก filter ตาม checkbox
+// let PRODUCTS_FOR_PL_COUNT = [];
+// let PRODUCTS_FOR_BR_COUNT = [];
+let _shipToList = [];
 let acSelected = null;
 let acFocusIdx = -1;
 let acItems = [];
@@ -28,8 +31,6 @@ let acSbFocusIdx = -1;
 let acSbItems = [];
 let _osSetQtyTimer = null;
 let _isChangingQty = false;
-var PRODUCTS_FOR_PL_COUNT = [];
-var PRODUCTS_FOR_BR_COUNT = [];
 const currentAllowed = {
     pl: [],
     br: []
@@ -122,11 +123,15 @@ window.addEventListener('DOMContentLoaded', () => {
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
+    const seen = new Set();
     (groups || []).forEach(group => {
-        // ✅ ข้าม group ที่ไม่มี productGroupNameMain
         if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
-
+       
         (group.productList || []).forEach(item => {
+            // กันพ่น product ซ้ำ //
+            if (!item.stkcode || seen.has(item.stkcode)) return;
+            seen.add(item.stkcode);
+            //----------------//
             const qty = parseInt(item.qtyReady, 10);
             const PLACEHOLDER = ['makername', 'modelname'];
             const maker = (item.makerName || '').trim();
@@ -142,12 +147,53 @@ function mapApiResponseToProducts(groups) {
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
                 fit: [],
-                carModel: carParts.join(' ') || '',   // ✅ ว่างถ้าเป็น placeholder
+                carModel: carParts.join(' ') || '',
                 img: item.imagePath || item.imageUrl || ''
             });
         });
     });
     return list;
+}
+//----function ใหม่สำหรับการรวมผลลัพธ์จาก API หลายเส้น-----//
+function _setBaseProducts(groups, searchType) {
+    BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
+
+    if (searchType === 'vehicle' || searchType === 'field') {
+        chkState = { pl: {}, br: {} };
+        fitState = new Set();
+        document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
+        document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
+    }
+
+    PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
+    PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
+
+    _applyFiltersAndRender();
+}
+
+function _applyFiltersAndRender() {
+    const q = (gEl('partQ')?.value || '').toLowerCase().trim();
+    const plKeys = Object.keys(chkState.pl);
+    const brKeys = Object.keys(chkState.br);
+    const fitK = [...fitState];
+
+    PRODUCTS = BASE_PRODUCTS.filter(p => {
+        if (q) {
+            let match = false;
+            if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
+            if (activeModes.has('oe') && p.code.toLowerCase().includes(q)) match = true;
+            if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
+            if (!match) return false;
+        }
+        if (plKeys.length && !plKeys.includes(p.line)) return false;
+        if (brKeys.length && !brKeys.includes(p.brand)) return false;
+        if (fitK.length && !fitK.some(f => p.fit.includes(f))) return false;
+        return true;
+    });
+
+    renderProducts(PRODUCTS);
+    updateFilterCounts();
+    renderActiveFilterChips();
 }
 
 /* ═══════════════ §1 — SEARCH SYNC ════════════════ */
@@ -312,12 +358,18 @@ function selectGroup(id) {
     showSkel();
     setTimeout(() => {
         hideSkel();
-        applyAllFilters();
-        searchProductByCategory().then(() => {
-            PRODUCTS_FOR_COUNT = [...PRODUCTS];   // snapshot หลังเปลี่ยน group
+        if (BASE_PRODUCTS.length > 0) {
+            _applyFiltersAndRender();
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];
             updateFilterCounts();
-            renderActiveFilterChips();             // ✅ เพิ่มบรรทัดนี้
-        });
+            renderActiveFilterChips();
+        } else {
+            searchProductByCategory().then(() => {
+                PRODUCTS_FOR_COUNT = [...PRODUCTS];
+                updateFilterCounts();
+                renderActiveFilterChips();
+            });
+        }
     }, 500);
 }
 
@@ -702,29 +754,7 @@ function renderProducts(list) {
 
 /* ══════════════ APPLY ALL FILTERS ══════════════════ */
 function applyAllFilters() {
-    const q = (gEl('partQ')?.value || '').toLowerCase().trim();
-    const plK = Object.keys(chkState.pl);
-    const brK = Object.keys(chkState.br);
-    const fitK = [...fitState];
-
-    const list = PRODUCTS.filter(p => {
-        if (activeGroup && activeGroup !== 'สินค้าทุกประเภท' && activeGroup !== '0') {
-            //if (p.cat !== activeGroup) return false;
-        }
-        if (q) {
-            let match = false;
-            if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
-            if (activeModes.has('oe') && p.code.toLowerCase().includes(q)) match = true;
-            if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
-            if (!match) return false;
-        }
-        if (plK.length && !plK.includes(p.line)) return false;
-        if (brK.length && !brK.includes(p.brand)) return false;
-        if (fitK.length && !fitK.some(f => p.fit.includes(f))) return false;
-        return true;
-    });
-
-    renderProducts(list);
+    _applyFiltersAndRender();
 }
 
 /* ══════════════ ACTIVE FILTER CHIPS ══════════════════ */
@@ -787,9 +817,11 @@ function removeActiveChip(t, v) {
     }
 
     showSkel();
-    searchProductByCategory().finally(() => {
+    setTimeout(() => {
         hideSkel();
-    });
+        _applyFiltersAndRender();
+        gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
 }
 
 /* ═════════════ §1 — VEHICLE FILTER ═════════════════════ */
@@ -874,13 +906,18 @@ function toggleChk(label, type, val) {
     activateSec(3);
     showSkel();
 
-    searchProductByCategory().finally(() => {
-        hideSkel();
-        updateFilterCounts();
-        renderActiveFilterChips();
-        // ✅ scroll to product area
-        gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    if (BASE_PRODUCTS.length > 0) {
+        setTimeout(() => {
+            hideSkel();
+            _applyFiltersAndRender();
+            gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+    } else {
+        searchProductByCategory().finally(() => {
+            hideSkel();
+            gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
 }
 
 function toggleFit(chip, val) {
@@ -890,10 +927,17 @@ function toggleFit(chip, val) {
     activateSec(3);
     showSkel();
 
-    searchProductByCategory().finally(() => {
-        hideSkel();
-        renderActiveFilterChips();   // ✅ เปลี่ยนจาก renderActiveChips
-    });
+    if (BASE_PRODUCTS.length > 0) {
+        setTimeout(() => {
+            hideSkel();
+            _applyFiltersAndRender();
+        }, 200);
+    } else {
+        searchProductByCategory().finally(() => {
+            hideSkel();
+            renderActiveFilterChips();
+        });
+    }
 }
 
 /* ════════════════ CART ══════════════════ */
@@ -1877,8 +1921,8 @@ document.addEventListener('keydown', e => {
 });
 
 function updateFilterCounts() {
-    const plSource = PRODUCTS_FOR_PL_COUNT.length ? PRODUCTS_FOR_PL_COUNT : PRODUCTS;
-    const brSource = PRODUCTS_FOR_BR_COUNT.length ? PRODUCTS_FOR_BR_COUNT : PRODUCTS;
+    const plSource = PRODUCTS_FOR_PL_COUNT.length ? PRODUCTS_FOR_PL_COUNT : BASE_PRODUCTS;
+    const brSource = PRODUCTS_FOR_BR_COUNT.length ? PRODUCTS_FOR_BR_COUNT : BASE_PRODUCTS;
 
     $("#brList .chk-item").each(function () {
         const brandName = $(this).attr('data-name');

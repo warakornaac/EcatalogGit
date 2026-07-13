@@ -12,15 +12,15 @@
     ของแถว (result.Data?.result) ไม่ใช่ object เดียว
 ==================================================================== */
 
-const TAB_API_URLS = {
-    count: '/Product/GetTabItemCountProduct',
-    description: '/Product/GetTabDescription',
-    spec: '/Product/GetTabSpec',
-    image: '/Product/GetTabImage',
-    oem: '/Product/GetTabOem',
-    competitor: '/Product/GetTabCompetitor',
-    linkage: '/Product/GetTabLinkage'
-};
+// const TAB_API_URLS = {
+//     count: '/Product/GetTabItemCountProduct',
+//     description: '/Product/GetTabDescription',
+//     spec: '/Product/GetTabSpec',
+//     image: '/Product/GetTabImage',
+//     oem: '/Product/GetTabOem',
+//     competitor: '/Product/GetTabCompetitor',
+//     linkage: '/Product/GetTabLinkage'
+// };
 
 /* Cache: key = "stkcode::tabName" */
 const _tabCache = {};
