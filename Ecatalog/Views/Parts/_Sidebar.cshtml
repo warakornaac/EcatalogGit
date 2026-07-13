@@ -32,7 +32,8 @@
             <div class="company-group" role="group" aria-label="Company">
                 <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
                 <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
-                <button class="company-btn" data-company="TAM" onclick="toggleCompany(this)" aria-pressed="false">TAM</button>
+                <button class="company-btn" data-company="AGS" onclick="toggleCompany(this)" aria-pressed="false">AGS</button>
+                <button class="company-btn" data-company="OMP" onclick="toggleCompany(this)" aria-pressed="false">OMP</button>
             </div>
         </div>
 
@@ -328,20 +329,21 @@
                 return $(this).data("id");
             })
             .get()
-            .filter(id => id !== '0' && id !== 0);   // ✅ ตัด placeholder "ทั้งหมด" ออก
+            .filter(id => id !== '0' && id !== 0)
+            .map(id => parseInt(id));  // ✅ แปลงเป็น int
 
         const filterObj = {
             productGroupId: activeGroupIds,
             productLineId:
                 $(".chk-item.checked[data-filter='filterProductLineId']")
                     .map(function () {
-                        return $(this).data("id");
+                        return parseInt($(this).data("id"));  // ✅ แปลงเป็น int
                     })
                     .get(),
             brandId:
                 $(".chk-item.checked[data-filter='filterProductBrandId']")
                     .map(function () {
-                        return $(this).attr("data-id");
+                        return parseInt($(this).attr("data-id"));  // ✅ แปลงเป็น int
                     })
                     .get()
         };
@@ -349,65 +351,31 @@
     }
     //send params send to controller searchByCategory
     async function searchProductByCategory() {
-        try {
-            const filters = getSearchCatagoryObject();
-            const response = await fetch(
-                '@Url.Action("GetProductBySearchCatagory","Product")',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(filters)
-                });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.Message || "API Error");
-            if (result.IsSuccess) {
-                PRODUCTS = mapApiResponseToProducts(result.Data || []);
-
-                const hasPlFilter = Object.keys(chkState.pl).length > 0;
-                const hasBrFilter = Object.keys(chkState.br).length > 0;
-
-                if (!hasPlFilter && !hasBrFilter) {
-                    // ✅ ไม่มี filter เลย → reset snapshot ทั้งคู่
-                    PRODUCTS_FOR_PL_COUNT = [...PRODUCTS];
-                    PRODUCTS_FOR_BR_COUNT = [...PRODUCTS];
-                } else if (hasPlFilter && !hasBrFilter) {
-                    // ✅ มีแค่ pl filter → update snapshot brand (ผลหลังกรอง pl)
-                    PRODUCTS_FOR_BR_COUNT = [...PRODUCTS];
-                } else if (!hasPlFilter && hasBrFilter) {
-                    // ✅ มีแค่ brand filter → update snapshot pl (ผลหลังกรอง brand)
-                    PRODUCTS_FOR_PL_COUNT = [...PRODUCTS];
-                }
-                // ✅ มีทั้ง pl + brand → คง snapshot ทั้งคู่ไว้
-
-                const q = (gEl('partQ')?.value || '').toLowerCase().trim();
-                const fitK = [...fitState];
-
-                const list = PRODUCTS.filter(p => {
-                    if (q) {
-                        let match = false;
-                        if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
-                        if (activeModes.has('oe') && p.code.toLowerCase().includes(q)) match = true;
-                        if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
-                        if (!match) return false;
-                    }
-                    if (fitK.length && !fitK.some(f => p.fit.includes(f))) return false;
-                    return true;
-                });
-
-                renderProducts(list);
-                updateFilterCounts();
-                renderActiveFilterChips();
-
-                gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            } else {
-                alert(result.Message || "Search Error");
-            }
-        } catch (ex) {
-            console.error("searchProductByCategory Error:", ex);
-            alert(ex.message || "System Error");
+    try {
+        const filters = getSearchCatagoryObject();
+        console.log('filters:', filters); // ✅ ดู filter ที่ส่งไป
+        const response = await fetch(
+            '@Url.Action("GetProductBySearchCatagory","Product")',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            });
+        const result = await response.json();
+        console.log('result:', result); // ✅ ดู response จาก API
+        console.log('result.Data:', result.Data); // ✅ ดูว่า Data มีอะไร
+        if (!response.ok) throw new Error(result.Message || "API Error");
+        if (result.IsSuccess) {
+            _setBaseProducts(result.Data, 'category');
+            gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            alert(result.Message || "Search Error");
         }
+    } catch (ex) {
+        console.error("searchProductByCategory Error:", ex);
+        alert(ex.message || "System Error");
     }
+}
     //get value text, checkbox
     async function getSearchFieldObject() {
         const request = {
@@ -457,12 +425,8 @@
                 " (" + result.ExecutionTime + " ms)"
             );
 
-            // ✅ กรอง group ที่ไม่มี productGroupNameMain ออก แล้ว map เป็น PRODUCTS
             const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
-            PRODUCTS = mapApiResponseToProducts(filteredData);
-
-            applyAllFilters();
-            updateFilterCounts();
+            _setBaseProducts(filteredData, 'field');
 
         } catch (ex) {
             console.error(ex);
@@ -488,7 +452,7 @@
         getMatchProductionGroup: '@Url.Action("getMatchProductionGroup", "Master")',
         getSalesmanAll: '@Url.Action("GetSalesmanAll", "Master")',
         getCustomerbySalesman: '@Url.Action("GetCustomerbySalesman", "Master")',
-        getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',       
+        getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',
 
     };*@
 

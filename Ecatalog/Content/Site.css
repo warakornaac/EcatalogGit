@@ -871,7 +871,7 @@ body {
 }
 
 .company-btn {
-    padding: 5px 20px;
+    padding: 4px 15px;
     border-radius: 20px;
     border: 1.5px solid;
     font-size: 11px;
@@ -885,18 +885,27 @@ body {
         background: #e8effe;
         color: #3350c8;
         border-color: #b3c2f7;
+        opacity: 40%;
     }
 
     .company-btn[data-company="TAC"] {
         background: #feeaea;
-        color: #b93232;
-        border-color: #f0b0b0;
+        color: #ff0000;
+        border-color: #ff0000;
     }
 
-    .company-btn[data-company="TAM"] {
+    .company-btn[data-company="AGS"] {
         background: #f3e8fe;
         color: #7c3aed;
         border-color: #d4aff7;
+        opacity: 40%;
+    }
+
+    .company-btn[data-company="OMP"] {
+        background: #fef5e8;
+        color: #ff8100;
+        border-color: #ffd800;
+        opacity: 40%;
     }
 
     .company-btn[aria-pressed="true"][data-company="AAC"] {
