@@ -155,16 +155,51 @@ function mapApiResponseToProducts(groups) {
     return list;
 }
 //----function ใหม่สำหรับการรวมผลลัพธ์จาก API หลายเส้น-----//
+// function _setBaseProducts(groups, searchType) {
+//     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
+
+//     if (searchType === 'vehicle' || searchType === 'field') {
+//         chkState = { pl: {}, br: {} };
+//         fitState = new Set();
+//         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
+//         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
+//     }
+
+//     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
+//     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
+
+//     _applyFiltersAndRender();
+// }
+
+/**
+ * เซต Base ใหม่จาก API response
+ * @param {Array}  groups      — grouped data จาก API
+ * @param {string} searchType  — 'vehicle' | 'part' | 'category'
+ */
 function _setBaseProducts(groups, searchType) {
     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
 
-    if (searchType === 'vehicle' || searchType === 'field') {
+    // Vehicle / Part search = เริ่มใหม่ → reset filter ทั้งหมด
+    if (searchType === 'vehicle' || searchType === 'part') {
         chkState = { pl: {}, br: {} };
         fitState = new Set();
         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
-    }
 
+        // reset sort กลับ default
+        currentSort = 'carModel';
+        const sel = gEl('sortSelect');
+        if (sel) sel.value = 'carModel';
+
+        // ล้าง active filter chips
+        const af = gEl('activeFilters');
+        if (af) af.innerHTML = '';
+    }
+    // category / checkbox → ไม่ reset filter, ใช้ของเดิม
+
+    // Snapshot สำหรับนับ filter counts
+    // ถ้า reset แล้ว → snapshot = BASE_PRODUCTS ทั้งหมด
+    // ถ้าไม่ reset → snapshot เดิมก็ยังถูก เพราะจะ overwrite ด้านล่าง
     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
 
@@ -177,7 +212,15 @@ function _applyFiltersAndRender() {
     const brKeys = Object.keys(chkState.br);
     const fitK = [...fitState];
 
-    PRODUCTS = BASE_PRODUCTS.filter(p => {
+    // ── 1. group filter ──
+    const activeGroupStr = String(activeGroup);
+    const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
+    const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
+    const filterUniversal = activeGroupStr === '99';
+
+    const baseFiltered = BASE_PRODUCTS.filter(p => {
+        if (filterUniversal && p.carModel !== 'Universal') return false;
+        if (filterByCat && p.cat !== activeGroupObj.label) return false;
         if (q) {
             let match = false;
             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
@@ -185,15 +228,108 @@ function _applyFiltersAndRender() {
             if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
             if (!match) return false;
         }
-        if (plKeys.length && !plKeys.includes(p.line)) return false;
-        if (brKeys.length && !brKeys.includes(p.brand)) return false;
         if (fitK.length && !fitK.some(f => p.fit.includes(f))) return false;
         return true;
     });
 
+    // ── 2-3. snapshots ──
+    PRODUCTS_FOR_BR_COUNT = plKeys.length
+        ? baseFiltered.filter(p => plKeys.includes(p.line))
+        : [...baseFiltered];
+
+    PRODUCTS_FOR_PL_COUNT = brKeys.length
+        ? baseFiltered.filter(p => brKeys.includes(p.brand))
+        : [...baseFiltered];
+
+    // ── 4. final products ──
+    PRODUCTS = baseFiltered.filter(p => {
+        if (plKeys.length && !plKeys.includes(p.line)) return false;
+        if (brKeys.length && !brKeys.includes(p.brand)) return false;
+        return true;
+    });
+
     renderProducts(PRODUCTS);
-    updateFilterCounts();
+    _updateSidebar();
     renderActiveFilterChips();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR UPDATE
+   - pl  : อัปเดต count เท่านั้น (show/hide ดูแลโดย FilterProductionLines)
+   - brand: อัปเดต count + sort + show/hide
+══════════════════════════════════════════════════════════════ */
+function _updateSidebar() {
+    const hasPlChecked = Object.keys(chkState.pl).length > 0;
+    const hasBrChecked = Object.keys(chkState.br).length > 0;
+
+    // ── อัปเดต count pl ──
+    $("#plList .chk-item").each(function () {
+        const lineName = $(this).attr('data-name');
+        const count = PRODUCTS_FOR_PL_COUNT.filter(p => p.line === lineName).length;
+        $(this).find('.chk-count').text(count);
+    });
+
+    // ── sort pl ตาม count (show/hide ยังให้ FilterProductionLines จัดการ) ──
+    if (!hasPlChecked) {
+        const $plList = $('#plList');
+        // sort เฉพาะที่ allowed (ไม่ซ่อนอยู่เพราะ not allowed)
+        const $plAllowed = $plList.find('.chk-item').filter(function () {
+            const id = $(this).attr('data-id');
+            return currentAllowed.pl.length === 0 || currentAllowed.pl.includes(id);
+        }).detach();
+
+        $plAllowed.sort((a, b) =>
+            (parseInt($(b).find('.chk-count').text()) || 0) -
+            (parseInt($(a).find('.chk-count').text()) || 0)
+        ).appendTo($plList);
+
+        // re-apply show/hide top 5 หลัง sort
+        let visibleCount = 0;
+        $plList.find('.chk-item').each(function () {
+            const id = $(this).attr('data-id');
+            const allowed = currentAllowed.pl.length === 0 || currentAllowed.pl.includes(id);
+            if (!allowed) {
+                $(this).hide();
+            } else {
+                visibleCount++;
+                $(this).toggle(visibleCount <= 5);
+            }
+        });
+    }
+
+    // ── อัปเดต count brand ──
+    $("#brList .chk-item").each(function () {
+        const brandName = $(this).attr('data-name');
+        const count = PRODUCTS_FOR_BR_COUNT.filter(p => p.brand === brandName).length;
+        $(this).find('.chk-count').text(count);
+    });
+
+    // ── sort brand + show top 5 เสมอ (รวม count=0) ──
+    const $brList = $('#brList');
+    const $brChecked = $brList.find('.chk-item.checked').detach();
+
+    $brList.find('.chk-item').sort((a, b) =>
+        (parseInt($(b).find('.chk-count').text()) || 0) -
+        (parseInt($(a).find('.chk-count').text()) || 0)
+    ).appendTo($brList);
+
+    $brList.prepend($brChecked);
+
+    // แสดง top 5 เสมอ ไม่ว่า count จะเป็น 0
+    let brVisible = 0;
+    $brList.find('.chk-item').each(function () {
+        const isChecked = $(this).hasClass('checked');
+        if (isChecked) {
+            $(this).show().removeClass('br-extra');
+            return;
+        }
+        if (brVisible < 5) {
+            $(this).show().removeClass('br-extra');
+            brVisible++;
+        } else {
+            $(this).hide().addClass('br-extra');
+        }
+    });
 }
 
 /* ═══════════════ §1 — SEARCH SYNC ════════════════ */
@@ -330,7 +466,9 @@ function applySorting(list) {
 /* ═══════════════ §5 — BOTTOM BAR ═══════════════════ */
 function renderBottomBar() {
     gEl('bbScroll').innerHTML = GROUPS.map(g => `
-        <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" data-id="${g.id}" onclick="selectGroup('${g.id}'); ClickedMatchData('${g.id}'); ">
+        <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" 
+             data-id="${g.id}" 
+             onclick="selectGroup('${g.id}')">
             <i class="bi ${g.icon}"></i>
             <span class="bb-label">${g.label}</span>
         </div>`).join('');
@@ -343,12 +481,14 @@ function scrollBottom(dx) {
 function selectGroup(id) {
     activeGroup = id;
     window.selectedGroupId = id;
+
     document.querySelectorAll('.bb-item').forEach((b, i) => {
         b.classList.toggle('active', GROUPS[i].id === id);
     });
     document.querySelectorAll('.pg-nav-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.gid === id);
     });
+
     const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
     if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     const activeBB = document.querySelector('.bb-item.active');
@@ -356,21 +496,82 @@ function selectGroup(id) {
 
     updateBreadcrumb(id, 'Parts Catalog');
     showSkel();
-    setTimeout(() => {
-        hideSkel();
-        if (BASE_PRODUCTS.length > 0) {
-            _applyFiltersAndRender();
-            PRODUCTS_FOR_COUNT = [...PRODUCTS];
-            updateFilterCounts();
-            renderActiveFilterChips();
-        } else {
-            searchProductByCategory().then(() => {
+    ClickedMatchData();
+}
+
+function _clickedMatchDataAndRender() {
+    const grpId = window.selectedGroupId || null;
+
+    $.ajax({
+        url: urls.getMatchProductionGroup,
+        method: 'GET',
+        data: { prodgrpid: grpId },
+        success: function (result) {
+            if (result.IsSuccess) {
+                const allowedIds = (result.Data || []).map(x => x.prodlineid.toString());
+
+                // 1. clean chkState.pl ที่ไม่อยู่ใน group นี้
+                Object.keys(chkState.pl).forEach(lineName => {
+                    const label = document.querySelector(`#plList .chk-item[data-name="${CSS.escape(lineName)}"]`);
+                    if (!label) { delete chkState.pl[lineName]; return; }
+                    const lineId = label.getAttribute('data-id');
+                    if (allowedIds.length > 0 && !allowedIds.includes(lineId)) {
+                        delete chkState.pl[lineName];
+                        label.classList.remove('checked');
+                    }
+                });
+
+                // 2. filter sidebar ให้แสดงเฉพาะ line ที่อยู่ใน group
+                currentAllowed.pl = allowedIds;
+                _filterSidebarLines(allowedIds);
+            }
+
+            // 3. render — ไม่ว่า API จะ success หรือไม่ก็ render
+            hideSkel();
+            if (BASE_PRODUCTS.length > 0) {
+                _applyFiltersAndRender();
                 PRODUCTS_FOR_COUNT = [...PRODUCTS];
-                updateFilterCounts();
+                _updateSidebar();
                 renderActiveFilterChips();
-            });
+            } else {
+                searchProductByCategory().then(() => {
+                    PRODUCTS_FOR_COUNT = [...PRODUCTS];
+                    _updateSidebar();
+                    renderActiveFilterChips();
+                });
+            }
+        },
+        error: function () {
+            // API fail → render ด้วย state เดิม
+            hideSkel();
+            if (BASE_PRODUCTS.length > 0) {
+                _applyFiltersAndRender();
+            }
         }
-    }, 500);
+    });
+}
+
+// แยก UI logic ออกมาจาก ClickedMatchData เดิม
+function _filterSidebarLines(allowedIds) {
+    const SHOW_LIMIT = 5;
+    let visibleCount = 0;
+
+    $("#plList .chk-item").each(function () {
+        const id = $(this).attr('data-id');
+        const allowed = allowedIds.length === 0 || allowedIds.includes(id);
+        if (!allowed) {
+            $(this).hide();
+        } else {
+            visibleCount++;
+            $(this).toggle(visibleCount <= SHOW_LIMIT);
+        }
+    });
+
+    const btn = gEl('plSeeMore');
+    if (btn) {
+        btn.classList.remove('expanded');
+        btn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+    }
 }
 
 /* ════════════════════════════════
@@ -1855,37 +2056,70 @@ function ClickedMatchData() {
         success: function (result) {
             if (result.IsSuccess) {
                 const allowedIds = (result.Data || []).map(x => x.prodlineid.toString());
-                FilterProductionLines(allowedIds); // ✅ แค่ filter sidebar
+                FilterProductionLines(allowedIds);
             } else {
-                console.error("API Error:", result.Message);
+                console.error('ClickedMatchData API Error:', result.Message);
             }
+            _renderAfterGroupChange();
         },
         error: function (xhr, status, error) {
-            console.error(error);
+            console.error('ClickedMatchData error:', error);
+            _renderAfterGroupChange();
         }
     });
 }
+
+function _renderAfterGroupChange() {
+    hideSkel();
+    if (BASE_PRODUCTS.length > 0) {
+        _applyFiltersAndRender();
+        PRODUCTS_FOR_COUNT = [...PRODUCTS];
+    } else {
+        searchProductByCategory().then(() => {
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];
+        });
+    }
+}
+
 function FilterProductionLines(allowedIds) {
     currentAllowed.pl = allowedIds;
 
+    // ล้าง chkState.pl ที่ไม่อยู่ใน group ใหม่
+    Object.keys(chkState.pl).forEach(lineName => {
+        const label = document.querySelector(`#plList .chk-item[data-name="${lineName}"]`);
+        if (!label) { delete chkState.pl[lineName]; return; }
+        const lineId = label.getAttribute('data-id');
+        if (allowedIds.length > 0 && !allowedIds.includes(lineId)) {
+            delete chkState.pl[lineName];
+            label.classList.remove('checked');
+        }
+    });
+
+    // ── sort pl ตาม count ก่อน แล้วค่อย show/hide ──
+    const $plList = $('#plList');
+    const $plChecked = $plList.find('.chk-item.checked').detach();
+
+    $plList.find('.chk-item').sort((a, b) =>
+        (parseInt($(b).find('.chk-count').text()) || 0) -
+        (parseInt($(a).find('.chk-count').text()) || 0)
+    ).appendTo($plList);
+
+    $plList.prepend($plChecked);
+
+    // show/hide ตาม allowedIds + top 5
     const SHOW_LIMIT = 5;
     let visibleCount = 0;
-
-    $("#plList .chk-item").each(function () {
+    $plList.find('.chk-item').each(function () {
         const id = $(this).attr('data-id');
         const allowed = allowedIds.length === 0 || allowedIds.includes(id);
-
         if (!allowed) {
             $(this).hide();
         } else {
             visibleCount++;
-            if (visibleCount <= SHOW_LIMIT) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
+            $(this).toggle(visibleCount <= SHOW_LIMIT);
         }
     });
+
     const btn = gEl('plSeeMore');
     if (btn) {
         btn.classList.remove('expanded');
@@ -1919,79 +2153,6 @@ document.addEventListener('keydown', e => {
     const sb = document.getElementById('sidebar');
     if (sb && sb.classList.contains('open')) toggleSidebar();
 });
-
-function updateFilterCounts() {
-    const plSource = PRODUCTS_FOR_PL_COUNT.length ? PRODUCTS_FOR_PL_COUNT : BASE_PRODUCTS;
-    const brSource = PRODUCTS_FOR_BR_COUNT.length ? PRODUCTS_FOR_BR_COUNT : BASE_PRODUCTS;
-
-    $("#brList .chk-item").each(function () {
-        const brandName = $(this).attr('data-name');
-        const count = brSource.filter(p => p.brand === brandName).length;
-        $(this).find('.chk-count').text(count);
-    });
-
-    $("#plList .chk-item").each(function () {
-        const lineName = $(this).attr('data-name');
-        const count = plSource.filter(p => p.line === lineName).length;
-        $(this).find('.chk-count').text(count);
-    });
-
-    const hasBrChecked = Object.keys(chkState.br).length > 0;
-    const hasPlChecked = Object.keys(chkState.pl).length > 0;
-
-    const $brList = $("#brList");
-    if (!hasBrChecked) {
-        $brList.find('.chk-item').sort(function (a, b) {
-            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
-        }).appendTo($brList);
-    } else {
-        const $checked = $brList.find('.chk-item.checked').detach();
-        $brList.find('.chk-item').sort(function (a, b) {
-            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
-        }).appendTo($brList);
-        $brList.prepend($checked);
-    }
-
-    const $plList = $("#plList");
-    if (!hasPlChecked) {
-        $plList.find('.chk-item').sort(function (a, b) {
-            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
-        }).appendTo($plList);
-    } else {
-        const $checked = $plList.find('.chk-item.checked').detach();
-        $plList.find('.chk-item').sort(function (a, b) {
-            return (parseInt($(b).find('.chk-count').text()) || 0) - (parseInt($(a).find('.chk-count').text()) || 0);
-        }).appendTo($plList);
-        $plList.prepend($checked);
-    }
-
-    const SHOW_LIMIT = 5;
-
-    if (!hasBrChecked) {
-        let visible = 0;
-        $("#brList .chk-item").each(function () {
-            if (visible < SHOW_LIMIT) {
-                $(this).show().removeClass('br-extra');
-                visible++;
-            } else {
-                $(this).hide().addClass('br-extra');
-            }
-        });
-    }
-
-    if (!hasPlChecked) {
-        let visible = 0;
-        $("#plList .chk-item").each(function () {
-            if ($(this).css('display') === 'none' && !$(this).hasClass('pl-extra')) return;
-            if (visible < SHOW_LIMIT) {
-                $(this).show().removeClass('pl-extra');
-                visible++;
-            } else {
-                $(this).hide().addClass('pl-extra');
-            }
-        });
-    }
-}
 
 /* ════════════════════════════════════════════════════════
    CART — SINGLE SOURCE OF TRUTH

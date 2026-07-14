@@ -78,7 +78,7 @@ namespace Ecatalog.Controllers
                         "Ecatalog/GetProductBySearchCatagory",
                         "POST",
                         request,
-                        true,
+                        false,
                         30);
 
                 if (result == null) {

@@ -82,9 +82,15 @@
         <div class="mb-2">
             <div class="flabel">Year Range</div>
             <div class="yr-range">
-                <input type="number" id="yearFrom" placeholder="Date From" onchange="activateSec(1)" disabled>
+                <div class="yp-wrap">
+                    <input type="text" id="yearFrom" class="yp-input" placeholder="From" readonly disabled autocomplete="off">
+                    <div class="yp-panel" id="ypPanelFrom"></div>
+                </div>
                 <span>–</span>
-                <input type="number" id="yearTo" placeholder="Date To" onchange="activateSec(1)" disabled>
+                <div class="yp-wrap">
+                    <input type="text" id="yearTo" class="yp-input" placeholder="To" readonly disabled autocomplete="off">
+                    <div class="yp-panel" id="ypPanelTo"></div>
+                </div>
             </div>
         </div>
         <div class="mb-1">
@@ -174,9 +180,7 @@
 </aside>
 
 <script>
-    // เพิ่ม global variables
-    var PRODUCTS_FOR_PL_COUNT = [];   // snapshot ก่อนกรอง pl → ใช้นับ pl count
-    var PRODUCTS_FOR_BR_COUNT = [];   // snapshot ก่อนกรอง brand → ใช้นับ brand count
+
     //get master
     async function loadMasterMarketDefault(moduleId) {
         let selectId = "marketsegId";
@@ -229,10 +233,11 @@
             const allThreeSelected = marketSegmentId && segmentId && makerId;
 
             // ✅ enable/disable dropdown ที่ต้องรอครบ 3 ตัว
-            ['rangeId', 'bodyId', 'engineId', 'yearFrom', 'yearTo', 'driveId'].forEach(id => {
+            ['rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !allThreeSelected;
             });
+            setYearRangeDisabled(!allThreeSelected);
 
             if (!allThreeSelected) {
                 $("#rangeId").empty().append('<option value="">— Select Range —</option>');
@@ -426,7 +431,7 @@
             );
 
             const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
-            _setBaseProducts(filteredData, 'field');
+            _setBaseProducts(filteredData, 'part');
 
         } catch (ex) {
             console.error(ex);
@@ -437,6 +442,129 @@
         }
     }
 
+    // ─── Year Picker (vanilla, ไม่พึ่ง library) ───
+    function createYearPicker(inputId, panelId, opts) {
+        opts = opts || {};
+        const input = document.getElementById(inputId);
+        const panel = document.getElementById(panelId);
+        let baseYear = new Date().getFullYear();
+        let decadeStart = baseYear - (baseYear % 10) - 10; // เริ่มต้นแสดง decade ปัจจุบัน -10
+
+        const state = {
+            selected: null,
+            decadeStart: decadeStart
+        };
+
+        function render() {
+            const years = [];
+            for (let i = -1; i <= 10; i++) years.push(state.decadeStart + i); // แสดง 12 ช่อง (4x3)
+
+            let html = `
+            <div class="yp-header">
+                <span class="yp-nav" data-act="prev">‹</span>
+                <span>${state.decadeStart + 1} - ${state.decadeStart + 10}</span>
+                <span class="yp-nav" data-act="next">›</span>
+            </div>
+            <div class="yp-grid">
+        `;
+            years.forEach(y => {
+                const isOut = (y <= state.decadeStart || y > state.decadeStart + 10);
+                const isSelected = state.selected === y;
+                const isDisabled = opts.limitFn ? !opts.limitFn(y) : false;
+                html += `<div class="yp-cell ${isOut ? 'outrange' : ''} ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" data-year="${y}">${y}</div>`;
+            });
+            html += `</div>`;
+            panel.innerHTML = html;
+        }
+
+        function open() {
+            if (input.disabled) return;
+            document.querySelectorAll('.yp-panel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });
+            render();
+            panel.classList.add('open');
+        }
+
+        function close() {
+            panel.classList.remove('open');
+        }
+
+        input.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.contains('open') ? close() : open();
+        });
+
+        panel.addEventListener('click', (e) => {
+            const nav = e.target.closest('.yp-nav');
+            if (nav) {
+                state.decadeStart += (nav.dataset.act === 'next' ? 10 : -10);
+                render();
+                return;
+            }
+            const cell = e.target.closest('.yp-cell');
+            if (cell && !cell.classList.contains('disabled')) {
+                state.selected = parseInt(cell.dataset.year, 10);
+                input.value = state.selected;
+                close();
+                if (typeof opts.onChange === 'function') opts.onChange(state.selected);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!panel.contains(e.target) && e.target !== input) close();
+        });
+
+        return {
+            clear() {
+                state.selected = null;
+                input.value = '';
+            },
+            setLimit(fn) {
+                opts.limitFn = fn;
+            },
+            getYear() {
+                return state.selected;
+            }
+        };
+    }
+
+    let ypFrom, ypTo;
+
+    function initYearPickers() {
+        ypFrom = createYearPicker('yearFrom', 'ypPanelFrom', {
+            onChange: (year) => {
+                // ปีเริ่มต้องไม่มากกว่าปีสิ้นสุด
+                if (ypTo.getYear() && year > ypTo.getYear()) {
+                    ypTo.clear();
+                }
+                ypTo.setLimit(y => y >= year);
+                activateSec(1);
+                updateVehSummary();
+            }
+        });
+
+        ypTo = createYearPicker('yearTo', 'ypPanelTo', {
+            onChange: (year) => {
+                if (ypFrom.getYear() && year < ypFrom.getYear()) {
+                    ypFrom.clear();
+                }
+                ypFrom.setLimit(y => y <= year);
+                activateSec(1);
+                updateVehSummary();
+            }
+        });
+    }
+
+    function setYearRangeDisabled(disabled) {
+        $("#yearFrom, #yearTo").prop('disabled', disabled);
+        if (disabled) {
+            ypFrom && ypFrom.clear();
+            ypTo && ypTo.clear();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initYearPickers();
+    });
     /*url: '/Master/GetProductGroups',
     url: '/Master/GetProductLines',
     url: '/Master/GetMatchProductionGroup',
@@ -444,8 +572,6 @@
     url: '/Master/GetCustomerbySalesman',
     url: '/Master/GetInfomantionCustomer',
     */
-
-
         @*const urls = {
         getBrands: '@Url.Action("GetBrands", "Master")',
         getProductGroups: '@Url.Action("GetProductGroups", "Master")',
@@ -453,8 +579,5 @@
         getSalesmanAll: '@Url.Action("GetSalesmanAll", "Master")',
         getCustomerbySalesman: '@Url.Action("GetCustomerbySalesman", "Master")',
         getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',
-
     };*@
-
-
 </script>
