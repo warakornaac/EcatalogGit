@@ -507,6 +507,12 @@
             if (input.disabled) return;
             document.querySelectorAll('.yp-panel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });
             render();
+
+            // คำนวณตำแหน่งจาก input จริง แล้ว fixed ไว้ ไม่โดน parent clip
+            const rect = input.getBoundingClientRect();
+            panel.style.top = (rect.bottom + 4) + 'px';
+            panel.style.left = rect.left + 'px';
+
             panel.classList.add('open');
         }
 
@@ -590,6 +596,14 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         initYearPickers();
+    });
+
+    window.addEventListener('scroll', () => {
+        document.querySelectorAll('.yp-panel.open').forEach(p => p.classList.remove('open'));
+    }, true);
+
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('.yp-panel.open').forEach(p => p.classList.remove('open'));
     });
     /*url: '/Master/GetProductGroups',
     url: '/Master/GetProductLines',
