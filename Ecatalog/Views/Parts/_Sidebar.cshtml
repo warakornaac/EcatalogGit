@@ -45,7 +45,7 @@
     <div class="filter-body mt-2">
         <div class="mb-2">
             <div class="flabel">Market Segment</div>
-            <select class="fselect" id="marketsegId" onchange="loadModelRange();">
+            <select class="fselect" id="marketsegId" onchange="loadMaker(); loadModelRange();">
                 <option value="">— Select Market —</option>
             </select>
         </div>
@@ -184,15 +184,16 @@
     //get master
     async function loadMasterMarketDefault(moduleId) {
         let selectId = "marketsegId";
-        let selectDefaultText = "Select Marker";
+        let selectDefaultText = "Select Market";
         //set moduleId
         if (moduleId == 2) {
             selectId = "segmentId";
             selectDefaultText = "Select Segment";
-        } else if (moduleId == 3) {
-            selectId = "makerId";
-            selectDefaultText = "Select Marker";
         }
+        // else if (moduleId == 3) {
+        //     selectId = "makerId";
+        //     selectDefaultText = "Select Marker";
+        // }
 
         try {
             const params = new URLSearchParams({
@@ -220,6 +221,31 @@
         } catch (error) {
             console.error(error);
             alert("Load Market Segment Failed");
+        }
+    }
+    async function loadMaker() {
+        try {
+            const marketSegmentId = $("#marketsegId").val();
+            const params = new URLSearchParams({ marketSegmentId});
+            const response = await fetch(`@Url.Action("GetMakerCar", "Master")?${params}`, { method: 'GET' });
+            const result = await response.json();
+            const ddl = $("#makerId");
+            ddl.empty();
+            ddl.append('<option value="">— Select Maker —</option>');
+            if (result.IsSuccess && result.Data) {
+                result.Data.forEach(item => {
+                    ddl.append(`
+                        <option value="${item.Id}">
+                            ${item.Name}
+                        </option>
+                    `);
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Load Maker Failed");
+        } finally {
+            updateVehSummary();
         }
     }
     async function loadModelRange() {
