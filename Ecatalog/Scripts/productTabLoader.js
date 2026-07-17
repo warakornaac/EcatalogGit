@@ -1,7 +1,16 @@
-﻿/* productTabLoader.js
+﻿/* ====================================================================
+   productTabLoader.js
    โหลดข้อมูล Tab จาก API โดยใช้ stkcode
    รองรับทั้ง mobile drawer (#dp-*) และ desktop modal (#mdp-*)
-   Load order: truscripts.js -> productSearch.js -> productTabLoader.js*/
+   Load order: truscripts.js -> productSearch.js -> productTabLoader.js
+
+   หมายเหตุ (แก้ไขจากเวอร์ชันก่อนหน้า):
+   field ทุกตัวถูกปรับให้ตรงกับ Model จริงฝั่ง C#
+   (ProductTabDescriptionModel, ProductTabSpecModel, ProductTabImageModel,
+    ProductTabOemModel, ProductTabCompetitorModel, ProductTabLinkageModel,
+    ProductTabItemCountModel) โดย Data ที่ Controller ส่งกลับมาเป็น "array"
+    ของแถว (result.Data?.result) ไม่ใช่ object เดียว
+==================================================================== */
 
 // const TAB_API_URLS = {
 //     count: '/Product/GetTabItemCountProduct',
@@ -76,7 +85,14 @@ function _setError(el, msg) {
         </div>`;
 }
 
-/* =========================GENERIC DATA HELPERS======================================== */
+/* ====================================================================
+   GENERIC DATA HELPERS
+   ใช้แทนการพึ่งพา field name/ตัวพิมพ์ใหญ่เล็กแบบตรง ๆ
+   - _pick(row, 'title', 'Title', ...)  -> ลองหลายชื่อ ไม่สนตัวพิมพ์ใหญ่เล็ก
+   - _getRows(apiResponse)              -> แปลงให้เป็น array เสมอ ไม่ว่า
+                                            Data จะเป็น array ตรง ๆ, object เดียว,
+                                            หรือซ้อนอยู่ใน .result/.Result อีกชั้น
+==================================================================== */
 function _pick(row, ...keys) {
     if (!row || typeof row !== 'object') return undefined;
     const lower = {};
@@ -101,7 +117,10 @@ function _sortBy(rows, ...seqKeys) {
     return [...rows].sort((a, b) => (Number(_pick(a, ...seqKeys)) || 0) - (Number(_pick(b, ...seqKeys)) || 0));
 }
 
-/* ======================RENDER HELPERS API ทุกตัว (ยกเว้น count) คืน Data เป็น "array" ของแถวเสมอ =========================== */
+/* ====================================================================
+   RENDER HELPERS
+   API ทุกตัว (ยกเว้น count) คืน Data เป็น "array" ของแถวเสมอ
+==================================================================== */
 
 // ResultProductTabDescription: stkcode, seqDescription, title, description
 function _renderDesc(el, data) {
@@ -217,7 +236,8 @@ function _renderCompetitor(el, data) {
         </table>`;
 }
 
-// ResultProductTabLinkageList: stkcode, seqLinkage, kType, productId, truType,maker, model, body, engine, driveType, yearFrom, yearTo
+// ResultProductTabLinkageList: stkcode, seqLinkage, kType, productId, truType,
+//                               maker, model, body, engine, driveType, yearFrom, yearTo
 function _renderLinkage(el, data) {
     const rows = _getRows(data);
     if (!rows.length) { _setError(el, 'No compatible vehicle data found.'); return; }
@@ -256,9 +276,13 @@ const _RENDERERS = {
     veh: _renderLinkage
 };
 
-/* TAB COUNT — อัปเดตตัวเลขบน Tab button
+/* ====================================================================
+   TAB COUNT — อัปเดตตัวเลขบน Tab button
    ResultProductTabItemCountList: countProductDes, countProductSpec,
-   countProductImage, countProductOem, countProductCom, countProductLinkage*/
+   countProductImage, countProductOem, countProductCom, countProductLinkage
+   หมายเหตุ: res.Data เป็น array (Controller คืน result.Data?.result)
+   ดังนั้นต้องหยิบแถวแรกออกมาก่อน
+==================================================================== */
 async function _loadTabCounts(stkcode, mode) {
     const res = await _fetchTabApi(stkcode, 'count');
     if (!res?.IsSuccess) return;
@@ -288,7 +312,9 @@ async function _loadTabCounts(stkcode, mode) {
     });
 }
 
-/* =========================CORE: LOAD ONE TAB=========================================== */
+/* ====================================================================
+   CORE: LOAD ONE TAB
+==================================================================== */
 const _loadedKeys = new Set(); // prevent duplicate loads
 
 async function _loadOneTab(tabId, stkcode, mode, pid) {
@@ -319,7 +345,9 @@ async function _loadOneTab(tabId, stkcode, mode, pid) {
     if (renderer) renderer(el, data);
 }
 
-/* ===================== PUBLIC API================================ */
+/* ====================================================================
+   PUBLIC API
+==================================================================== */
 
 /**
  * initProductTabs
@@ -342,24 +370,34 @@ async function initProductTabs(stkcode, mode, pid) {
     ]);
 }
 
-/*loadModalTab — เรียกจาก switchModalTab() ใน productSearch.js*/
+/**
+ * loadModalTab — เรียกจาก switchModalTab() ใน productSearch.js
+ */
 async function loadModalTab(tabId, stkcode, pid) {
     if (!stkcode) return;
     await _loadOneTab(tabId, stkcode, 'modal', pid ?? 'modal');
 }
 
-/*loadDrawerTab — เรียกจาก switchDrTab() ด้านล่าง*/
+/**
+ * loadDrawerTab — เรียกจาก switchDrTab() ด้านล่าง
+ */
 async function loadDrawerTab(tabId, stkcode) {
     if (!stkcode) return;
     await _loadOneTab(tabId, stkcode, 'drawer', null);
 }
 
-/*loadInlineTab — เรียกจาก switchTabIn() ใน truscripts.js*/
+/**
+ * loadInlineTab — เรียกจาก switchTabIn() ใน truscripts.js
+ */
 async function loadInlineTab(tabId, stkcode, pid) {
     if (!stkcode) return;
     await _loadOneTab(tabId, stkcode, 'inline', pid);
 }
 
+/* ====================================================================
+   OVERRIDE switchDrTab (drawer tabs)
+   แทนที่ fallback ใน truscripts.js
+==================================================================== */
 window.switchDrTab = function (btn, tabId) {
     const drawer = document.getElementById('specDrawer');
     if (!drawer) return;
@@ -375,6 +413,10 @@ window.switchDrTab = function (btn, tabId) {
     if (stkcode) loadDrawerTab(tabId, stkcode);
 };
 
+/* ====================================================================
+   OVERRIDE switchTabIn (inline/modal tabs จาก truscripts)
+   เพิ่ม lazy load บน top ของ function เดิม
+==================================================================== */
 const _origSwitchTabIn = window.switchTabIn;
 window.switchTabIn = function (btn, tabId, pid) {
     if (typeof _origSwitchTabIn === 'function') _origSwitchTabIn(btn, tabId, pid);

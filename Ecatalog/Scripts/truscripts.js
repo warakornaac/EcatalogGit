@@ -1,7 +1,10 @@
-﻿/* DATA
-   PRODUCTS ถูกเติมจาก loadSearchProductVio()*/
+﻿/* ════════════════════════════════
+   DATA
+   PRODUCTS ถูกเติมจาก loadSearchProductVio()
+════════════════════════════════ */
 let PRODUCTS = [];
 let BASE_PRODUCTS = [];
+
 let GROUPS = [];
 
 /* ═══════════════ STATE ═════════════════ */
@@ -17,6 +20,8 @@ let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
 let PRODUCTS_FOR_COUNT = [];
+// let PRODUCTS_FOR_PL_COUNT = [];
+// let PRODUCTS_FOR_BR_COUNT = [];
 let _shipToList = [];
 let acSelected = null;
 let acFocusIdx = -1;
@@ -68,34 +73,41 @@ document.addEventListener("keydown", function (e) {
         e.preventDefault();
         return false;
     }
+
     // Ctrl + C
     if (e.ctrlKey && e.key.toLowerCase() === "c") {
         e.preventDefault();
     }
+
     // Ctrl + U
     if (e.ctrlKey && e.key.toLowerCase() === "u") {
         e.preventDefault();
     }
+
     // F12
     if (e.key === "F12") {
         e.preventDefault();
         return false;
     } 
+
     // Ctrl + Shift + I
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") {
         e.preventDefault();
         return false;
     }
+
     // Ctrl + Shift + J
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "j") {
         e.preventDefault();
         return false;
     }
+
     // Ctrl + U
     if (e.ctrlKey && e.key.toLowerCase() === "u") {
         e.preventDefault();
         return false;
     }
+
 });
 /* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
@@ -142,6 +154,22 @@ function mapApiResponseToProducts(groups) {
     });
     return list;
 }
+//----function ใหม่สำหรับการรวมผลลัพธ์จาก API หลายเส้น-----//
+// function _setBaseProducts(groups, searchType) {
+//     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
+
+//     if (searchType === 'vehicle' || searchType === 'field') {
+//         chkState = { pl: {}, br: {} };
+//         fitState = new Set();
+//         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
+//         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
+//     }
+
+//     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
+//     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
+
+//     _applyFiltersAndRender();
+// }
 
 /**
  * เซต Base ใหม่จาก API response
@@ -168,11 +196,13 @@ function _setBaseProducts(groups, searchType) {
         if (af) af.innerHTML = '';
     }
     // category / checkbox → ไม่ reset filter, ใช้ของเดิม
+
     // Snapshot สำหรับนับ filter counts
     // ถ้า reset แล้ว → snapshot = BASE_PRODUCTS ทั้งหมด
     // ถ้าไม่ reset → snapshot เดิมก็ยังถูก เพราะจะ overwrite ด้านล่าง
     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
+
     _applyFiltersAndRender();
 }
 
@@ -181,6 +211,7 @@ function _applyFiltersAndRender() {
     const plKeys = Object.keys(chkState.pl);
     const brKeys = Object.keys(chkState.br);
     const fitK = [...fitState];
+
     // ── 1. group filter ──
     const activeGroupStr = String(activeGroup);
     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
@@ -222,18 +253,22 @@ function _applyFiltersAndRender() {
     renderActiveFilterChips();
 }
 
-/* SIDEBAR UPDATE
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR UPDATE
    - pl  : อัปเดต count เท่านั้น (show/hide ดูแลโดย FilterProductionLines)
-   - brand: อัปเดต count + sort + show/hide*/
+   - brand: อัปเดต count + sort + show/hide
+══════════════════════════════════════════════════════════════ */
 function _updateSidebar() {
     const hasPlChecked = Object.keys(chkState.pl).length > 0;
     const hasBrChecked = Object.keys(chkState.br).length > 0;
+
     // ── อัปเดต count pl ──
     $("#plList .chk-item").each(function () {
         const lineName = $(this).attr('data-name');
         const count = PRODUCTS_FOR_PL_COUNT.filter(p => p.line === lineName).length;
         $(this).find('.chk-count').text(count);
     });
+
     // ── sort pl ตาม count (show/hide ยังให้ FilterProductionLines จัดการ) ──
     if (!hasPlChecked) {
         const $plList = $('#plList');
@@ -539,9 +574,11 @@ function _filterSidebarLines(allowedIds) {
     }
 }
 
-/* PRODUCT DETAIL
+/* ════════════════════════════════
+   §6 — PRODUCT DETAIL
    openDrawer → เปิด modal (desktop) หรือ drawer (mobile)
-   แล้วเรียก initProductTabs(stkcode) เพื่อโหลด Tab จาก API*/
+   แล้วเรียก initProductTabs(stkcode) เพื่อโหลด Tab จาก API
+════════════════════════════════ */
 function selCard(id) {
     document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
     gEl('pc-' + id)?.classList.add('active-card');
@@ -1511,7 +1548,9 @@ if (_headerQ) _headerQ.addEventListener('focus', () => { if (_headerQ.value.trim
 const DISCOUNT_RATE = 0.075;
 const VAT_RATE = 0.07;
 
-/* ORDER SUMMARY — ต้องใช้ข้อมูลเดียวกับ cart[]*/
+/* ════════════════════════════════════════════════════════
+   ORDER SUMMARY — ต้องใช้ข้อมูลเดียวกับ cart[]
+════════════════════════════════════════════════════════ */
 async function openOrderSummary(clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     if (!cart.length) {
@@ -1556,7 +1595,9 @@ function osOverlayClick(e) {
     if (e.target === gEl('osOverlay')) closeOrderSummary();
 }
 
-/*renderOrderSummary — ใช้ cart[] ที่ sync มาจาก server*/
+/* ════════════════════════════════════════════════════════
+   renderOrderSummary — ใช้ cart[] ที่ sync มาจาก server
+════════════════════════════════════════════════════════ */
 function renderOrderSummary() {
     const list = g('osProductList');
     if (!list) return;
@@ -2113,9 +2154,11 @@ document.addEventListener('keydown', e => {
     if (sb && sb.classList.contains('open')) toggleSidebar();
 });
 
-/* CART — SINGLE SOURCE OF TRUTH
+/* ════════════════════════════════════════════════════════
+   CART — SINGLE SOURCE OF TRUTH
    cart[] ถูก populate จาก server เท่านั้น
-   Primary key = ordId (string จาก API)*/
+   Primary key = ordId (string จาก API)
+════════════════════════════════════════════════════════ */
 
 /* ── Map API response row → cart item ── */
 function _mapCartItem(item) {
@@ -2188,8 +2231,10 @@ async function _deleteCartItem(ordId) {
     }
 }
 
-/* ════════════════SHIP-TO LIST — fetch from API, render dynamically
-   Called once when OS modal opens═══════════════ */
+/* ════════════════════════════════════════════════════════
+   SHIP-TO LIST — fetch from API, render dynamically
+   Called once when OS modal opens
+════════════════════════════════════════════════════════ */
 
   // cache so we don't re-fetch every open
 
@@ -2291,7 +2336,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionSlm = config?.dataset.slmcode ?? '';
     const sessionCus = config?.dataset.cuscode ?? '';
 
-    // console.log('Session →', { userType, sessionSlm, sessionCus });
+    console.log('Session →', { userType, sessionSlm, sessionCus });
 
     if (userType === '1') {
         // admin → ดึง salesman ทั้งหมดมาให้เลือกเสมอ (ไม่ว่าจะมี sessionSlm หรือไม่)
@@ -2469,7 +2514,9 @@ function getInfomantionCustomer(cuscode) {
         }
     });
 }
-// ================RENDER: Customer Card (ขนาดไม่ยุบ)=================
+// ==========================================
+// RENDER: Customer Card (ขนาดไม่ยุบ)
+// ==========================================
 function renderCustomerCard(cus) {
     const info = document.querySelector('#customerCard .customer-info');
     if (!info) return;
@@ -2506,7 +2553,9 @@ function clearCustomerSelect() {
     if (select) select.innerHTML = '<option value="">-- เลือก Customer --</option>';
 }
 
-// ==========HELPER: Company Toggle================
+// ==========================================
+// HELPER: Company Toggle
+// ==========================================
 function getActiveCompanies() {
     return [...document.querySelectorAll('.company-btn[aria-pressed="true"]')]
         .map(btn => btn.dataset.company);
@@ -2537,5 +2586,6 @@ function initTheme() {
         document.body.classList.add('theme-blue');
     }
 }
+
 initTheme();
 //-----------------กันคลิกขวา คัดลอกรูป save img และคีย์ลัด------------------//
