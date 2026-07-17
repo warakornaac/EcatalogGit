@@ -1,10 +1,7 @@
-﻿/* ════════════════════════════════
-   DATA
-   PRODUCTS ถูกเติมจาก loadSearchProductVio()
-════════════════════════════════ */
+﻿/* DATA
+   PRODUCTS ถูกเติมจาก loadSearchProductVio()*/
 let PRODUCTS = [];
 let BASE_PRODUCTS = [];
-
 let GROUPS = [];
 
 /* ═══════════════ STATE ═════════════════ */
@@ -20,8 +17,6 @@ let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
 let PRODUCTS_FOR_COUNT = [];
-// let PRODUCTS_FOR_PL_COUNT = [];
-// let PRODUCTS_FOR_BR_COUNT = [];
 let _shipToList = [];
 let acSelected = null;
 let acFocusIdx = -1;
@@ -73,41 +68,34 @@ document.addEventListener("keydown", function (e) {
         e.preventDefault();
         return false;
     }
-
     // Ctrl + C
     if (e.ctrlKey && e.key.toLowerCase() === "c") {
         e.preventDefault();
     }
-
     // Ctrl + U
     if (e.ctrlKey && e.key.toLowerCase() === "u") {
         e.preventDefault();
     }
-
     // F12
     if (e.key === "F12") {
         e.preventDefault();
         return false;
-    } 
-
+    }
     // Ctrl + Shift + I
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") {
         e.preventDefault();
         return false;
     }
-
     // Ctrl + Shift + J
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "j") {
         e.preventDefault();
         return false;
     }
-
     // Ctrl + U
     if (e.ctrlKey && e.key.toLowerCase() === "u") {
         e.preventDefault();
         return false;
     }
-
 });
 /* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
@@ -126,7 +114,7 @@ function mapApiResponseToProducts(groups) {
     const seen = new Set();
     (groups || []).forEach(group => {
         if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
-       
+
         (group.productList || []).forEach(item => {
             // กันพ่น product ซ้ำ //
             if (!item.stkcode || seen.has(item.stkcode)) return;
@@ -154,22 +142,6 @@ function mapApiResponseToProducts(groups) {
     });
     return list;
 }
-//----function ใหม่สำหรับการรวมผลลัพธ์จาก API หลายเส้น-----//
-// function _setBaseProducts(groups, searchType) {
-//     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
-
-//     if (searchType === 'vehicle' || searchType === 'field') {
-//         chkState = { pl: {}, br: {} };
-//         fitState = new Set();
-//         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
-//         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
-//     }
-
-//     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
-//     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
-
-//     _applyFiltersAndRender();
-// }
 
 /**
  * เซต Base ใหม่จาก API response
@@ -196,13 +168,11 @@ function _setBaseProducts(groups, searchType) {
         if (af) af.innerHTML = '';
     }
     // category / checkbox → ไม่ reset filter, ใช้ของเดิม
-
     // Snapshot สำหรับนับ filter counts
     // ถ้า reset แล้ว → snapshot = BASE_PRODUCTS ทั้งหมด
     // ถ้าไม่ reset → snapshot เดิมก็ยังถูก เพราะจะ overwrite ด้านล่าง
     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
-
     _applyFiltersAndRender();
 }
 
@@ -211,7 +181,6 @@ function _applyFiltersAndRender() {
     const plKeys = Object.keys(chkState.pl);
     const brKeys = Object.keys(chkState.br);
     const fitK = [...fitState];
-
     // ── 1. group filter ──
     const activeGroupStr = String(activeGroup);
     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
@@ -253,22 +222,18 @@ function _applyFiltersAndRender() {
     renderActiveFilterChips();
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SIDEBAR UPDATE
+/* SIDEBAR UPDATE
    - pl  : อัปเดต count เท่านั้น (show/hide ดูแลโดย FilterProductionLines)
-   - brand: อัปเดต count + sort + show/hide
-══════════════════════════════════════════════════════════════ */
+   - brand: อัปเดต count + sort + show/hide*/
 function _updateSidebar() {
     const hasPlChecked = Object.keys(chkState.pl).length > 0;
     const hasBrChecked = Object.keys(chkState.br).length > 0;
-
     // ── อัปเดต count pl ──
     $("#plList .chk-item").each(function () {
         const lineName = $(this).attr('data-name');
         const count = PRODUCTS_FOR_PL_COUNT.filter(p => p.line === lineName).length;
         $(this).find('.chk-count').text(count);
     });
-
     // ── sort pl ตาม count (show/hide ยังให้ FilterProductionLines จัดการ) ──
     if (!hasPlChecked) {
         const $plList = $('#plList');
@@ -475,7 +440,7 @@ function renderBottomBar() {
 }
 function scrollBottom(dx) {
     gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
-} 
+}
 
 // ── ใน selectGroup (truscripts.js) ──
 function selectGroup(id) {
@@ -574,11 +539,9 @@ function _filterSidebarLines(allowedIds) {
     }
 }
 
-/* ════════════════════════════════
-   §6 — PRODUCT DETAIL
+/* PRODUCT DETAIL
    openDrawer → เปิด modal (desktop) หรือ drawer (mobile)
-   แล้วเรียก initProductTabs(stkcode) เพื่อโหลด Tab จาก API
-════════════════════════════════ */
+   แล้วเรียก initProductTabs(stkcode) เพื่อโหลด Tab จาก API*/
 function selCard(id) {
     document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
     gEl('pc-' + id)?.classList.add('active-card');
@@ -590,7 +553,7 @@ function buildSpecHTML(p) {
         ${p.img
             ? `<img src="${p.img}" alt="${p.name}"
                onerror="this.parentElement.innerHTML='<div class=\'no-image\'>No images found.</div>'">`
-        : `<div class="no-image">
+            : `<div class="no-image">
                <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
                <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
            </div>`}
@@ -643,7 +606,7 @@ async function addCartFromSpecModal(productId, clickEvent) {
     await _callAddToCartAPI(p, qty, btn);
 }
 
-const s = window.getComputedStyle(drawer); 
+const s = window.getComputedStyle(drawer);
 
 async function openDrawer(productId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
@@ -867,9 +830,9 @@ function renderProducts(list) {
             <div class="pimg">
                 ${stockLabel(p.stock ?? 99)}
                 ${p.img
-                ? `<img src="${p.img}" alt="${p.name}"
+            ? `<img src="${p.img}" alt="${p.name}"
                    onerror="this.parentElement.innerHTML='<div class=\'no-image\'>No images found.</div>'">`
-        : `<div class="no-image">
+            : `<div class="no-image">
                <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
                <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
            </div>`}
@@ -885,13 +848,13 @@ function renderProducts(list) {
                 ${p.carModel ? `
                 <div style="display:flex;align-items:center;gap:5px;margin-top:4px;margin-bottom:2px">
                     ${p.carModel === 'Universal'
-                                ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
+                ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
                                        color:#92400e;border:1px solid #f59e0b;border-radius:20px;padding:1px 9px;
                                        display:inline-flex;align-items:center;gap:3px">
                                        <i class="bi bi-stars" style="font-size:9px"></i> Universal</span>`
-                                : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
+                : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
                            <span style="font-size:11px;color:var(--text-2);font-weight:500">${p.carModel}</span>`
-                            }
+            }
                 </div>` : ''}
                 ${p.fit && p.fit.length
             ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">
@@ -1266,7 +1229,7 @@ function updateCart() {
                     ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
                 </div>
                 <div class="cr-code">${c.code}</div>
-                <div class="cr-price">${fmt(c.price) }</div>
+                <div class="cr-price">${fmt(c.price)}</div>
             </div>
             <div class="cr-qty-ctrl">
                 <button class="qty-btn" onclick="changeQty('${c.id}',-1)">
@@ -1548,9 +1511,7 @@ if (_headerQ) _headerQ.addEventListener('focus', () => { if (_headerQ.value.trim
 const DISCOUNT_RATE = 0.075;
 const VAT_RATE = 0.07;
 
-/* ════════════════════════════════════════════════════════
-   ORDER SUMMARY — ต้องใช้ข้อมูลเดียวกับ cart[]
-════════════════════════════════════════════════════════ */
+/* ORDER SUMMARY — ต้องใช้ข้อมูลเดียวกับ cart[]*/
 async function openOrderSummary(clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     if (!cart.length) {
@@ -1595,9 +1556,7 @@ function osOverlayClick(e) {
     if (e.target === gEl('osOverlay')) closeOrderSummary();
 }
 
-/* ════════════════════════════════════════════════════════
-   renderOrderSummary — ใช้ cart[] ที่ sync มาจาก server
-════════════════════════════════════════════════════════ */
+/*renderOrderSummary — ใช้ cart[] ที่ sync มาจาก server*/
 function renderOrderSummary() {
     const list = g('osProductList');
     if (!list) return;
@@ -1948,7 +1907,7 @@ function RenderBrands(brands) {
         const $label = $('<label>')
             .addClass('chk-item')
             .attr('data-id', brand.id)
-            .attr('data-name', brand.name) 
+            .attr('data-name', brand.name)
             .attr('data-filter', 'filterProductBrandId')
             .toggleClass('br-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
@@ -2154,11 +2113,9 @@ document.addEventListener('keydown', e => {
     if (sb && sb.classList.contains('open')) toggleSidebar();
 });
 
-/* ════════════════════════════════════════════════════════
-   CART — SINGLE SOURCE OF TRUTH
+/* CART — SINGLE SOURCE OF TRUTH
    cart[] ถูก populate จาก server เท่านั้น
-   Primary key = ordId (string จาก API)
-════════════════════════════════════════════════════════ */
+   Primary key = ordId (string จาก API)*/
 
 /* ── Map API response row → cart item ── */
 function _mapCartItem(item) {
@@ -2231,12 +2188,10 @@ async function _deleteCartItem(ordId) {
     }
 }
 
-/* ════════════════════════════════════════════════════════
-   SHIP-TO LIST — fetch from API, render dynamically
-   Called once when OS modal opens
-════════════════════════════════════════════════════════ */
+/* ════════════════SHIP-TO LIST — fetch from API, render dynamically
+   Called once when OS modal opens═══════════════ */
 
-  // cache so we don't re-fetch every open
+// cache so we don't re-fetch every open
 
 async function loadShipToList() {
     try {
@@ -2336,7 +2291,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionSlm = config?.dataset.slmcode ?? '';
     const sessionCus = config?.dataset.cuscode ?? '';
 
-    console.log('Session →', { userType, sessionSlm, sessionCus });
+    // console.log('Session →', { userType, sessionSlm, sessionCus });
 
     if (userType === '1') {
         // admin → ดึง salesman ทั้งหมดมาให้เลือกเสมอ (ไม่ว่าจะมี sessionSlm หรือไม่)
@@ -2514,9 +2469,7 @@ function getInfomantionCustomer(cuscode) {
         }
     });
 }
-// ==========================================
-// RENDER: Customer Card (ขนาดไม่ยุบ)
-// ==========================================
+// ================RENDER: Customer Card (ขนาดไม่ยุบ)=================
 function renderCustomerCard(cus) {
     const info = document.querySelector('#customerCard .customer-info');
     if (!info) return;
@@ -2553,9 +2506,7 @@ function clearCustomerSelect() {
     if (select) select.innerHTML = '<option value="">-- เลือก Customer --</option>';
 }
 
-// ==========================================
-// HELPER: Company Toggle
-// ==========================================
+// ==========HELPER: Company Toggle================
 function getActiveCompanies() {
     return [...document.querySelectorAll('.company-btn[aria-pressed="true"]')]
         .map(btn => btn.dataset.company);
@@ -2586,6 +2537,5 @@ function initTheme() {
         document.body.classList.add('theme-blue');
     }
 }
-
 initTheme();
 //-----------------กันคลิกขวา คัดลอกรูป save img และคีย์ลัด------------------//
