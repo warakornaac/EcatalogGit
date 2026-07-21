@@ -79,7 +79,7 @@ namespace Ecatalog.Controllers
                         "POST",
                         request,
                         false,
-                        30);
+                        180);
 
                 if (result == null) {
                     return Json(new {

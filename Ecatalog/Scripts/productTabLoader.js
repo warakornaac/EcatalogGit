@@ -223,7 +223,19 @@ function _renderLinkage(el, data) {
     if (!rows.length) { _setError(el, 'No compatible vehicle data found.'); return; }
 
     const sorted = _sortBy(rows, 'seqLinkage', 'seq');
-    const items = sorted.map(v => {
+
+    const seen = new Set();
+    const unique = sorted.filter(v => {
+        const key = `${_pick(v, 'maker', 'makerName')}|${_pick(v, 'model', 'modelName')}`;
+        console.log('key:', key); // ดูว่า key ออกมาเป็นอะไร
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
+    console.log('unique count:', unique.length);
+
+    const items = unique.map(v => {
         const maker = _pick(v, 'maker', 'makerName') ?? '';
         const model = _pick(v, 'model', 'modelName') ?? '';
         const body = _pick(v, 'body', 'bodyName') ?? '';
