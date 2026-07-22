@@ -473,8 +473,11 @@
         opts = opts || {};
         const input = document.getElementById(inputId);
         const panel = document.getElementById(panelId);
-        let baseYear = new Date().getFullYear();
-        let decadeStart = baseYear - (baseYear % 10) - 10; // เริ่มต้นแสดง decade ปัจจุบัน -10
+
+        const YEAR_MIN = 1990;
+        const YEAR_MAX = new Date().getFullYear();
+
+        let decadeStart = YEAR_MAX - (YEAR_MAX % 10) - 10;
 
         const state = {
             selected: null,
@@ -483,7 +486,7 @@
 
         function render() {
             const years = [];
-            for (let i = -1; i <= 10; i++) years.push(state.decadeStart + i); // แสดง 12 ช่อง (4x3)
+            for (let i = -1; i <= 10; i++) years.push(state.decadeStart + i);
 
             let html = `
             <div class="yp-header">
@@ -496,7 +499,11 @@
             years.forEach(y => {
                 const isOut = (y <= state.decadeStart || y > state.decadeStart + 10);
                 const isSelected = state.selected === y;
-                const isDisabled = opts.limitFn ? !opts.limitFn(y) : false;
+
+                // ✅ จำกัด global min/max ก่อน แล้วค่อย apply limitFn
+                const outOfGlobalRange = y < YEAR_MIN || y > YEAR_MAX;
+                const isDisabled = outOfGlobalRange || (opts.limitFn ? !opts.limitFn(y) : false);
+
                 html += `<div class="yp-cell ${isOut ? 'outrange' : ''} ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" data-year="${y}">${y}</div>`;
             });
             html += `</div>`;
@@ -505,10 +512,17 @@
 
         function open() {
             if (input.disabled) return;
-            document.querySelectorAll('.yp-panel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });
+            document.querySelectorAll('.yp-panel.open').forEach(p => {
+                if (p !== panel) p.classList.remove('open');
+            });
+
+            // ✅ ย้าย panel ไปติด body ก่อน render เพื่อหนี parent ที่ clip
+            if (panel.parentElement !== document.body) {
+                document.body.appendChild(panel);
+            }
+
             render();
 
-            // คำนวณตำแหน่งจาก input จริง แล้ว fixed ไว้ ไม่โดน parent clip
             const rect = input.getBoundingClientRect();
             panel.style.top = (rect.bottom + 4) + 'px';
             panel.style.left = rect.left + 'px';
@@ -526,6 +540,8 @@
         });
 
         panel.addEventListener('click', (e) => {
+            e.stopPropagation(); // ✅ เพิ่มบรรทัดนี้บรรทัดเดียว
+
             const nav = e.target.closest('.yp-nav');
             if (nav) {
                 state.decadeStart += (nav.dataset.act === 'next' ? 10 : -10);
@@ -559,16 +575,15 @@
         };
     }
 
-    let ypFrom, ypTo;
-
     function initYearPickers() {
         ypFrom = createYearPicker('yearFrom', 'ypPanelFrom', {
             onChange: (year) => {
-                // ปีเริ่มต้องไม่มากกว่าปีสิ้นสุด
-                if (ypTo.getYear() && year > ypTo.getYear()) {
+                // ✅ ถ้า To มีค่าอยู่ และน้อยกว่าหรือเท่ากับ From → clear
+                if (ypTo.getYear() && year >= ypTo.getYear()) {
                     ypTo.clear();
                 }
-                ypTo.setLimit(y => y >= year);
+                // ✅ To ต้องมากกว่า From เท่านั้น (ไม่ใช่เท่ากัน)
+                ypTo.setLimit(y => y > year);
                 activateSec(1);
                 updateVehSummary();
             }
@@ -576,10 +591,11 @@
 
         ypTo = createYearPicker('yearTo', 'ypPanelTo', {
             onChange: (year) => {
-                if (ypFrom.getYear() && year < ypFrom.getYear()) {
+                if (ypFrom.getYear() && year <= ypFrom.getYear()) {
                     ypFrom.clear();
                 }
-                ypFrom.setLimit(y => y <= year);
+                // ✅ From ต้องน้อยกว่า To เท่านั้น
+                ypFrom.setLimit(y => y < year);
                 activateSec(1);
                 updateVehSummary();
             }

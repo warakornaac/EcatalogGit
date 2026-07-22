@@ -135,7 +135,12 @@ function _renderSpec(el, data) {
     const sorted = _sortBy(rows, 'seqSpec', 'seq');
     const trs = sorted.map(r => {
         const label = _pick(r, 'title', 'specName', 'label', 'name') ?? '—';
-        const value = _pick(r, 'description', 'specValue', 'value') ?? '—';
+        let value = _pick(r, 'description', 'specValue', 'value') ?? '—';
+
+        if (label === 'SVHC' && typeof value === 'string' && value.startsWith('ไม่มี')) {
+            value = 'ไม่พบข้อมูล กรุณาติดต่อพนักงานขาย';
+        }
+
         return `<tr><td>${label}</td><td>${value}</td></tr>`;
     }).join('');
     el.innerHTML = `<table class="spec-table">${trs}</table>`;
