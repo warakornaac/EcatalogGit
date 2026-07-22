@@ -362,7 +362,7 @@ async function _callAddToCartAPI(p, qty, btnEl) {
     }
 
     try {
-        const res = await fetch('/Product/AddProductToCart', {
+        const res = await fetch(urlsPro.addProductToCartUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({

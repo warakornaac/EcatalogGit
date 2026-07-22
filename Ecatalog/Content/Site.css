@@ -1386,7 +1386,7 @@ body {
         font-size: 13px;
         color: var(--text);
         transition: border-color var(--tr);
-        width: 45px;
+        width: 115px;
     }
 
         .yr-range input:focus {
@@ -4433,4 +4433,88 @@ body.theme-blue {
 
     .theme-switch-btn:active {
         transform: scale(.92);
+    }
+
+.yp-wrap {
+    position: relative;
+    flex: 1;
+}
+
+.yp-input {
+    cursor: pointer;
+    background: #fff;
+}
+
+    .yp-input:disabled {
+        cursor: not-allowed;
+        background: #f3f3f3;
+    }
+
+.yp-panel {
+    display: none;
+    position: fixed; /* เปลี่ยนจาก absolute เป็น fixed */
+    z-index: 9999;
+    width: 220px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    padding: 8px;
+}
+
+    .yp-panel.open {
+        display: block;
+    }
+
+.yp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.yp-nav {
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+    user-select: none;
+}
+
+    .yp-nav:hover {
+        background: #f0f0f0;
+    }
+
+.yp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.yp-cell {
+    text-align: center;
+    padding: 6px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+    .yp-cell:hover {
+        background: #f0f0f0;
+    }
+
+    .yp-cell.selected {
+        background: var(--purple, #6f42c1);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .yp-cell.disabled {
+        opacity: .3;
+        pointer-events: none;
+    }
+
+    .yp-cell.outrange {
+        color: #bbb;
     }

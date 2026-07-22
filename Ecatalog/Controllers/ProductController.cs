@@ -78,8 +78,8 @@ namespace Ecatalog.Controllers
                         "Ecatalog/GetProductBySearchCatagory",
                         "POST",
                         request,
-                        true,
-                        30);
+                        false,
+                        180);
 
                 if (result == null) {
                     return Json(new {

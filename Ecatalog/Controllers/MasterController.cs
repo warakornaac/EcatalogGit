@@ -53,6 +53,49 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
+
+        public async Task<ActionResult> GetMakerCar(string marketSegmentId)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<
+                        MarketCarFilterModel>(
+                        "Ecatalog/GetMakerCar",
+                        "GET",
+                        new
+                        {
+                            marketSegmentId = marketSegmentId
+                        },
+                        true,
+                        10);
+
+                if (result.IsSuccess &&
+                    result.Data != null &&
+                    result.Data.result != null &&
+                    result.Data.result.Count > 0)
+                {
+                    var user = result.Data.result.FirstOrDefault();
+                }
+
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    Data = result.Data?.result
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+        }
+
         public async Task<ActionResult> GetModelRange(string marketSegmentId, string segmentId, string makerId) {
             try {
                 var result = await Utils.CallApiAsyncMemory<

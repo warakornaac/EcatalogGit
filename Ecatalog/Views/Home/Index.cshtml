@@ -153,7 +153,8 @@
             await Promise.all([
                 loadMasterMarketDefault(1),
                 loadMasterMarketDefault(2),
-                loadMasterMarketDefault(3)
+                loadMaker()
+                //loadMasterMarketDefault(3)
             ]);
 
             // ✅ ย้ายเข้ามาอยู่ใน ready ด้วย
@@ -177,6 +178,7 @@
 
     const urlsPro = {
         getProductToCartUrl: '@Url.Action("GetProductToCart", "Product")',
+        addProductToCartUrl: '@Url.Action("AddProductToCart", "Product")',
         editProductToCart: '@Url.Action("EditProductToCart", "Product")',
         delProductToCart: '@Url.Action("DeleteProductToCart", "Product")'
 
