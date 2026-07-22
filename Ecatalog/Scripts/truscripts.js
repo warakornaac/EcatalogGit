@@ -2486,17 +2486,12 @@ function renderCustomerCard(cus) {
 }
 
 function clearCustomerCard() {
-    // ใส่ placeholder แทน เพื่อไม่ให้ card ยุบ
     const info = document.querySelector('#customerCard .customer-info');
     if (!info) return;
 
     info.innerHTML = `
-        <div class="mb-2"><strong>-</strong></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
-            <div><span class="text-muted">Salesman: </span><strong>-</strong></div>
-            <div><span class="text-muted">Customer Code: </span><strong>-</strong></div>
-            <div><span class="text-muted">Rating: </span><strong>-</strong></div>
-            <div><span class="text-muted">Payment term: </span><strong>-</strong></div>
+        <div style="display:flex; align-items:center; justify-content:center; height:100%; padding:20px; background-color:#fff0f0; border-radius:10px;">
+            <strong>ไม่พบข้อมูลลูกค้า</strong>
         </div>
     `;
 }
