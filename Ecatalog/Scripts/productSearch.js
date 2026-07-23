@@ -86,11 +86,10 @@ async function searchProductGlobal(keyword) {
     showSkel();
 
     try {
-        const url = `/Product/GetProductBySearchGlobal?Keyword=${encodeURIComponent(keyword.trim())}`;
-        const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const result = await response.json();
+        const result = await ajaxCallApiService(
+            API_URLS.getProductBySearchGlobal,
+            { Keyword: keyword.trim() }
+        );
 
         if (result.IsSuccess && result.Data?.length > 0) {
             activeGroup = '0';
@@ -98,12 +97,10 @@ async function searchProductGlobal(keyword) {
             document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
             document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
 
-            // ตั้ง sort เป็น line ก่อน
             currentSort = 'part';
             const sel = gEl('sortSelect');
             if (sel) sel.value = 'part';
 
-            // filter grouped data ก่อน map
             const kw = keyword.toLowerCase().trim();
             const tokens = kw.split(/[\s\/]+/).filter(t => t.length > 0);
 
@@ -111,33 +108,24 @@ async function searchProductGlobal(keyword) {
                 ...group,
                 productList: (group.productList || []).filter(p => {
                     const searchText = [
-                        p.stkcode,
-                        p.stkcodeDescription,
-                        p.brand,
-                        p.makerName,
-                        p.modelName,
-                        p.productGroup,
-                        p.productLine
+                        p.stkcode, p.stkcodeDescription, p.brand,
+                        p.makerName, p.modelName, p.productGroup, p.productLine
                     ].join(' ').toLowerCase();
                     return tokens.every(token => searchText.includes(token));
                 })
             })).filter(group => group.productList.length > 0);
 
-            // ใช้ filtered ถ้าเจอ ถ้าไม่เจอใช้ทั้งหมด
             const dataToUse = filteredData.length > 0 ? filteredData : result.Data;
-
-            // keepSort = true เพื่อไม่ให้ reset currentSort
             _setBaseProducts(dataToUse, 'part', true);
-            hideSkel();
 
         } else {
             toast(result.Message || "ไม่พบสินค้าที่ค้นหา", "warn");
-            hideSkel();
         }
 
     } catch (ex) {
         console.error('searchProductGlobal error:', ex);
         toast("เกิดข้อผิดพลาดในการค้นหา", "warn");
+    } finally {
         hideSkel();
     }
 }
