@@ -71,51 +71,6 @@ namespace Ecatalog.Controllers
             }
         }
 
-        public async Task<ActionResult> GetProductBySearchGlobal(string Keyword)
-        {
-            try
-            {
-                var encodedKeyword = Uri.EscapeDataString(Keyword ?? "");
-                var apiPath = $"Ecatalog/GetProductBySearchGlobal?Keyword={encodedKeyword}&Debug=false&TopN=50&PageSize=20";
-
-                // ✅ เปลี่ยนจาก JObject → ProductBySearchGlobalModel โดยตรง
-                var rawResult = await Utils.CallApiAsyncMemory<ProductBySearchGlobalModel>(
-                    apiPath, "GET", null, false, 180);
-
-                var data = rawResult.Data;
-
-                if (data == null || !data.Success || data.Items == null || !data.Items.Any())
-                {
-                    return Json(new
-                    {
-                        IsSuccess = false,
-                        Message = data?.Message ?? "ไม่พบสินค้าที่ค้นหา"
-                    }, JsonRequestBehavior.AllowGet);
-                }
-
-                var groupData = data.Items
-                    .GroupBy(x => x.productGroup)
-                    .Select(g => new
-                    {
-                        productGroupNameMain = g.Key,
-                        productList = g.ToList()
-                    })
-                    .ToList();
-
-                return Json(new
-                {
-                    IsSuccess = true,
-                    IsFromCache = rawResult.IsFromCache,
-                    ExecutionTime = rawResult.ExecutionTime,
-                    Data = groupData
-                }, JsonRequestBehavior.AllowGet);
-            }
-            catch (Exception ex)
-            {
-                return Json(new { IsSuccess = false, Message = ex.Message },
-                           JsonRequestBehavior.AllowGet);
-            }
-        }
         [HttpPost]
         public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request) {
             try {
@@ -206,53 +161,51 @@ namespace Ecatalog.Controllers
                 });
             }
         }
-        //public async Task<ActionResult> GetProductBySearchGlobal(string Keyword, bool Debug = false) {
-        //    try {
-        //        var result =
-        //            await Utils.CallApiAsyncMemory<
-        //                ProductSearchVioModel>(
-        //                "Ecatalog/GetProductBySearchGlobal",
-        //                "GET",
-        //                 new {
-        //                     Keyword,
-        //                     Debug
-        //                 },
-        //                true,
-        //                30);
+        public async Task<ActionResult> GetProductBySearchGlobal(string Keyword, bool Debug = false)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
+                    "Ecatalog/GetProductBySearchGlobal",
+                    "GET",
+                    new { Keyword, Debug },
+                    true,
+                    30);
 
-        //        if (result == null) {
-        //            return Json(new {
-        //                IsSuccess = false,
-        //                Message = "API Response is null"
-        //            });
-        //        }
+                if (result == null)
+                {
+                    return Json(new
+                    {
+                        IsSuccess = false,
+                        Message = "API Response is null"
+                    }, JsonRequestBehavior.AllowGet);  // ✅
+                }
 
-        //        var groupData =
-        //          result.Data?.result?
-        //          .GroupBy(x => x.productGroup)
-        //          .Select(g => new {
-        //              productGroupNameMain = g.Key,
-        //              productList = g.ToList()
-        //          })
-        //          .ToList();
+                var groupData = result.Data?.result?
+                    .GroupBy(x => x.productGroup)
+                    .Select(g => new {
+                        productGroupNameMain = g.Key,
+                        productList = g.ToList()
+                    })
+                    .ToList();
 
-        //        return Json(new {
-        //            IsSuccess = result.IsSuccess,
-        //            IsFromCache = result.IsFromCache,
-        //            ExecutionTime = result.ExecutionTime,
-        //            Data = groupData
-        //        });
-        //    }
-        //    catch (Exception ex) {
-        //        return Json(new {
-        //            IsSuccess = false,
-        //            IsFromCache = false,
-        //            ExecutionTime = 0,
-        //            Message = ex.Message,
-        //            Data = new List<object>()
-        //        });
-        //    }
-        //}
+                return Json(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    IsFromCache = result.IsFromCache,
+                    ExecutionTime = result.ExecutionTime,
+                    Data = groupData
+                }, JsonRequestBehavior.AllowGet);  // ✅
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message
+                }, JsonRequestBehavior.AllowGet);  // ✅
+            }
+        }
         //get count by tab
         public async Task<ActionResult> GetTabItemCountProduct(string stkcode)
         {
