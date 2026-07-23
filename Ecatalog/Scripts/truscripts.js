@@ -121,10 +121,12 @@ function mapApiResponseToProducts(groups) {
             seen.add(item.stkcode);
             //----------------//
             const qty = parseInt(item.qtyReady, 10);
-            const PLACEHOLDER = ['makername', 'modelname'];
+            const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
             const maker = (item.makerName || '').trim();
             const model = (item.modelName || '').trim();
-            const carParts = [maker, model].filter(v => v && !PLACEHOLDER.includes(v.toLowerCase()));
+            const carParts = [maker, model].filter(v =>
+                v && !PLACEHOLDER.includes(v) && !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
+            );
             list.push({
                 id: autoId++,
                 code: item.stkcode || '',
@@ -148,29 +150,26 @@ function mapApiResponseToProducts(groups) {
  * @param {Array}  groups      — grouped data จาก API
  * @param {string} searchType  — 'vehicle' | 'part' | 'category'
  */
-function _setBaseProducts(groups, searchType) {
+// ── 2. _setBaseProducts — ส่ง keepSort=true เสมอ หรือดูจาก dropdown ──
+function _setBaseProducts(groups, searchType, keepSort = false) {
     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
 
-    // Vehicle / Part search = เริ่มใหม่ → reset filter ทั้งหมด
     if (searchType === 'vehicle' || searchType === 'part') {
         chkState = { pl: {}, br: {} };
         fitState = new Set();
         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
 
-        // reset sort กลับ default
-        currentSort = 'carModel';
+        // ✅ อ่านค่าจาก dropdown โดยตรง แทนการ hardcode
         const sel = gEl('sortSelect');
-        if (sel) sel.value = 'carModel';
+        if (!keepSort && sel) {
+            currentSort = sel.value || 'carModel';
+        }
 
-        // ล้าง active filter chips
         const af = gEl('activeFilters');
         if (af) af.innerHTML = '';
     }
-    // category / checkbox → ไม่ reset filter, ใช้ของเดิม
-    // Snapshot สำหรับนับ filter counts
-    // ถ้า reset แล้ว → snapshot = BASE_PRODUCTS ทั้งหมด
-    // ถ้าไม่ reset → snapshot เดิมก็ยังถูก เพราะจะ overwrite ด้านล่าง
+
     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
     _applyFiltersAndRender();
@@ -411,11 +410,13 @@ function switchSortbyPart() {
 }
 
 
+// ── 3. sortProducts — ซิงก์ dropdown กลับด้วย (กันกรณี call จากที่อื่น) ──
 function sortProducts(val) {
     currentSort = val;
+    const sel = gEl('sortSelect');
+    if (sel && sel.value !== val) sel.value = val;  // ✅ sync UI
     applyAllFilters();
 }
-
 function applySorting(list) {
     const arr = [...list];
     if (currentSort === 'price-asc') return arr.sort((a, b) => a.price - b.price);
@@ -791,20 +792,36 @@ window.addEventListener('resize', () => {
 
 /* ═════════════════ GROUP BY HELPER ══════════════════ */
 function groupByLine(list, forceByLine) {
-    const keyFn = p =>
-        forceByLine ? (p.line || 'อื่นๆ') :
-            currentSort === 'carModel' ? (p.carModel || 'อื่นๆ') :
-                currentSort === 'brand' ? (p.brand || 'อื่นๆ') :
-                    (p.line || 'อื่นๆ');
+    if (!list || !list.length) return [];   // ✅ guard
+
+    const keyFn = p => {
+        if (forceByLine) return p.line || 'อื่นๆ';
+
+        if (currentSort === 'carModel') {
+            return p.carModel && p.carModel.trim() !== ''
+                ? p.carModel
+                : 'ใช้ได้ทั่วไป';
+        }
+        if (currentSort === 'brand') return p.brand || 'อื่นๆ';
+        if (currentSort === 'part') return p.line || 'อื่นๆ';
+        if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
+        if (currentSort === 'price-asc' || currentSort === 'price-desc') return 'ทั้งหมด';
+
+        return p.line || 'อื่นๆ';
+    };
+
     const map = {};
     list.forEach(p => {
         const key = keyFn(p);
         if (!map[key]) map[key] = [];
         map[key].push(p);
     });
-    return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0], 'th'));
-}
 
+    // ✅ guard — กัน Object.entries คืน undefined
+    return Object.entries(map).sort((a, b) =>
+        (a[0] || '').localeCompare(b[0] || '', 'th')
+    );
+}
 function nfScroll(rowId, dir) {
     const el = gEl(rowId);
     if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
@@ -873,14 +890,24 @@ function renderProducts(list) {
                 </button>
             </div>
         </div>`;
+    // const noHTML = `
+    //     <div class="no-results">
+    //         <i class="bi bi-search"></i>
+    //         <p>ไม่พบสินค้าตามเงื่อนไขที่เลือก<br>กรุณาเลือกข้อมูลรถยนต์ในแถบด้านซ้าย หรือปรับตัวกรอง</p>
+    //     </div>`;
 
+    // ✅ เพิ่ม 2 บรรทัดนี้
+    const forceByLine = activeGroup === '0';
+    const groups = groupByLine(sorted, forceByLine);
+
+    // if (!groups || !groups.length) {
     const noHTML = `
         <div class="no-results">
             <i class="bi bi-search"></i>
             <p>ไม่พบสินค้าตามเงื่อนไขที่เลือก<br>กรุณาเลือกข้อมูลรถยนต์ในแถบด้านซ้าย หรือปรับตัวกรอง</p>
         </div>`;
 
-    if (!sorted.length) {
+    if (!groups || !groups.length) {
         pGrid.style.display = 'none';
         nfRows.style.display = 'flex';
         nfRows.innerHTML = noHTML;
@@ -891,10 +918,12 @@ function renderProducts(list) {
     pGrid.style.display = 'none';
     nfRows.style.display = 'flex';
 
-    const groups = groupByLine(sorted, activeGroup === 'สินค้าทุกประเภท');
     const groupIcon =
         currentSort === 'carModel' ? 'bi-car-front-fill' :
-            currentSort === 'brand' ? 'bi-award' : 'bi-tag';
+            currentSort === 'brand' ? 'bi-award' :
+                currentSort === 'name' ? 'bi-sort-alpha-down' :
+                    (currentSort === 'price-asc' || currentSort === 'price-desc') ? 'bi-currency-exchange' :
+                        'bi-tag';   // part / default
 
     nfRows.innerHTML = groups.map(([lineName, products], idx) => {
         const rowId = `nfstrip-${idx}`;
@@ -1040,32 +1069,52 @@ function removeVfTag(k) {
 /* ═════════════ §2 — SEARCH ════════════════════ */
 function runSearch() {
     activateSec(2);
+    const keyword = (gEl('partQ')?.value || gEl('headerQ')?.value || '').trim();
+
+    if (keyword.length < 2) {
+        toast('กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร', 'warn');
+        return;
+    }
+
     showSkel();
-    setTimeout(() => {
-        hideSkel();
-        applyAllFilters();
-        gEl('rz2').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 500);
+
+    if (BASE_PRODUCTS.length > 0) {
+        // มี BASE_PRODUCTS → ลอง filter local ก่อน
+        const kw = keyword.toLowerCase();
+        const tokens = kw.split(' ').filter(t => t.length > 0);
+
+        const matched = BASE_PRODUCTS.filter(p => {
+            const searchText = [p.code, p.name, p.brand, p.cat, p.line, p.carModel]
+                .join(' ').toLowerCase();
+            return tokens.every(token => searchText.includes(token));
+        });
+
+        if (matched.length > 0) {
+            // เจอใน local → render เลย
+            setTimeout(() => {
+                hideSkel();
+                _applyFiltersAndRender();
+                gEl('rz2')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        } else {
+            // ไม่เจอใน local → เรียก Global Search API
+            searchProductGlobal(keyword);
+        }
+    } else {
+        // ไม่มี BASE_PRODUCTS → เรียก Global Search API
+        searchProductGlobal(keyword);
+    }
 }
 
 /* ══════════════ §3 — CHECKBOX FILTERS ══════════════════ */
+// ── 1. toggleChk — อย่า override currentSort โดยไม่จำเป็น ──
 function toggleChk(label, type, val) {
     label.classList.toggle('checked');
     if (label.classList.contains('checked')) {
         chkState[type][val] = true;
-        if (type === 'pl' || type === 'br') {
-            currentSort = 'part';
-            const sel = gEl('sortSelect');
-            if (sel) sel.value = 'part';
-        }
+        // ✅ ลบ block ที่บังคับ currentSort = 'part' ออกทั้งหมด
     } else {
         delete chkState[type][val];
-        const hasFilter = Object.keys(chkState.pl).length || Object.keys(chkState.br).length;
-        if (!hasFilter) {
-            currentSort = 'carModel';
-            const sel = gEl('sortSelect');
-            if (sel) sel.value = 'carModel';
-        }
     }
     activateSec(3);
     showSkel();
@@ -1083,7 +1132,6 @@ function toggleChk(label, type, val) {
         });
     }
 }
-
 function toggleFit(chip, val) {
     chip.classList.toggle('active');
     if (chip.classList.contains('active')) { fitState.add(val); }
@@ -1299,6 +1347,60 @@ function highlightMatch(text, q) {
     return text.replace(new RegExp('(' + escaped + ')', 'gi'), '<mark>$1</mark>');
 }
 
+function renderAcDropdown(q) {
+    const dd = gEl('acDropdown');
+    const headerQ = gEl('headerQ');
+    if (!dd || !headerQ) return;
+
+    if (!acItems.length) {
+        dd.classList.add('open');
+        dd.innerHTML = `<div class="ac-header">ไม่พบสินค้าที่ค้นหา</div>`;
+        return;
+    }
+
+    const products = acItems.filter(i => i.type === 'product');
+    const cats = acItems.filter(i => i.type === 'category');
+    let html = '';
+
+    if (products.length) {
+        html += `<div class="ac-header"><i class="bi bi-box-seam me-1"></i>สินค้า</div>`;
+        products.forEach(item => {
+            html += `
+                <div class="ac-item" role="option"
+                     data-val="${item.name}"
+                     data-code="${item.code}"
+                     onmousedown="acSelect(event,'${item.name.replace(/'/g, "\\'")}','${item.code.replace(/'/g, "\\'")}')">
+                    <div class="ac-text">
+                        <div class="ac-name">${highlightMatch(item.name, q)}</div>
+                        <div class="ac-meta">
+                            ${highlightMatch(item.code, q)}
+                            ${item.brand ? ' · ' + item.brand : ''}
+                            ${item.cat ? ' · ' + item.cat : ''}
+                        </div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    if (cats.length) {
+        html += `<div class="ac-header"><i class="bi bi-tag me-1"></i>หมวดหมู่</div>`;
+        cats.forEach(item => {
+            html += `
+                <div class="ac-item" role="option"
+                     data-val="${item.name}"
+                     onmousedown="acSelect(event,'${item.name.replace(/'/g, "\\'")}','')">
+                    <div class="ac-text">
+                        <div class="ac-name">${highlightMatch(item.name, q)}</div>
+                        <div class="ac-meta">ดูสินค้าในหมวด "${item.name}"</div>
+                    </div>
+                </div>`;
+        });
+    }
+
+    dd.innerHTML = html;
+    dd.classList.add('open');
+    headerQ.setAttribute('aria-expanded', 'true');
+}
 
 function acInput(inp) {
     const q = inp.value.trim();

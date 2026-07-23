@@ -1,5 +1,6 @@
 ﻿using Ecatalog.Library;
 using Ecatalog.Models;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -67,6 +68,52 @@ namespace Ecatalog.Controllers
                     Message = ex.Message
                 },
                 JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        public async Task<ActionResult> GetProductBySearchGlobal(string Keyword)
+        {
+            try
+            {
+                var encodedKeyword = Uri.EscapeDataString(Keyword ?? "");
+                var apiPath = $"Ecatalog/GetProductBySearchGlobal?Keyword={encodedKeyword}&Debug=false&TopN=50&PageSize=20";
+
+                // ✅ เปลี่ยนจาก JObject → ProductBySearchGlobalModel โดยตรง
+                var rawResult = await Utils.CallApiAsyncMemory<ProductBySearchGlobalModel>(
+                    apiPath, "GET", null, false, 180);
+
+                var data = rawResult.Data;
+
+                if (data == null || !data.Success || data.Items == null || !data.Items.Any())
+                {
+                    return Json(new
+                    {
+                        IsSuccess = false,
+                        Message = data?.Message ?? "ไม่พบสินค้าที่ค้นหา"
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                var groupData = data.Items
+                    .GroupBy(x => x.productGroup)
+                    .Select(g => new
+                    {
+                        productGroupNameMain = g.Key,
+                        productList = g.ToList()
+                    })
+                    .ToList();
+
+                return Json(new
+                {
+                    IsSuccess = true,
+                    IsFromCache = rawResult.IsFromCache,
+                    ExecutionTime = rawResult.ExecutionTime,
+                    Data = groupData
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { IsSuccess = false, Message = ex.Message },
+                           JsonRequestBehavior.AllowGet);
             }
         }
         [HttpPost]
