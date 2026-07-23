@@ -792,21 +792,15 @@ window.addEventListener('resize', () => {
 
 /* ═════════════════ GROUP BY HELPER ══════════════════ */
 function groupByLine(list, forceByLine) {
-    if (!list || !list.length) return [];   // ✅ guard
+    if (!list || !list.length) return [];
 
     const keyFn = p => {
         if (forceByLine) return p.line || 'อื่นๆ';
-
-        if (currentSort === 'carModel') {
-            return p.carModel && p.carModel.trim() !== ''
-                ? p.carModel
-                : 'ใช้ได้ทั่วไป';
-        }
+        if (currentSort === 'carModel') return p.carModel && p.carModel.trim() ? p.carModel : 'ใช้ได้ทั่วไป';
         if (currentSort === 'brand') return p.brand || 'อื่นๆ';
         if (currentSort === 'part') return p.line || 'อื่นๆ';
         if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
         if (currentSort === 'price-asc' || currentSort === 'price-desc') return 'ทั้งหมด';
-
         return p.line || 'อื่นๆ';
     };
 
@@ -817,7 +811,6 @@ function groupByLine(list, forceByLine) {
         map[key].push(p);
     });
 
-    // ✅ guard — กัน Object.entries คืน undefined
     return Object.entries(map).sort((a, b) =>
         (a[0] || '').localeCompare(b[0] || '', 'th')
     );
@@ -897,7 +890,7 @@ function renderProducts(list) {
     //     </div>`;
 
     // ✅ เพิ่ม 2 บรรทัดนี้
-    const forceByLine = activeGroup === '0';
+    const forceByLine = currentSort === 'part';
     const groups = groupByLine(sorted, forceByLine);
 
     // if (!groups || !groups.length) {
