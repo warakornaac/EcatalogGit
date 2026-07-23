@@ -17,6 +17,7 @@ namespace Ecatalog.Models
         public string SearchType { get; set; }
 
         public string SourceTable { get; set; }
+        public string SourceId { get; set; }
 
         public int Priority { get; set; }
 

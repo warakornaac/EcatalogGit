@@ -18,8 +18,8 @@ namespace Ecatalog.Controllers
 {
     public class MeiliSearchController : Controller
     {
-        private const string Host = "http://localhost:7700";
-        private const string ApiKey = "HCJiA-w-iSsJYlWa3an3H3Lnp85-zxRWaWGDW5E2t4U";
+        private const string Host = "http://172.28.23.178:7700";
+        private const string ApiKey = "4OzjChmxf8dTKGLIKaD0AwLe-vtjubGixpU9o-laMRE";
 
         [HttpGet]
         public async Task<ActionResult> ImportSearchDictionary() {
