@@ -1707,17 +1707,15 @@ function updateOsSelection() {
     const totalQty = selectedItems.reduce((s, c) => s + c.qty, 0);
     const skuCount = selectedItems.length;
     const subtotal = selectedItems.reduce((s, c) => s + c.price * c.qty, 0);
-    const discount = subtotal * DISCOUNT_RATE;
-    const net = subtotal - discount;
+    const net = subtotal;
     const vat = net * VAT_RATE;
     const total = net + vat;
 
     g('osItemBadge').textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
     g('osQtyCount').textContent = totalQty;
     g('osSkuCount').textContent = skuCount;
-    g('osDiscount').textContent = '−' + discount.toFixed(2);
-    g('osNet').textContent = net.toFixed(2);
-    g('osVat').textContent = vat.toFixed(2);
+    g('osNet').textContent = fmt(net);
+    g('osVat').textContent = fmt(vat);
     g('osTotal').textContent = fmt(total);
 }
 

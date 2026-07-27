@@ -169,7 +169,7 @@ namespace Ecatalog.Controllers
                     "Ecatalog/GetProductBySearchGlobal",
                     "GET",
                     new { Keyword, Debug },
-                    true,
+                    false,
                     30);
 
                 if (result == null)
