@@ -356,29 +356,34 @@
     //set params obj by select catagory
     function getSearchCatagoryObject() {
         const activeGroupIds = $(".bb-item.active")
-            .map(function () {
-                return $(this).data("id");
-            })
+            .map(function () { return $(this).data("id"); })
             .get()
             .filter(id => id !== '0' && id !== 0)
-            .map(id => parseInt(id));  // ✅ แปลงเป็น int
+            .map(id => parseInt(id));
 
-        const filterObj = {
+        // แปลง chip ไทย → ค่า DB
+        const axisMap = { 'หน้า': 'Fr', 'หลัง': 'Rr', 'กลาง': 'Mid', 'เครื่องยนต์': 'Engine' };
+        const sideMap = { 'ซ้าย': 'Lh', 'ขวา': 'Rh', 'กลาง': 'Center' };
+        const levelMap = { 'บน': 'Upper', 'ล่าง': 'Lower' };
+        const dirMap = { 'ใน': 'Inner', 'นอก': 'Outer' };
+
+        const allMaps = { ...axisMap, ...sideMap, ...levelMap, ...dirMap };
+
+        // ✅ รวมทุก chip เป็น array เดียว
+        const fittingFilter = [...fitState]
+            .map(f => allMaps[f])
+            .filter(Boolean);
+
+        return {
             productGroupId: activeGroupIds,
             productLineId:
                 $(".chk-item.checked[data-filter='filterProductLineId']")
-                    .map(function () {
-                        return parseInt($(this).data("id"));  // ✅ แปลงเป็น int
-                    })
-                    .get(),
+                    .map(function () { return parseInt($(this).data("id")); }).get(),
             brandId:
                 $(".chk-item.checked[data-filter='filterProductBrandId']")
-                    .map(function () {
-                        return parseInt($(this).attr("data-id"));  // ✅ แปลงเป็น int
-                    })
-                    .get()
+                    .map(function () { return parseInt($(this).attr("data-id")); }).get(),
+            fittingFilter  // ✅ ['Fr', 'Lh', 'Upper']
         };
-        return filterObj;
     }
     //send params send to controller searchByCategory
     async function searchProductByCategory() {

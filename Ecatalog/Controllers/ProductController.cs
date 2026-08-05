@@ -72,19 +72,21 @@ namespace Ecatalog.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request) {
-            try {
-                var result =
-                    await Utils.CallApiAsyncMemory<
-                        ProductSearchVioModel>(
-                        "Ecatalog/GetProductBySearchCatagory",
-                        "POST",
-                        request,
-                        false,
-                        180);
+        public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<ProductSearchCatagoryResponseModel> ( // ✅ เปลี่ยน
+                    "Ecatalog/GetProductBySearchCatagory",
+                    "POST",
+                    request,
+                    false,
+                    180);
 
-                if (result == null) {
-                    return Json(new {
+                if (result == null)
+                {
+                    return Json(new
+                    {
                         IsSuccess = false,
                         Message = "API Response is null"
                     });
@@ -99,15 +101,18 @@ namespace Ecatalog.Controllers
                     })
                     .ToList();
 
-                return Json(new {
+                return Json(new
+                {
                     IsSuccess = result.IsSuccess,
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
                     Data = groupData
                 });
             }
-            catch (Exception ex) {
-                return Json(new {
+            catch (Exception ex)
+            {
+                return Json(new
+                {
                     IsSuccess = false,
                     IsFromCache = false,
                     ExecutionTime = 0,

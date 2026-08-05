@@ -112,21 +112,23 @@ function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
     const seen = new Set();
+
     (groups || []).forEach(group => {
         if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
 
         (group.productList || []).forEach(item => {
-            // กันพ่น product ซ้ำ //
             if (!item.stkcode || seen.has(item.stkcode)) return;
             seen.add(item.stkcode);
-            //----------------//
+
             const qty = parseInt(item.qtyReady, 10);
             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
             const maker = (item.makerName || '').trim();
             const model = (item.modelName || '').trim();
             const carParts = [maker, model].filter(v =>
-                v && !PLACEHOLDER.includes(v) && !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
+                v && !PLACEHOLDER.includes(v) &&
+                !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
             );
+
             list.push({
                 id: autoId++,
                 code: item.stkcode || '',
@@ -136,15 +138,39 @@ function mapApiResponseToProducts(groups) {
                 cat: item.productGroup || group.productGroupNameMain || 'อื่นๆ',
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
-                fit: [],
                 carModel: carParts.join(' ') || '',
-                img: item.imagePath || item.imageUrl || ''
+                img: item.imagePath || item.imageUrl || '',
+                fit: parseFittingDescription(item.fittingDescription)
             });
         });
     });
+
     return list;
 }
 
+function parseFittingDescription(fittingDescription) {
+    if (!fittingDescription) return [];
+
+    const axisMap = { 'fr': 'หน้า', 'rr': 'หลัง', 'mid': 'กลาง', 'engine': 'เครื่องยนต์' };
+    const sideMap = { 'lh': 'ซ้าย', 'rh': 'ขวา', 'center': 'กลาง' };
+    const levelMap = { 'upper': 'บน', 'lower': 'ล่าง' };
+    const dirMap = { 'inner': 'ใน', 'outer': 'นอก' };
+
+    const chips = [];
+
+    fittingDescription.split(',').forEach(part => {
+        const val = part.trim().toLowerCase();
+        if (!val || val === 'null') return;
+
+        if (axisMap[val]) { chips.push(axisMap[val]); return; }
+        if (val === 'both') { chips.push('ซ้าย'); chips.push('ขวา'); return; }
+        if (sideMap[val]) { chips.push(sideMap[val]); return; }
+        if (levelMap[val]) { chips.push(levelMap[val]); return; }
+        if (dirMap[val]) { chips.push(dirMap[val]); return; }
+    });
+
+    return [...new Set(chips)];
+}
 /**
  * เซต Base ใหม่จาก API response
  * @param {Array}  groups      — grouped data จาก API
@@ -196,7 +222,8 @@ function _applyFiltersAndRender() {
             if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
             if (!match) return false;
         }
-        if (fitK.length && !fitK.some(f => p.fit.includes(f))) return false;
+        // ✅ ถ้าสินค้าไม่มีข้อมูล fitting → แสดงทุกกรณี
+        if (fitK.length && p.fit.length > 0 && !fitK.some(f => p.fit.includes(f))) return false;
         return true;
     });
 
