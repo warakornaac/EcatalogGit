@@ -151,23 +151,39 @@ function mapApiResponseToProducts(groups) {
 function parseFittingDescription(fittingDescription) {
     if (!fittingDescription) return [];
 
-    const axisMap = { 'fr': 'หน้า', 'rr': 'หลัง', 'mid': 'กลาง', 'engine': 'เครื่องยนต์' };
-    const sideMap = { 'lh': 'ซ้าย', 'rh': 'ขวา', 'center': 'กลาง' };
-    const levelMap = { 'upper': 'บน', 'lower': 'ล่าง' };
-    const dirMap = { 'inner': 'ใน', 'outer': 'นอก' };
-
+    // format: FR/BOTH/LOWER/-  (axis/side/level/direction)
+    const parts = fittingDescription.split('/').map(p => p.trim().toLowerCase());
+    const [axis, side, level, direction] = parts;
     const chips = [];
 
-    fittingDescription.split(',').forEach(part => {
-        const val = part.trim().toLowerCase();
-        if (!val || val === 'null') return;
+    // Axis (index 0)
+    const axisMap = { 'fr': 'หน้า', 'rr': 'หลัง', 'mid': 'กลาง', 'engine': 'เครื่องยนต์' };
+    if (axis && axis !== '-') {
+        if (axis === 'both') { chips.push('หน้า'); chips.push('หลัง'); }
+        else if (axisMap[axis]) chips.push(axisMap[axis]);
+    }
 
-        if (axisMap[val]) { chips.push(axisMap[val]); return; }
-        if (val === 'both') { chips.push('ซ้าย'); chips.push('ขวา'); return; }
-        if (sideMap[val]) { chips.push(sideMap[val]); return; }
-        if (levelMap[val]) { chips.push(levelMap[val]); return; }
-        if (dirMap[val]) { chips.push(dirMap[val]); return; }
-    });
+    // Side (index 1)
+    if (side && side !== '-') {
+        if (side === 'both') { chips.push('ซ้าย'); chips.push('ขวา'); }
+        else if (side === 'lh') chips.push('ซ้าย');
+        else if (side === 'rh') chips.push('ขวา');
+        else if (side === 'center') chips.push('กลาง');
+    }
+
+    // Level (index 2)
+    if (level && level !== '-') {
+        if (level === 'both') { chips.push('บน'); chips.push('ล่าง'); }
+        else if (level === 'upper') chips.push('บน');
+        else if (level === 'lower') chips.push('ล่าง');
+    }
+
+    // Direction (index 3)
+    if (direction && direction !== '-') {
+        if (direction === 'both') { chips.push('ใน'); chips.push('นอก'); }
+        else if (direction === 'inner') chips.push('ใน');
+        else if (direction === 'outer') chips.push('นอก');
+    }
 
     return [...new Set(chips)];
 }

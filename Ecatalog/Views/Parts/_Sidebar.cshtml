@@ -361,18 +361,20 @@
             .filter(id => id !== '0' && id !== 0)
             .map(id => parseInt(id));
 
-        // แปลง chip ไทย → ค่า DB
-        const axisMap = { 'หน้า': 'Fr', 'หลัง': 'Rr', 'กลาง': 'Mid', 'เครื่องยนต์': 'Engine' };
-        const sideMap = { 'ซ้าย': 'Lh', 'ขวา': 'Rh', 'กลาง': 'Center' };
-        const levelMap = { 'บน': 'Upper', 'ล่าง': 'Lower' };
-        const dirMap = { 'ใน': 'Inner', 'นอก': 'Outer' };
+        const axisMap = { 'หน้า': 'FR', 'หลัง': 'RR', 'กลาง': 'MID', 'เครื่องยนต์': 'ENGINE' };
+        const sideMap = { 'ซ้าย': 'LH', 'ขวา': 'RH', 'กลาง': 'CENTER' };
+        const levelMap = { 'บน': 'UPPER', 'ล่าง': 'LOWER' };
+        const dirMap = { 'ใน': 'INNER', 'นอก': 'OUTER' };
 
-        const allMaps = { ...axisMap, ...sideMap, ...levelMap, ...dirMap };
+        const fits = [...fitState];
 
-        // ✅ รวมทุก chip เป็น array เดียว
-        const fittingFilter = [...fitState]
-            .map(f => allMaps[f])
-            .filter(Boolean);
+        // ✅ แยก map ไม่ให้ทับกัน รวมแล้ว dedupe
+        const fittingFilter = [...new Set([
+            ...fits.map(f => axisMap[f]).filter(Boolean),
+            ...fits.map(f => sideMap[f]).filter(Boolean),
+            ...fits.map(f => levelMap[f]).filter(Boolean),
+            ...fits.map(f => dirMap[f]).filter(Boolean),
+        ])];
 
         return {
             productGroupId: activeGroupIds,
@@ -382,7 +384,7 @@
             brandId:
                 $(".chk-item.checked[data-filter='filterProductBrandId']")
                     .map(function () { return parseInt($(this).attr("data-id")); }).get(),
-            fittingFilter  // ✅ ['Fr', 'Lh', 'Upper']
+            fittingFilter
         };
     }
     //send params send to controller searchByCategory
