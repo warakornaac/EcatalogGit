@@ -109,7 +109,7 @@ async function searchProductGlobal(keyword) {
                 productList: (group.productList || []).filter(p => {
                     const searchText = [
                         p.stkcode, p.stkcodeDescription, p.brand,
-                        p.makerName, p.modelName, p.productGroup, p.productLine
+                        p.makerName, p.modelName, p.productGroup, p.productLine, p.fittingDescription
                     ].join(' ').toLowerCase();
                     return tokens.every(token => searchText.includes(token));
                 })

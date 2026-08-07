@@ -170,23 +170,35 @@ namespace Ecatalog.Controllers
         {
             try
             {
-                var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
+                var result = await Utils.CallApiAsyncMemory<Newtonsoft.Json.Linq.JObject>(
                     "Ecatalog/GetProductBySearchGlobal",
                     "GET",
                     new { Keyword, Debug },
                     false,
                     30);
 
-                if (result == null)
+                if (result == null || !result.IsSuccess || result.Data == null)
                 {
                     return Json(new
                     {
                         IsSuccess = false,
-                        Message = "API Response is null"
-                    }, JsonRequestBehavior.AllowGet);  // ✅
+                        Message = result?.ErrorMessage ?? "API Response is null"
+                    }, JsonRequestBehavior.AllowGet);
                 }
 
-                var groupData = result.Data?.result?
+                var items = result.Data["result"]?
+                    .ToObject<List<ResultProductSearchVioModelList>>();
+
+                if (items == null || !items.Any())
+                {
+                    return Json(new
+                    {
+                        IsSuccess = false,
+                        Message = result.Data["errorMessage"]?.ToString() ?? "ไม่พบข้อมูล"
+                    }, JsonRequestBehavior.AllowGet);
+                }
+
+                var groupData = items
                     .GroupBy(x => x.productGroup)
                     .Select(g => new {
                         productGroupNameMain = g.Key,
@@ -196,11 +208,11 @@ namespace Ecatalog.Controllers
 
                 return Json(new
                 {
-                    IsSuccess = result.IsSuccess,
+                    IsSuccess = true,
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
                     Data = groupData
-                }, JsonRequestBehavior.AllowGet);  // ✅
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -208,7 +220,7 @@ namespace Ecatalog.Controllers
                 {
                     IsSuccess = false,
                     Message = ex.Message
-                }, JsonRequestBehavior.AllowGet);  // ✅
+                }, JsonRequestBehavior.AllowGet);
             }
         }
         //get count by tab
