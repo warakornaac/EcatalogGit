@@ -1,4 +1,5 @@
-﻿using Ecatalog.Library;
+﻿using Ecatalog.Helpers;
+using Ecatalog.Library;
 using Ecatalog.Models;
 using Newtonsoft.Json.Linq;
 using System;
@@ -21,23 +22,10 @@ namespace Ecatalog.Controllers
         {
             try
             {
-                var result = await Utils.CallApiAsyncMemory<
-                    ProductSearchVioModel>(
+                var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
                     "Ecatalog/GetProductBySearchVio",
                     "GET",
-                    new
-                    {
-                        marketSegmentId,
-                        segmentId,
-                        makerId,
-                        rangeId,
-                        bodyId,
-                        engineId,
-                        yearFrom,
-                        yearTo,
-                        driveType,
-                        imagePath
-                    },
+                    new { marketSegmentId, segmentId, makerId, rangeId, bodyId, engineId, yearFrom, yearTo, driveType, imagePath },
                     true,
                     30);
 
@@ -50,15 +38,17 @@ namespace Ecatalog.Controllers
                     })
                     .ToList();
 
-                return Json(new
+                return new LargeJsonResult
                 {
-                    IsSuccess = result.IsSuccess,
-                    IsFromCache = result.IsFromCache,
-                    ExecutionTime = result.ExecutionTime,
-                    Data = groupData //result.Data?.result
-                },
-
-                JsonRequestBehavior.AllowGet);
+                    Data = new
+                    {
+                        IsSuccess = result.IsSuccess,
+                        IsFromCache = result.IsFromCache,
+                        ExecutionTime = result.ExecutionTime,
+                        Data = groupData   // <-- ใช้ groupData ที่จัดกลุ่มแล้ว ไม่ใช่ result ดิบ
+                    },
+                    JsonRequestBehavior = JsonRequestBehavior.AllowGet
+                };
             }
             catch (Exception ex)
             {
@@ -70,7 +60,6 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-
         [HttpPost]
         public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request)
         {
