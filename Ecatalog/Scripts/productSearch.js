@@ -30,7 +30,12 @@ async function loadSearchProductVio() {
     const hasMarketAndSegment = !!(marketSegmentId && segmentId);
 
     if (!hasMaker && !hasMarketAndSegment) {
-        alert("กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา");
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา',
+            text: result.Message || "Search Error"
+        });
+        //alert("กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา");
         return;
     }
 

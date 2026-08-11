@@ -220,7 +220,12 @@
             }
         } catch (error) {
             console.error(error);
-            alert("Load Market Segment Failed");
+            Swal.fire({
+                icon: 'error',
+                title: 'Load Market Segment Failed',
+                text: ex.message
+            });
+            //alert("Load Market Segment Failed");
         }
     }
     async function loadMaker() {
@@ -243,7 +248,12 @@
             }
         } catch (error) {
             console.error(error);
-            alert("Load Maker Failed");
+            Swal.fire({
+                icon: 'error',
+                title: 'Load Maker Failed',
+                text: ex.message
+            });
+            // alert("Load Maker Failed");
         } finally {
             updateVehSummary();
         }
@@ -284,7 +294,12 @@
             }
         } catch (error) {
             console.error(error);
-            alert("Load Model Range Failed");
+            Swal.fire({
+                icon: 'error',
+                title: 'Load Model Range Failed',
+                text: ex.message
+            });
+            //alert("Load Model Range Failed");
         } finally {
             updateVehSummary();
         }
@@ -315,7 +330,12 @@
             }
         } catch (error) {
             console.error(error);
-            alert("Load Body Failed");
+            Swal.fire({
+                icon: 'error',
+                title: 'Load Body Failed',
+                text: ex.message
+            });
+            //alert("Load Body Failed");
         } finally {
             updateVehSummary();
         }
@@ -348,7 +368,12 @@
             }
         } catch (error) {
             console.error(error);
-            alert("Load Engine Failed");
+            Swal.fire({
+                icon: 'error',
+                title: 'Load Engine Failed',
+                text: ex.message
+            });
+            //alert("Load Engine Failed");
         } finally {
             updateVehSummary();
         }
@@ -407,11 +432,21 @@
             _setBaseProducts(result.Data, 'category');
             gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
-            alert(result.Message || "Search Error");
+            Swal.fire({
+                icon: 'warning',
+                title: 'ไม่สำเร็จ',
+                text: result.Message || "Search Error"
+            });
+            //alert(result.Message || "Search Error");
         }
     } catch (ex) {
         console.error("searchProductByCategory Error:", ex);
-        alert(ex.message || "System Error");
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: ex.message || "System Error"
+        });
+        //alert(ex.message || "System Error");
     }
 }
     //get value text, checkbox
@@ -438,11 +473,21 @@
         try {
             const request = await getSearchFieldObject();
             if (!request.searchText) {
-                alert("Please enter search text.");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาเลือก',
+                    text: 'Please enter search text.'
+                });
+                //alert("Please enter search text.");
                 return;
             }
             if (request.searchFields.length === 0) {
-                alert("Please select search mode.");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'กรุณาเลือก',
+                    text: 'Please select search mode.'
+                });
+                //alert("Please select search mode.");
                 return;
             }
             const response = await fetch(
@@ -468,7 +513,12 @@
 
         } catch (ex) {
             console.error(ex);
-            alert(ex.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: ex.message
+            });
+            //alert(ex.message);
         } finally {
             hideSkel();
             btn.prop("disabled", false);

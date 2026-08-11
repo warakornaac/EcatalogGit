@@ -71,12 +71,13 @@
                   <i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม
                 </button> -->
                 @*<div class="card-footer">
-                        มีปัญหาในการเข้าสู่ระบบ? <a href="#">ติดต่อผู้ดูแลระบบ</a>
-                </div>*@
+                            มีปัญหาในการเข้าสู่ระบบ? <a href="#">ติดต่อผู้ดูแลระบบ</a>
+                    </div>*@
             </div>
         </div>
     </div>
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="@Url.Content("~/Scripts/sweetalert2.all.min.js")"></script>
     <script>
 
     document.getElementById("loginForm").addEventListener("submit", function(event) {
@@ -143,12 +144,21 @@
                 //alert("Login Success " + res.Data[0].username);
                 window.location.href = '@Url.Action("Index","Home")';
             } else {
-                alert(res.Message);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ไม่สำเร็จ',
+                    text: res.Message
+                });
             }
 
         } catch (e) {
             console.log(e);
-            alert("System Error Login Fail");
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: ex.message || "System Error"
+            });
+            //alert("System Error Login Fail");
         }
     }
     </script>
