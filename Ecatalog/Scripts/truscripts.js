@@ -17,6 +17,8 @@ let activeModes = new Set(['description']);
 let activeGroups = [];
 let activeProduct = null;
 let PRODUCTS_FOR_COUNT = [];
+let PRODUCTS_FOR_PL_COUNT = [];   // ← เพิ่ม
+let PRODUCTS_FOR_BR_COUNT = [];
 let _shipToList = [];
 let acSelected = null;
 let acFocusIdx = -1;
@@ -273,7 +275,7 @@ function _updateSidebar() {
     // ── อัปเดต count pl ──
     $("#plList .chk-item").each(function () {
         const lineName = $(this).attr('data-name');
-        const count = PRODUCTS_FOR_PL_COUNT.filter(p => p.line === lineName).length;
+        const count = (PRODUCTS_FOR_PL_COUNT || []).filter(p => p.line === lineName).length;
         $(this).find('.chk-count').text(count);
     });
     // ── sort pl ตาม count (show/hide ยังให้ FilterProductionLines จัดการ) ──
@@ -535,31 +537,23 @@ function _clickedMatchDataAndRender() {
                 _filterSidebarLines(allowedIds);
             }
 
-            // 3. render — ไม่ว่า API จะ success หรือไม่ก็ render
+            // 3. render — เรียก API ค้นหาสินค้าใหม่ทุกครั้งที่เปลี่ยน category
             hideSkel();
-            if (BASE_PRODUCTS.length > 0) {
-                _applyFiltersAndRender();
+            searchProductByCategory().then(() => {
                 PRODUCTS_FOR_COUNT = [...PRODUCTS];
                 _updateSidebar();
                 renderActiveFilterChips();
-            } else {
-                searchProductByCategory().then(() => {
-                    PRODUCTS_FOR_COUNT = [...PRODUCTS];
-                    _updateSidebar();
-                    renderActiveFilterChips();
-                });
-            }
+            });
         },
         error: function () {
-            // API fail → render ด้วย state เดิม
+            // API fail → ยังพยายามค้นหาด้วย category ที่เลือกอยู่ดี
             hideSkel();
-            if (BASE_PRODUCTS.length > 0) {
-                _applyFiltersAndRender();
-            }
+            searchProductByCategory().then(() => {
+                PRODUCTS_FOR_COUNT = [...PRODUCTS];
+            });
         }
     });
 }
-
 // แยก UI logic ออกมาจาก ClickedMatchData เดิม
 function _filterSidebarLines(allowedIds) {
     const SHOW_LIMIT = 5;
@@ -2164,16 +2158,25 @@ function ClickedMatchData() {
     });
 }
 
+// function _renderAfterGroupChange() {
+//     hideSkel();
+//     if (BASE_PRODUCTS.length > 0) {
+//         _applyFiltersAndRender();
+//         PRODUCTS_FOR_COUNT = [...PRODUCTS];
+//     } else {
+//         searchProductByCategory().then(() => {
+//             PRODUCTS_FOR_COUNT = [...PRODUCTS];
+//         });
+//     }
+// }
+
 function _renderAfterGroupChange() {
     hideSkel();
-    if (BASE_PRODUCTS.length > 0) {
-        _applyFiltersAndRender();
+    searchProductByCategory().then(() => {
         PRODUCTS_FOR_COUNT = [...PRODUCTS];
-    } else {
-        searchProductByCategory().then(() => {
-            PRODUCTS_FOR_COUNT = [...PRODUCTS];
-        });
-    }
+        _updateSidebar();
+        renderActiveFilterChips();
+    });
 }
 
 function FilterProductionLines(allowedIds) {

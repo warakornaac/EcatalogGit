@@ -54,6 +54,7 @@
     <Compile Include="GetCustomerbySalesmanModel.cs" />
     <Compile Include="GetInfomantionCustomerModel.cs" />
     <Compile Include="GetSalesmanAllModel.cs" />
+    <Compile Include="GlobalSearchVioModel.cs" />
     <Compile Include="MarketCarFilterModel.cs" />
     <Compile Include="MatchProductGroupModel.cs" />
     <Compile Include="ModelBrandsFilterModel.cs" />
