@@ -240,8 +240,9 @@ function _applyFiltersAndRender() {
             if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
             if (!match) return false;
         }
-        // ✅ ถ้าสินค้าไม่มีข้อมูล fitting → แสดงทุกกรณี
-        if (fitK.length && p.fit.length > 0 && !fitK.some(f => p.fit.includes(f))) return false;
+        // หยิบมาเฉพาะที่ตรงกันใน card เท่านั้นทุกกรณี
+        if (fitK.length && p.fit.length > 0 && !fitK.every(f => p.fit.includes(f))) return false;
+        //if (fitK.length && p.fit.length > 0 && !fitK.some(f => p.fit.includes(f))) return false;
         return true;
     });
 
@@ -490,15 +491,18 @@ function scrollBottom(dx) {
 
 // ── ใน selectGroup (truscripts.js) ──
 function selectGroup(id) {
+    // ป้องกันคลิกซ้ำระหว่างรอ
+    if (window._isSearchingCategory) return;
+    window._isSearchingCategory = true;
+
     activeGroup = id;
     window.selectedGroupId = id;
 
     document.querySelectorAll('.bb-item').forEach((b, i) => {
         b.classList.toggle('active', GROUPS[i].id === id);
     });
-    document.querySelectorAll('.pg-nav-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.gid === id);
-    });
+
+    document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none'); // disable ระหว่างรอ
 
     const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
     if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -538,7 +542,7 @@ function _clickedMatchDataAndRender() {
             }
 
             // 3. render — เรียก API ค้นหาสินค้าใหม่ทุกครั้งที่เปลี่ยน category
-            hideSkel();
+            // hideSkel();
             searchProductByCategory().then(() => {
                 PRODUCTS_FOR_COUNT = [...PRODUCTS];
                 _updateSidebar();
@@ -1176,7 +1180,7 @@ function toggleFit(chip, val) {
         }, 200);
     } else {
         searchProductByCategory().finally(() => {
-            hideSkel();
+            //hideSkel();
             renderActiveFilterChips();
         });
     }
@@ -2171,8 +2175,10 @@ function ClickedMatchData() {
 // }
 
 function _renderAfterGroupChange() {
-    hideSkel();
-    searchProductByCategory().then(() => {
+    //hideSkel();
+    searchProductByCategory().finally(() => {
+        window._isSearchingCategory = false;
+        document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
         PRODUCTS_FOR_COUNT = [...PRODUCTS];
         _updateSidebar();
         renderActiveFilterChips();

@@ -18,7 +18,12 @@ namespace Ecatalog.Controllers
     {
         // GET: Login
         [HttpGet]
-        public ActionResult Login() {
+        public ActionResult Login(string returnUrl)
+        {
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                ViewBag.ReturnUrl = returnUrl;
+            }
 
             return View();
         }

@@ -15,9 +15,10 @@ namespace Ecatalog.Controllers
     {
         public ActionResult Index()
         {
-            if (!Utils.IsLogin) {
+            if (!Utils.IsLogin)
+            {
                 return RedirectToAction(
-                    "Index",
+                    "Login",
                     "Login");
             }
             var currentYear = DateTime.Now.Year;

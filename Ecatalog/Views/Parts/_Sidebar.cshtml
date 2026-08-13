@@ -401,11 +401,14 @@
             ...fits.map(f => dirMap[f]).filter(Boolean),
         ])];
 
+        const checkedLineIds = $(".chk-item.checked[data-filter='filterProductLineId']")
+            .map(function () { return parseInt($(this).data("id")); }).get();
+
         return {
             productGroupId: activeGroupIds,
-            productLineId:
-                $(".chk-item.checked[data-filter='filterProductLineId']")
-                    .map(function () { return parseInt($(this).data("id")); }).get(),
+            productLineId: checkedLineIds.length > 0
+                ? checkedLineIds
+                : (currentAllowed.pl || []).map(id => parseInt(id)),  // fallback ใช้ allowedIds ทั้งหมด
             brandId:
                 $(".chk-item.checked[data-filter='filterProductBrandId']")
                     .map(function () { return parseInt($(this).attr("data-id")); }).get(),
@@ -413,20 +416,25 @@
         };
     }
     //send params send to controller searchByCategory
-    async function searchProductByCategory() {
+async function searchProductByCategory() {
     try {
         const filters = getSearchCatagoryObject();
-        console.log('filters:', filters); // ✅ ดู filter ที่ส่งไป
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout ฝั่ง client
+
         const response = await fetch(
             '@Url.Action("GetProductBySearchCatagory","Product")',
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(filters)
+                body: JSON.stringify(filters),
+                signal: controller.signal
             });
+
+        clearTimeout(timeoutId);
+
         const result = await response.json();
-        console.log('result:', result); // ✅ ดู response จาก API
-        console.log('result.Data:', result.Data); // ✅ ดูว่า Data มีอะไร
         if (!response.ok) throw new Error(result.Message || "API Error");
         if (result.IsSuccess) {
             _setBaseProducts(result.Data, 'category');
@@ -434,37 +442,40 @@
         } else {
             Swal.fire({
                 icon: 'warning',
-                title: 'ไม่สำเร็จ',
-                text: result.Message || "Search Error"
+                title: 'ค้นหาไม่สำเร็จ',
+                text: 'ระบบใช้เวลานานกว่าปกติ กรุณาลองใหม่อีกครั้ง'
             });
-            //alert(result.Message || "Search Error");
         }
     } catch (ex) {
         console.error("searchProductByCategory Error:", ex);
+        const isTimeout = ex.name === 'AbortError';
         Swal.fire({
             icon: 'error',
-            title: 'เกิดข้อผิดพลาด',
-            text: ex.message || "System Error"
+            title: isTimeout ? 'หมดเวลาค้นหา' : 'เกิดข้อผิดพลาด',
+            text: isTimeout
+                ? 'ระบบค้นหาช้ากว่าปกติ กรุณาลองใหม่อีกครั้ง'
+                : (ex.message || "System Error")
         });
-        //alert(ex.message || "System Error");
+    }finally {
+        hideSkel(); // ← hideSkel อยู่ที่นี่ที่เดียว ทั้ง success และ fail
     }
 }
-    //get value text, checkbox
-    async function getSearchFieldObject() {
-        const request = {
-            searchText:
-                $("#txtSearchField")
-                    .val()
-                    .trim(),
+//get value text, checkbox
+async function getSearchFieldObject() {
+    const request = {
+        searchText:
+            $("#txtSearchField")
+                .val()
+                .trim(),
 
-            searchFields:
-                $(".smode-btn.active").map(function () {
-                    return $(this).data("mode");
-                }).get()
-        };
-        //console.log(request);
-        return request;
-    }
+        searchFields:
+            $(".smode-btn.active").map(function () {
+                return $(this).data("mode");
+            }).get()
+    };
+    //console.log(request);
+    return request;
+}
     //get search by field data by value
    async function loadSearchProductField() {
         const btn = $("#btnSearchProductField");
