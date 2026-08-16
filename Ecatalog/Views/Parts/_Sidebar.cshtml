@@ -238,12 +238,15 @@
             ddl.empty();
             ddl.append('<option value="">— Select Maker —</option>');
             if (result.IsSuccess && result.Data) {
-                result.Data.forEach(item => {
+                result.Data.forEach((item, index) => {
                     ddl.append(`
                         <option value="${item.Id}">
                             ${item.Name}
                         </option>
                     `);
+                    if (index === 4) {
+                        ddl.append('<option disabled>──────────────────────────</option>');
+                    }
                 });
             }
         } catch (error) {
@@ -251,7 +254,7 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Load Maker Failed',
-                text: ex.message
+                text: error.message
             });
             // alert("Load Maker Failed");
         } finally {
@@ -438,6 +441,10 @@ async function searchProductByCategory() {
         if (!response.ok) throw new Error(result.Message || "API Error");
         if (result.IsSuccess) {
             _setBaseProducts(result.Data, 'category');
+
+            // ✅ re-render plList จาก BASE_PRODUCTS จริงของ category นี้
+            _rebuildSidebarFromProducts();
+
             gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             Swal.fire({

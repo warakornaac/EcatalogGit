@@ -488,22 +488,3 @@ function _resetAddBtn(btnEl, isBO, success) {
                            ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
     }
 }
-
-/* ── reset button state หลัง API call ── */
-function _resetAddBtn(btnEl, isBO, success) {
-    if (!btnEl) return;
-    btnEl.disabled = false;
-
-    if (success) {
-        btnEl.classList.add('added');
-        btnEl.innerHTML = '<i class="bi bi-check-lg"></i> Added';
-        setTimeout(() => {
-            btnEl.classList.remove('added');
-            btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
-                               ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
-        }, 1500);
-    } else {
-        btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
-                           ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
-    }
-}

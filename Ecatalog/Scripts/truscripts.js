@@ -110,13 +110,56 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ══════════════ API: MAP RESPONSE → FLAT PRODUCTS ═══════════════ */
+// function mapApiResponseToProducts(groups) {
+//     const list = [];
+//     let autoId = 1;
+//     const seen = new Set();
+
+//     (groups || []).forEach(group => {
+//         if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
+
+//         (group.productList || []).forEach(item => {
+//             if (!item.stkcode || seen.has(item.stkcode)) return;
+//             seen.add(item.stkcode);
+
+//             const qty = parseInt(item.qtyReady, 10);
+//             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
+//             const maker = (item.makerName || '').trim();
+//             const model = (item.modelName || '').trim();
+//             const carParts = [maker, model].filter(v =>
+//                 v && !PLACEHOLDER.includes(v) &&
+//                 !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
+//             );
+
+//             list.push({
+//                 id: autoId++,
+//                 code: item.stkcode || '',
+//                 name: item.stkcodeDescription || item.stkcode || '—',
+//                 price: parseFloat(item.price) || 0,
+//                 stock: isNaN(qty) ? 99 : qty,
+//                 cat: item.productGroup || group.productGroupNameMain || 'อื่นๆ',
+//                 brand: item.brand || '—',
+//                 line: item.productLine || 'อื่นๆ',
+//                 carModel: carParts.join(' ') || '',
+//                 img: item.imagePath || item.imageUrl || '',
+//                 fit: parseFittingDescription(item.fittingDescription)
+//             });
+//         });
+//     });
+
+//     return list;
+// }
+
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
     const seen = new Set();
 
     (groups || []).forEach(group => {
-        if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
+        // ✅ ลบ guard นี้ออก — อย่าทิ้ง group ที่ productGroupNameMain ว่าง
+        // if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
+
+        const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
 
         (group.productList || []).forEach(item => {
             if (!item.stkcode || seen.has(item.stkcode)) return;
@@ -137,7 +180,7 @@ function mapApiResponseToProducts(groups) {
                 name: item.stkcodeDescription || item.stkcode || '—',
                 price: parseFloat(item.price) || 0,
                 stock: isNaN(qty) ? 99 : qty,
-                cat: item.productGroup || group.productGroupNameMain || 'อื่นๆ',
+                cat: item.productGroup || groupLabel,
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
                 carModel: carParts.join(' ') || '',
@@ -415,11 +458,40 @@ function clearAllFilters() {
 
     closeSpecModal({ target: gEl('specModalBackdrop') });
     closeDrawer();
-
     PRODUCTS = [];
+    BASE_PRODUCTS = [];
     PRODUCTS_FOR_COUNT = [];
-    showSkel();
-    setTimeout(() => { hideSkel(); renderProducts(PRODUCTS); }, 350);
+    PRODUCTS_FOR_PL_COUNT = [];
+    PRODUCTS_FOR_BR_COUNT = [];
+    currentAllowed.pl = [];
+    currentAllowed.br = [];
+
+    // reset count เป็น 0 ทุกตัว
+    $("#plList .chk-item .chk-count").text(0);
+    $("#brList .chk-item .chk-count").text(0);
+
+    // แสดงแค่ 5 ตัวแรกของ product line (เหมือนตอน init)
+    let plVisible = 0;
+    $("#plList .chk-item").each(function () {
+        plVisible++;
+        $(this).toggle(plVisible <= 5);
+    });
+
+    // แสดงแค่ 5 ตัวแรกของ brand
+    let brVisible = 0;
+    $("#brList .chk-item").each(function () {
+        brVisible++;
+        $(this).toggle(brVisible <= 5);
+    });
+
+    // reset ปุ่ม see more
+    const plBtn = gEl('plSeeMore');
+    if (plBtn) { plBtn.classList.remove('expanded'); plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
+    const brBtn = gEl('brSeeMore');
+    if (brBtn) { brBtn.classList.remove('expanded'); brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
+
+    hideSkel();
+    renderProducts(PRODUCTS);
 
     [1, 2, 3, 4].forEach(i => {
         gEl('lb' + i)?.classList.remove('active-badge');
@@ -428,6 +500,89 @@ function clearAllFilters() {
     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 }
+
+function _rebuildSidebarFromProducts() {
+    // ── Product Line: อัปเดต count + show/hide จาก BASE_PRODUCTS ──
+    const lineCount = {};
+    BASE_PRODUCTS.forEach(p => {
+        if (p.line) lineCount[p.line] = (lineCount[p.line] || 0) + 1;
+    });
+
+    let plVisible = 0;
+    $('#plList .chk-item').each(function () {
+        const name = $(this).attr('data-name');
+        const count = lineCount[name] || 0;
+        $(this).find('.chk-count').text(count);
+        // แสดงเฉพาะที่มี count > 0 และ top 5
+        if (count > 0) {
+            plVisible++;
+            $(this).toggle(plVisible <= 5);
+        } else {
+            $(this).hide();
+        }
+    });
+
+    // sort by count desc
+    const $plList = $('#plList');
+    const $items = $plList.find('.chk-item').detach();
+    $items.sort((a, b) =>
+        (parseInt($(b).find('.chk-count').text()) || 0) -
+        (parseInt($(a).find('.chk-count').text()) || 0)
+    ).appendTo($plList);
+
+    // re-apply show/hide top 5 หลัง sort
+    plVisible = 0;
+    $plList.find('.chk-item').each(function () {
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
+        if (count > 0) {
+            plVisible++;
+            $(this).toggle(plVisible <= 5);
+        } else {
+            $(this).hide();
+        }
+    });
+
+    const plBtn = gEl('plSeeMore');
+    if (plBtn) {
+        plBtn.classList.remove('expanded');
+        plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+    }
+
+    // ── Brand: อัปเดต count + show/hide จาก BASE_PRODUCTS ──
+    const brandCount = {};
+    BASE_PRODUCTS.forEach(p => {
+        if (p.brand && p.brand !== '—') brandCount[p.brand] = (brandCount[p.brand] || 0) + 1;
+    });
+
+    let brVisible = 0;
+    const $brList = $('#brList');
+    const $brItems = $brList.find('.chk-item').detach();
+    $brItems.each(function () {
+        const name = $(this).attr('data-name');
+        $(this).find('.chk-count').text(brandCount[name] || 0);
+    });
+    $brItems.sort((a, b) =>
+        (parseInt($(b).find('.chk-count').text()) || 0) -
+        (parseInt($(a).find('.chk-count').text()) || 0)
+    ).appendTo($brList);
+
+    $brList.find('.chk-item').each(function () {
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
+        if (count > 0) {
+            brVisible++;
+            $(this).toggle(brVisible <= 5);
+        } else {
+            $(this).hide();
+        }
+    });
+
+    const brBtn = gEl('brSeeMore');
+    if (brBtn) {
+        brBtn.classList.remove('expanded');
+        brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+    }
+}
+
 /* ═══════════════ §4 — SORTING ════════════════ */
 function switchSortbyPart() {
     // toggle ระหว่าง carModel (default) และ part
@@ -1101,6 +1256,44 @@ function removeVfTag(k) {
 }
 
 /* ═════════════ §2 — SEARCH ════════════════════ */
+// function runSearch() {
+//     activateSec(2);
+//     const keyword = (gEl('partQ')?.value || gEl('headerQ')?.value || '').trim();
+
+//     if (keyword.length < 2) {
+//         toast('กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร', 'warn');
+//         return;
+//     }
+
+//     showSkel();
+
+//     if (BASE_PRODUCTS.length > 0) {
+//         มี BASE_PRODUCTS → ลอง filter local ก่อน
+//         const kw = keyword.toLowerCase();
+//         const tokens = kw.split(' ').filter(t => t.length > 0);
+
+//         const matched = BASE_PRODUCTS.filter(p => {
+//             const searchText = [p.code, p.name, p.brand, p.cat, p.line, p.carModel]
+//                 .join(' ').toLowerCase();
+//             return tokens.every(token => searchText.includes(token));
+//         });
+
+//         if (matched.length > 0) {
+//             เจอใน local → render เลย
+//             setTimeout(() => {
+//                 hideSkel();
+//                 _applyFiltersAndRender();
+//                 gEl('rz2')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+//             }, 200);
+//         } else {
+//             ไม่เจอใน local → เรียก Global Search API
+//             searchProductGlobal(keyword);
+//         }
+//     } else {
+//         ไม่มี BASE_PRODUCTS → เรียก Global Search API
+//         searchProductGlobal(keyword);
+//     }
+// }
 function runSearch() {
     activateSec(2);
     const keyword = (gEl('partQ')?.value || gEl('headerQ')?.value || '').trim();
@@ -1113,7 +1306,6 @@ function runSearch() {
     showSkel();
 
     if (BASE_PRODUCTS.length > 0) {
-        // มี BASE_PRODUCTS → ลอง filter local ก่อน
         const kw = keyword.toLowerCase();
         const tokens = kw.split(' ').filter(t => t.length > 0);
 
@@ -1124,18 +1316,19 @@ function runSearch() {
         });
 
         if (matched.length > 0) {
-            // เจอใน local → render เลย
+            // ✅ render matched โดยตรง ไม่ใช่ _applyFiltersAndRender() ที่ re-filter ใหม่
             setTimeout(() => {
                 hideSkel();
-                _applyFiltersAndRender();
+                PRODUCTS = matched;
+                renderProducts(PRODUCTS);
+                _updateSidebar();
+                renderActiveFilterChips();
                 gEl('rz2')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 200);
         } else {
-            // ไม่เจอใน local → เรียก Global Search API
             searchProductGlobal(keyword);
         }
     } else {
-        // ไม่มี BASE_PRODUCTS → เรียก Global Search API
         searchProductGlobal(keyword);
     }
 }
@@ -2162,28 +2355,37 @@ function ClickedMatchData() {
     });
 }
 
-// function _renderAfterGroupChange() {
-//     hideSkel();
-//     if (BASE_PRODUCTS.length > 0) {
-//         _applyFiltersAndRender();
-//         PRODUCTS_FOR_COUNT = [...PRODUCTS];
-//     } else {
-//         searchProductByCategory().then(() => {
-//             PRODUCTS_FOR_COUNT = [...PRODUCTS];
-//         });
-//     }
-// }
-
 function _renderAfterGroupChange() {
-    //hideSkel();
-    searchProductByCategory().finally(() => {
+    // ✅ ถ้ามี BASE_PRODUCTS อยู่แล้ว (จาก vehicle/field search) → filter local ไม่ต้อง API ใหม่
+    if (BASE_PRODUCTS.length > 0) {
+        _applyFiltersAndRender();
         window._isSearchingCategory = false;
         document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
         PRODUCTS_FOR_COUNT = [...PRODUCTS];
         _updateSidebar();
         renderActiveFilterChips();
-    });
+        hideSkel();
+    } else {
+        searchProductByCategory().finally(() => {
+            window._isSearchingCategory = false;
+            document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];
+            _updateSidebar();
+            renderActiveFilterChips();
+        });
+    }
 }
+
+// function _renderAfterGroupChange() {
+//     hideSkel();
+//     searchProductByCategory().finally(() => {
+//         window._isSearchingCategory = false;
+//         document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+//         PRODUCTS_FOR_COUNT = [...PRODUCTS];
+//         _updateSidebar();
+//         renderActiveFilterChips();
+//     });
+// }
 
 function FilterProductionLines(allowedIds) {
     currentAllowed.pl = allowedIds;

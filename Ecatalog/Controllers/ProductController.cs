@@ -70,7 +70,7 @@ namespace Ecatalog.Controllers
                     "POST",
                     request,
                     false,
-                    180);
+                    300);
 
                 if (result == null)
                 {
