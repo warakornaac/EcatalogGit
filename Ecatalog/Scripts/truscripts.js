@@ -513,6 +513,8 @@ function clearAllFilters() {
     });
     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
+
+    _vehiclePromptShown = false; // ✅ reset ให้โชว์ popup ได้ใหม่หลัง clear
 }
 
 function _rebuildSidebarFromProducts() {
