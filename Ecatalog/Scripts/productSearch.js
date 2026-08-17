@@ -64,12 +64,29 @@ async function loadSearchProductVio() {
                 (result.IsFromCache ? "VIO Cache Hit" : "API Call") +
                 " (" + result.ExecutionTime + " ms)"
             );
-            activeGroup = '0';
-            window.selectedGroupId = '0';
-            document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
-            document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
 
-            _setBaseProducts(result.Data, 'vehicle');
+            const previousGroup = activeGroup;
+
+            document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
+
+            // ส่ง skipRender=true เพื่อไม่ให้ _setBaseProducts เรียก _applyFiltersAndRender เอง
+            _setBaseProducts(result.Data, 'vehicle', false, true);
+
+            const groupStillExists = previousGroup !== '0' &&
+                GROUPS.some(g => String(g.id) === String(previousGroup));
+
+            if (groupStillExists) {
+                activeGroup = previousGroup;
+                window.selectedGroupId = previousGroup;
+                document.querySelector(`.bb-item[data-id="${previousGroup}"]`)?.classList.add('active');
+            } else {
+                activeGroup = '0';
+                window.selectedGroupId = '0';
+                document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
+            }
+
+            // render ครั้งเดียวหลัง activeGroup ถูก set แล้ว
+            _applyFiltersAndRender();
 
         } else {
             toast(result.Message || "Search Error", "warn");

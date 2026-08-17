@@ -238,7 +238,7 @@ function parseFittingDescription(fittingDescription) {
  * @param {string} searchType  — 'vehicle' | 'part' | 'category'
  */
 // ── 2. _setBaseProducts — ส่ง keepSort=true เสมอ หรือดูจาก dropdown ──
-function _setBaseProducts(groups, searchType, keepSort = false) {
+function _setBaseProducts(groups, searchType, keepSort = false, skipRender = false) {
     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
 
     if (searchType === 'vehicle' || searchType === 'part') {
@@ -247,7 +247,6 @@ function _setBaseProducts(groups, searchType, keepSort = false) {
         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
 
-        // ✅ อ่านค่าจาก dropdown โดยตรง แทนการ hardcode
         const sel = gEl('sortSelect');
         if (!keepSort && sel) {
             currentSort = sel.value || 'carModel';
@@ -259,7 +258,11 @@ function _setBaseProducts(groups, searchType, keepSort = false) {
 
     PRODUCTS_FOR_PL_COUNT = [...BASE_PRODUCTS];
     PRODUCTS_FOR_BR_COUNT = [...BASE_PRODUCTS];
-    _applyFiltersAndRender();
+
+    // ✅ caller บางตัว handle render เองหลัง set activeGroup — ไม่ render ซ้ำ
+    if (!skipRender) {
+        _applyFiltersAndRender();
+    }
 }
 
 function _applyFiltersAndRender() {
@@ -336,12 +339,13 @@ function _updateSidebar() {
             (parseInt($(a).find('.chk-count').text()) || 0)
         ).appendTo($plList);
 
-        // re-apply show/hide top 5 หลัง sort
+        // re-apply show/hide top 5 หลัง sort — เฉพาะ count > 0 เท่านั้น
         let visibleCount = 0;
         $plList.find('.chk-item').each(function () {
             const id = $(this).attr('data-id');
+            const count = parseInt($(this).find('.chk-count').text()) || 0;
             const allowed = currentAllowed.pl.length === 0 || currentAllowed.pl.includes(id);
-            if (!allowed) {
+            if (!allowed || count === 0) {
                 $(this).hide();
             } else {
                 visibleCount++;
@@ -357,7 +361,7 @@ function _updateSidebar() {
         $(this).find('.chk-count').text(count);
     });
 
-    // ── sort brand + show top 5 เสมอ (รวม count=0) ──
+    // ── sort brand + show top 5 เฉพาะที่ count > 0 ──
     const $brList = $('#brList');
     const $brChecked = $brList.find('.chk-item.checked').detach();
 
@@ -368,15 +372,15 @@ function _updateSidebar() {
 
     $brList.prepend($brChecked);
 
-    // แสดง top 5 เสมอ ไม่ว่า count จะเป็น 0
     let brVisible = 0;
     $brList.find('.chk-item').each(function () {
         const isChecked = $(this).hasClass('checked');
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
         if (isChecked) {
             $(this).show().removeClass('br-extra');
             return;
         }
-        if (brVisible < 5) {
+        if (count > 0 && brVisible < 5) {
             $(this).show().removeClass('br-extra');
             brVisible++;
         } else {
@@ -470,18 +474,28 @@ function clearAllFilters() {
     $("#plList .chk-item .chk-count").text(0);
     $("#brList .chk-item .chk-count").text(0);
 
-    // แสดงแค่ 5 ตัวแรกของ product line (เหมือนตอน init)
+    // แสดงแค่ 5 ตัวแรกของ product line เฉพาะ count > 0
     let plVisible = 0;
     $("#plList .chk-item").each(function () {
-        plVisible++;
-        $(this).toggle(plVisible <= 5);
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
+        if (count > 0 && plVisible < 5) {
+            $(this).show();
+            plVisible++;
+        } else {
+            $(this).hide();
+        }
     });
 
-    // แสดงแค่ 5 ตัวแรกของ brand
+    // แสดงแค่ 5 ตัวแรกของ brand เฉพาะ count > 0
     let brVisible = 0;
     $("#brList .chk-item").each(function () {
-        brVisible++;
-        $(this).toggle(brVisible <= 5);
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
+        if (count > 0 && brVisible < 5) {
+            $(this).show();
+            brVisible++;
+        } else {
+            $(this).hide();
+        }
     });
 
     // reset ปุ่ม see more
