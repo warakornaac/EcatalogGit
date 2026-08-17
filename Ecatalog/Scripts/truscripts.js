@@ -2854,17 +2854,60 @@ function getActiveCompanies() {
         .map(btn => btn.dataset.company);
 }
 
+// ฟังก์ชันบันทึกและจัดการการคลิก
 function toggleCompany(btn) {
-    const isPressed = btn.getAttribute('aria-pressed') === 'true';
-    btn.setAttribute('aria-pressed', String(!isPressed));
+    const container = btn.closest('.company-group');
+    const isCurrentlyPressed = btn.getAttribute('aria-pressed') === 'true';
 
-    // ✅ sync company ตัวแรกที่ active เข้า APP_SESSION (ถ้ามีมากกว่า 1 ตัว active ให้ใช้ตัวแรก)
-    const active = getActiveCompanies();
-    if (window.APP_SESSION) window.APP_SESSION.company = active[0] || 'TAC';
+    // 1. ปิดสถานะของทุกปุ่มในกลุ่มก่อน
+    if (container) {
+        container.querySelectorAll('.company-btn').forEach(b => {
+            b.setAttribute('aria-pressed', 'false');
+        });
+    }
 
+    // 2. ถ้าปุ่มที่กดไม่ได้เปิดอยู่ ให้เปิดใช้งาน (ถ้าเปิดอยู่แล้วกดซ้ำ จะเป็นการยกเลิกเลือก)
+    let selectedCompany = '';
+    if (!isCurrentlyPressed) {
+        btn.setAttribute('aria-pressed', 'true');
+        selectedCompany = btn.getAttribute('data-company');
+    }
+
+    // 3. บันทึกลง window.APP_SESSION
+    if (!window.APP_SESSION) window.APP_SESSION = {};
+    window.APP_SESSION.company = selectedCompany || 'TAC';
+
+    // 4. ✅ เซฟลง sessionStorage (หรือ localStorage) เพื่อให้ค่าไม่หายตอนรีเฟรช
+    sessionStorage.setItem('selected_company', window.APP_SESSION.company);
+
+    // 5. โหลดข้อมูลลูกค้าใหม่
     const selectedSlm = document.getElementById('salesmanId')?.value;
-    if (selectedSlm) getCustomerbySalesman(selectedSlm, '');
+    if (selectedSlm) {
+        getCustomerbySalesman(selectedSlm, '');
+    }
 }
+
+// ✅ ฟังก์ชันดึงค่าที่เคยเลือกไว้กลับมาแสดง (เรียกใช้ตอนโหลดหน้าเว็บ)
+function initCompanySelection() {
+    if (!window.APP_SESSION) window.APP_SESSION = {};
+
+    // อ่านค่าจาก sessionStorage (ถ้าไม่มีให้ใช้ 'TAC' เป็นค่าเริ่มต้น)
+    const savedCompany = sessionStorage.getItem('selected_company') || window.APP_SESSION.company || 'TAC';
+    window.APP_SESSION.company = savedCompany;
+
+    // ค้นหาปุ่มที่ตรงกับค่าที่บันทึกไว้ แล้วตั้งค่า aria-pressed="true"
+    const targetBtn = document.querySelector(`.company-btn[data-company="${savedCompany}"]`);
+    if (targetBtn) {
+        const container = targetBtn.closest('.company-group');
+        if (container) {
+            container.querySelectorAll('.company-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        }
+        targetBtn.setAttribute('aria-pressed', 'true');
+    }
+}
+
+// เรียกทำงานทันทีเมื่อโหลด DOM เสร็จสิ้น
+document.addEventListener('DOMContentLoaded', initCompanySelection);
 
 /* ════════════ THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)════════════ */
 const THEME_KEY = 'truTheme';

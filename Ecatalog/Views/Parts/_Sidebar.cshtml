@@ -63,9 +63,12 @@
         </div>
         <div class="mb-2">
             <div class="flabel">Model Range</div>
-            <select class="fselect" id="rangeId" onchange="loadBody();" disabled>
+            @*<select class="fselect" id="rangeId" onchange="loadBody();" disabled>
                 <option value="">— Select Range —</option>
-            </select>
+            </select>*@
+            <select class="fselect" id="rangeId" onchange="loadBody(); loadEngine();" disabled>
+                <option value="">— Select Range —</option>
+            </select>Model
         </div>
         <div class="mb-2">
             <div class="flabel">Model Body</div>
@@ -228,6 +231,7 @@
             //alert("Load Market Segment Failed");
         }
     }
+
     async function loadMaker() {
         try {
             const marketSegmentId = $("#marketsegId").val();
@@ -261,6 +265,7 @@
             updateVehSummary();
         }
     }
+
     async function loadModelRange() {
         try {
             $("#bodyId").empty().append('<option value="">— Select Body —</option>');
@@ -271,7 +276,6 @@
             const makerId = $("#makerId").val();
             const allThreeSelected = marketSegmentId && segmentId && makerId;
 
-            // ✅ enable/disable dropdown ที่ต้องรอครบ 3 ตัว
             ['rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !allThreeSelected;
@@ -297,18 +301,16 @@
             }
         } catch (error) {
             console.error(error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Load Model Range Failed',
-                text: ex.message
-            });
-            //alert("Load Model Range Failed");
+            Swal.fire({ icon: 'error', title: 'Load Model Range Failed', text: error.message });
         } finally {
             updateVehSummary();
         }
     }
+
     async function loadBody() {
         try {
+            $("#engineId").empty().append('<option value="">— Select Engine —</option>');
+
             const marketSegmentId = $("#marketsegId").val();
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
@@ -333,32 +335,30 @@
             }
         } catch (error) {
             console.error(error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Load Body Failed',
-                text: ex.message
-            });
-            //alert("Load Body Failed");
+            Swal.fire({ icon: 'error', title: 'Load Body Failed', text: error.message });
         } finally {
             updateVehSummary();
+            await loadEngine(); // ✅ โหลด Engine ทันทีหลัง Body โหลดเสร็จ
         }
     }
-
     async function loadEngine() {
         try {
             const marketSegmentId = $("#marketsegId").val();
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
             const rangeId = $("#rangeId").val();
-            const bodyId = $("#bodyId").val();
+            const bodyId = $("#bodyId").val(); // optional
 
-            if (!marketSegmentId || !segmentId || !makerId || !rangeId || !bodyId) {
+            // ✅ บังคับแค่ครบ 3 ตัวแรก + rangeId เท่านั้น
+            if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
                 $("#engineId").empty().append('<option value="">— Select Engine —</option>');
                 updateVehSummary();
                 return;
             }
 
-            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId, bodyId });
+            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId });
+            if (bodyId) params.append('bodyId', bodyId); // ✅ ส่ง bodyId ถ้ามี เพื่อ filter เพิ่มเติม
+
             const response = await fetch(`@Url.Action("GetEngine", "Master")?${params}`, { method: 'GET' });
             const result = await response.json();
 
@@ -371,12 +371,7 @@
             }
         } catch (error) {
             console.error(error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Load Engine Failed',
-                text: ex.message
-            });
-            //alert("Load Engine Failed");
+            Swal.fire({ icon: 'error', title: 'Load Engine Failed', text: error.message });
         } finally {
             updateVehSummary();
         }

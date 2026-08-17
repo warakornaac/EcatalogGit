@@ -885,27 +885,24 @@ body {
         background: #e8effe;
         color: #3350c8;
         border-color: #b3c2f7;
-        opacity: 40%;
     }
 
     .company-btn[data-company="TAC"] {
         background: #feeaea;
-        color: #ff0000;
-        border-color: #ff0000;
+        color: #f82a2a;
+        border-color: #f82a2a;
     }
 
     .company-btn[data-company="AGS"] {
         background: #f3e8fe;
         color: #7c3aed;
         border-color: #d4aff7;
-        opacity: 40%;
     }
 
     .company-btn[data-company="OMP"] {
         background: #fef5e8;
         color: #ff8100;
         border-color: #ffd800;
-        opacity: 40%;
     }
 
     .company-btn[aria-pressed="true"][data-company="AAC"] {
@@ -915,17 +912,22 @@ body {
     }
 
     .company-btn[aria-pressed="true"][data-company="TAC"] {
-        background: #b93232;
+        background: #f82a2a;
         color: #fff;
-        border-color: #b93232;
+        border-color: #f82a2a;
     }
 
-    .company-btn[aria-pressed="true"][data-company="TAM"] {
+    .company-btn[aria-pressed="true"][data-company="AGS"] {
         background: #7c3aed;
         color: #fff;
         border-color: #7c3aed;
     }
 
+    .company-btn[aria-pressed="true"][data-company="OMP"] {
+        background: #ff8100;
+        color: #fff;
+        border-color: #ff8100;
+    }
     .company-btn:hover {
         opacity: .85;
     }
