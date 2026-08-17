@@ -680,6 +680,95 @@ async function getSearchFieldObject() {
         }
     }
 
+    //---------------- Popup LoadGroup --------------------//
+    function showVehiclePrompt(onYes, onNo) {
+        // ถ้าเลือกรถครบแล้ว ไม่ต้องโชว์ popup
+        const hasMaker = $("#makerId").val();
+        const hasRange = $("#rangeId").val();
+        if (hasMaker && hasRange) {
+            onNo(); // ค้นหาต่อปกติ
+            return;
+        }
+
+        Swal.fire({
+            icon: false,
+            title: '⚡ เพิ่มความเร็วในการค้นหา',
+            html: `
+            <p style="margin:0;font-size:16px;color:#555;">
+                เพื่อให้ระบบค้นหาสินค้าได้รวดเร็วยิ่งขึ้น<br>
+                กรุณาเลือก<strong> รุ่นรถ </strong>ที่ต้องการค้นหาเพิ่มเติม
+            </p>
+            <p style="margin:10px 0 0;font-size:14px;color:#888;">
+                การเลือกรุ่นรถจะช่วยลดระยะเวลาในการค้นหาและแสดงผลสินค้าได้เร็วขึ้น
+            </p>
+        `,
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'No',
+            confirmButtonColor: '#e63946',
+            cancelButtonColor: '#aaa',
+            reverseButtons: false,
+            allowOutsideClick: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                onYes();
+            } else {
+                onNo();
+            }
+        });
+    }
+
+    function goToVehicleFilter() {
+        const vfBody = document.getElementById('vfBody');
+        if (vfBody && !vfBody.classList.contains('show')) {
+            const hd = document.querySelector("[onclick*=\"'vfBody'\"]");
+            if (hd) hd.click();
+        }
+
+        setTimeout(() => {
+            const maker = document.getElementById('makerId');
+            if (!maker) return;
+
+            maker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            setTimeout(() => {
+                maker.style.transition = 'box-shadow 0.2s, border-color 0.2s';
+                maker.style.boxShadow = '0 0 0 3px #e6394680';
+                maker.style.borderColor = '#e63946';
+                maker.focus();
+
+                let count = 0;
+                const blink = setInterval(() => {
+                    maker.style.boxShadow = count % 2 === 0
+                        ? '0 0 0 3px #e6394680'
+                        : '0 0 0 3px #e6394620';
+                    count++;
+                    if (count >= 6) {
+                        clearInterval(blink);
+                        // ✅ เคลียร์ style ออกเมื่อ blink จบ
+                        maker.style.boxShadow = '';
+                        maker.style.borderColor = '';
+                        maker.style.transition = '';
+                    }
+                }, 300);
+
+                // ✅ เคลียร์ทันทีเมื่อ user คลิก
+                const clearHighlight = () => {
+                    clearInterval(blink);
+                    maker.style.boxShadow = '';
+                    maker.style.borderColor = '';
+                    maker.style.transition = '';
+                    maker.removeEventListener('mousedown', clearHighlight);
+                    maker.removeEventListener('change', clearHighlight);
+                };
+                maker.addEventListener('mousedown', clearHighlight);
+                maker.addEventListener('change', clearHighlight);
+
+            }, 400);
+        }, 200);
+    }
+    //---------------------------------------------------------//
+
     document.addEventListener('DOMContentLoaded', function () {
         initYearPickers();
     });

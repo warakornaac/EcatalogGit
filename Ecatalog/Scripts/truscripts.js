@@ -660,29 +660,37 @@ function scrollBottom(dx) {
 
 // ── ใน selectGroup (truscripts.js) ──
 function selectGroup(id) {
-    // ป้องกันคลิกซ้ำระหว่างรอ
     if (window._isSearchingCategory) return;
-    window._isSearchingCategory = true;
 
-    activeGroup = id;
-    window.selectedGroupId = id;
+    showVehiclePrompt(
+        // Yes → ไปเลือกรถ ยังไม่ค้นหา
+        function () {
+            goToVehicleFilter();
+        },
+        // No → ค้นหาต่อปกติ
+        function () {
+            window._isSearchingCategory = true;
 
-    document.querySelectorAll('.bb-item').forEach((b, i) => {
-        b.classList.toggle('active', GROUPS[i].id === id);
-    });
+            activeGroup = id;
+            window.selectedGroupId = id;
 
-    document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none'); // disable ระหว่างรอ
+            document.querySelectorAll('.bb-item').forEach((b, i) => {
+                b.classList.toggle('active', GROUPS[i].id === id);
+            });
 
-    const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
-    if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    const activeBB = document.querySelector('.bb-item.active');
-    if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none');
 
-    updateBreadcrumb(id, 'Parts Catalog');
-    showSkel();
-    ClickedMatchData();
+            const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
+            if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            const activeBB = document.querySelector('.bb-item.active');
+            if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+            updateBreadcrumb(id, 'Parts Catalog');
+            showSkel();
+            ClickedMatchData();
+        }
+    );
 }
-
 function _clickedMatchDataAndRender() {
     const grpId = window.selectedGroupId || null;
 
