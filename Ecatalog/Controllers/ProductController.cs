@@ -18,14 +18,14 @@ namespace Ecatalog.Controllers
     public class ProductController : Controller
     {
         // GET: Product
-        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath)
+        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath, string slmCode, string cusCode, string company)
         {
             try
             {
                 var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
                     "Ecatalog/GetProductBySearchVio",
                     "GET",
-                    new { marketSegmentId, segmentId, makerId, rangeId, bodyId, engineId, yearFrom, yearTo, driveType, imagePath },
+                    new { marketSegmentId, segmentId, makerId, rangeId, bodyId, engineId, yearFrom, yearTo, driveType, imagePath, slmCode, cusCode, company },
                     true,
                     30);
 

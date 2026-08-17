@@ -39,6 +39,9 @@ namespace Ecatalog.Models
         public string modelName { get; set; }
         public string imagePath { get; set; }
         public string imageUrl { get; set; }
+        public string slmCode { get; set; }
+        public string cusCode { get; set; }
+        public string company { get; set; }
         public string fittingDescription { get; set; } // ✅
     }
 }

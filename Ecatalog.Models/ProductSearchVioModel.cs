@@ -24,6 +24,9 @@ namespace Ecatalog.Models
         public string productGroup { get; set; }
         public string productLine { get; set; }
         public string imagePath { get; set; }
+        public string slmCode { get; set; }
+        public string cusCode { get; set; }
+        public string company { get; set; }
         public string fittingDescription { get; set; }
     }
 }
