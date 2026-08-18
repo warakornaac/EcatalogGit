@@ -287,7 +287,8 @@ function _applyFiltersAndRender() {
             if (!match) return false;
         }
         // หยิบมาเฉพาะที่ตรงกันใน card เท่านั้นทุกกรณี
-        if (fitK.length && p.fit.length > 0 && !fitK.every(f => p.fit.includes(f))) return false;
+        if (fitK.length && (p.fit.length === 0 || !fitK.every(f => p.fit.includes(f)))) return false;
+        //if (fitK.length && p.fit.length > 0 && !fitK.every(f => p.fit.includes(f))) return false;
         //if (fitK.length && p.fit.length > 0 && !fitK.some(f => p.fit.includes(f))) return false;
         return true;
     });
@@ -2312,16 +2313,18 @@ function GetProductionLine() {
     $.ajax({
         url: urls.getProductline,
         method: 'GET',
-        success: function (result) {
-            if (result.IsSuccess) {
-                //PRODUCTS = result.Data || [];
-                RenderProductionLines(result.Data || []);
+        success: function (res) {
+            // ✅ รองรับทั้ง { IsSuccess, Data } และ { statusCode, result }
+            const ok = res.IsSuccess === true || res.statusCode === 200;
+            const data = res.Data || res.result || [];
+            if (ok) {
+                RenderProductionLines(data);
             } else {
-                console.error("API Error:", result.Message);
+                console.error("GetProductionLine Error:", res.Message || res.errorMessage);
             }
         },
         error: function (xhr, status, error) {
-            console.error(error);
+            console.error("GetProductionLine Ajax Error:", error);
         }
     });
 }
