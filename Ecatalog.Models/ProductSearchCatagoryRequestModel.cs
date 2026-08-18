@@ -13,6 +13,18 @@ namespace Ecatalog.Models
         public List<int> productLineId { get; set; }
         public List<int> brandId { get; set; }
         public List<string> fittingFilter { get; set; }
+        public List<string> marketSegmentId { get; set; }
+        public List<string> segmentId { get; set; }
+        public List<string> makerId { get; set; }
+        public List<string> rangeId { get; set; }
+        public List<string> bodyId { get; set; }
+        public List<string> engineId { get; set; }
+        public List<string> yearFrom { get; set; }
+        public List<string> yearTo { get; set; }
+        public List<string> driveType { get; set; }
+        public List<string> slmCode { get; set; }
+        public List<string> cusCode { get; set; }
+        public List<string> company { get; set; }
     }
 
     // ── RESPONSE ─────────────────────────────────────────────

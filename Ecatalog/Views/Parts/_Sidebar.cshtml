@@ -391,7 +391,6 @@
 
         const fits = [...fitState];
 
-        // ✅ แยก map ไม่ให้ทับกัน รวมแล้ว dedupe
         const fittingFilter = [...new Set([
             ...fits.map(f => axisMap[f]).filter(Boolean),
             ...fits.map(f => sideMap[f]).filter(Boolean),
@@ -399,87 +398,114 @@
             ...fits.map(f => dirMap[f]).filter(Boolean),
         ])];
 
-        const checkedLineIds = $(".chk-item.checked[data-filter='filterProductLineId']")
-            .map(function () { return parseInt($(this).data("id")); }).get();
+        // ✅ อ่านจาก chkState โดยตรง ไม่อ่านจาก DOM
+        const checkedLineNames = Object.keys(chkState.pl);
+        const checkedBrandNames = Object.keys(chkState.br);
+
+        // แปลง name → id จาก DOM (data-id อยู่บน element)
+        const checkedLineIds = checkedLineNames.length > 0
+            ? checkedLineNames.map(name => {
+                const el = document.querySelector(`#plList .chk-item[data-name="${CSS.escape(name)}"]`);
+                return el ? parseInt(el.getAttribute('data-id')) : null;
+            }).filter(id => id !== null && !isNaN(id))
+            : [];
+
+        const checkedBrandIds = checkedBrandNames.length > 0
+            ? checkedBrandNames.map(name => {
+                const el = document.querySelector(`#brList .chk-item[data-name="${CSS.escape(name)}"]`);
+                return el ? parseInt(el.getAttribute('data-id')) : null;
+            }).filter(id => id !== null && !isNaN(id))
+            : [];
 
         return {
             productGroupId: activeGroupIds,
-            productLineId: checkedLineIds.length > 0
-                ? checkedLineIds
-                : (currentAllowed.pl || []).map(id => parseInt(id)),  // fallback ใช้ allowedIds ทั้งหมด
-            brandId:
-                $(".chk-item.checked[data-filter='filterProductBrandId']")
-                    .map(function () { return parseInt($(this).attr("data-id")); }).get(),
-            fittingFilter
+            // ✅ ไม่มี fallback currentAllowed.pl อีกต่อไป — ถ้าไม่เลือก = ไม่ filter by line
+            productLineId: checkedLineIds,
+            brandId: checkedBrandIds,
+            fittingFilter,
+
+            marketSegmentId: marketSegmentId,
+            segmentId: segmentId,
+            makerId: makerId,
+            rangeId: rangeId,
+            bodyId: bodyId,
+            engineId: engineId,
+            yearFrom: yearFrom,
+            yearTo: yearTo,
+            driveType: driveType,
+
+            slmCode: slmCode,
+            cusCode: cusCode,
+            company: company
         };
     }
     //send params send to controller searchByCategory
-async function searchProductByCategory() {
-    try {
-        const filters = getSearchCatagoryObject();
+    async function searchProductByCategory() {
+        try {
+            const filters = getSearchCatagoryObject();
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout ฝั่ง client
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout ฝั่ง client
 
-        const response = await fetch(
-            '@Url.Action("GetProductBySearchCatagory","Product")',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(filters),
-                signal: controller.signal
-            });
+            const response = await fetch(
+                '@Url.Action("GetProductBySearchCatagory","Product")',
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filters),
+                    signal: controller.signal
+                });
 
-        clearTimeout(timeoutId);
+            clearTimeout(timeoutId);
 
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.Message || "API Error");
-        if (result.IsSuccess) {
-            _setBaseProducts(result.Data, 'category');
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.Message || "API Error");
+            if (result.IsSuccess) {
+                _setBaseProducts(result.Data, 'category');
 
-            // ✅ re-render plList จาก BASE_PRODUCTS จริงของ category นี้
-            _rebuildSidebarFromProducts();
+                // ✅ re-render plList จาก BASE_PRODUCTS จริงของ category นี้
+                _rebuildSidebarFromProducts();
 
-            gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
+                gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ค้นหาไม่สำเร็จ',
+                    text: 'ระบบใช้เวลานานกว่าปกติ กรุณาลองใหม่อีกครั้ง'
+                });
+            }
+        } catch (ex) {
+            console.error("searchProductByCategory Error:", ex);
+            const isTimeout = ex.name === 'AbortError';
             Swal.fire({
-                icon: 'warning',
-                title: 'ค้นหาไม่สำเร็จ',
-                text: 'ระบบใช้เวลานานกว่าปกติ กรุณาลองใหม่อีกครั้ง'
+                icon: 'error',
+                title: isTimeout ? 'หมดเวลาค้นหา' : 'เกิดข้อผิดพลาด',
+                text: isTimeout
+                    ? 'ระบบค้นหาช้ากว่าปกติ กรุณาลองใหม่อีกครั้ง'
+                    : (ex.message || "System Error")
             });
+        }finally {
+            hideSkel(); // ← hideSkel อยู่ที่นี่ที่เดียว ทั้ง success และ fail
         }
-    } catch (ex) {
-        console.error("searchProductByCategory Error:", ex);
-        const isTimeout = ex.name === 'AbortError';
-        Swal.fire({
-            icon: 'error',
-            title: isTimeout ? 'หมดเวลาค้นหา' : 'เกิดข้อผิดพลาด',
-            text: isTimeout
-                ? 'ระบบค้นหาช้ากว่าปกติ กรุณาลองใหม่อีกครั้ง'
-                : (ex.message || "System Error")
-        });
-    }finally {
-        hideSkel(); // ← hideSkel อยู่ที่นี่ที่เดียว ทั้ง success และ fail
     }
-}
-//get value text, checkbox
-async function getSearchFieldObject() {
-    const request = {
-        searchText:
-            $("#txtSearchField")
-                .val()
-                .trim(),
+    //get value text, checkbox
+    async function getSearchFieldObject() {
+        const request = {
+            searchText:
+                $("#txtSearchField")
+                    .val()
+                    .trim(),
 
-        searchFields:
-            $(".smode-btn.active").map(function () {
-                return $(this).data("mode");
-            }).get()
-    };
-    //console.log(request);
-    return request;
-}
+            searchFields:
+                $(".smode-btn.active").map(function () {
+                    return $(this).data("mode");
+                }).get()
+        };
+        //console.log(request);
+        return request;
+    }
     //get search by field data by value
-   async function loadSearchProductField() {
+    async function loadSearchProductField() {
         const btn = $("#btnSearchProductField");
         btn.prop("disabled", true);
         showSkel();
