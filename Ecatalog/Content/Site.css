@@ -1035,7 +1035,7 @@ body {
 .chk-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    /*gap: 2px;*/
 }
 
     .chk-list label {
@@ -1320,7 +1320,7 @@ body {
 }
 
 .filter-body {
-    padding: 11px 14px 14px;
+    padding: 5px 14px 14px;
 }
 
 .flabel {
@@ -1329,7 +1329,7 @@ body {
     color: var(--text-3);
     text-transform: uppercase;
     letter-spacing: .8px;
-    margin-bottom: 7px;
+    margin-bottom: 1px;
 }
 
 .sort-select {
@@ -1353,7 +1353,7 @@ body {
 .fselect {
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
-    padding: .38rem .75rem;
+    padding: .20rem .75rem;
     font-size: 13px;
     background: var(--surface);
     color: var(--text);
@@ -1384,7 +1384,7 @@ body {
         flex: 1;
         border: 1px solid var(--border);
         border-radius: var(--r-sm);
-        padding: .38rem .5rem;
+        padding: .20rem .5rem;
         font-size: 13px;
         color: var(--text);
         transition: border-color var(--tr);
@@ -1403,8 +1403,8 @@ body {
 .ftags {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 9px;
+/*    gap: 5px;*/
+/*    margin-top: 9px;*/
 }
 
 .ftag {
@@ -2965,7 +2965,8 @@ body {
         box-shadow: var(--sh-lg);
         width: var(--sidebar-w);
         transition: transform .3s cubic-bezier(.4,0,.2,1);
-        padding-top: 120px;
+        padding-top: 90px;
+        padding-bottom: 50px;
     }
 
         .sidebar.mob-open {

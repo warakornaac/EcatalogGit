@@ -28,6 +28,7 @@ let acSbFocusIdx = -1;
 let acSbItems = [];
 let _osSetQtyTimer = null;
 let _isChangingQty = false;
+let _lastSearchType = '';     // 'vehicle' | 'category' | 'part' | ''
 const currentAllowed = {
     pl: [],
     br: []
@@ -239,6 +240,8 @@ function parseFittingDescription(fittingDescription) {
  */
 // ── 2. _setBaseProducts — ส่ง keepSort=true เสมอ หรือดูจาก dropdown ──
 function _setBaseProducts(groups, searchType, keepSort = false, skipRender = false) {
+    
+    _lastSearchType = searchType
     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
 
     if (searchType === 'vehicle' || searchType === 'part') {
@@ -270,7 +273,7 @@ function _applyFiltersAndRender() {
     const plKeys = Object.keys(chkState.pl);
     const brKeys = Object.keys(chkState.br);
     const fitK = [...fitState];
-    // ── 1. group filter ──
+
     const activeGroupStr = String(activeGroup);
     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
     const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
@@ -278,7 +281,8 @@ function _applyFiltersAndRender() {
 
     const baseFiltered = BASE_PRODUCTS.filter(p => {
         if (filterUniversal && p.carModel !== 'Universal') return false;
-        if (filterByCat && p.cat !== activeGroupObj.label) return false;
+        if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
+        if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
         if (q) {
             let match = false;
             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
@@ -286,23 +290,20 @@ function _applyFiltersAndRender() {
             if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
             if (!match) return false;
         }
-        // หยิบมาเฉพาะที่ตรงกันใน card เท่านั้นทุกกรณี
         if (fitK.length && (p.fit.length === 0 || !fitK.every(f => p.fit.includes(f)))) return false;
-        //if (fitK.length && p.fit.length > 0 && !fitK.every(f => p.fit.includes(f))) return false;
-        //if (fitK.length && p.fit.length > 0 && !fitK.some(f => p.fit.includes(f))) return false;
         return true;
     });
 
-    // ── 2-3. snapshots ──
+    // แก้เป็น
     PRODUCTS_FOR_BR_COUNT = plKeys.length
         ? baseFiltered.filter(p => plKeys.includes(p.line))
         : [...baseFiltered];
 
+    // ✅ ต้อง filter เฉพาะ br เท่านั้น ไม่รวม pl เพื่อให้ pl count สะท้อนจำนวนจริงหลัง untick
     PRODUCTS_FOR_PL_COUNT = brKeys.length
         ? baseFiltered.filter(p => brKeys.includes(p.brand))
         : [...baseFiltered];
 
-    // ── 4. final products ──
     PRODUCTS = baseFiltered.filter(p => {
         if (plKeys.length && !plKeys.includes(p.line)) return false;
         if (brKeys.length && !brKeys.includes(p.brand)) return false;
@@ -312,84 +313,175 @@ function _applyFiltersAndRender() {
     renderProducts(PRODUCTS);
     _updateSidebar();
     renderActiveFilterChips();
+
+    // ✅ ปรับแก้สเตตการมองเห็นของรายการใน Sidebar หลัง Render
+    _ensureSidebarVisibility();
 }
+
+// 🔧 ฟังก์ชันช่วยจัดการการโชว์/ซ่อน รายการ Sidebar ไม่ให้หุบหาย
+function _ensureSidebarVisibility() {
+    ['pl', 'br'].forEach(type => {
+        const listEl = $(`#${type}List`);
+        const items = listEl.find('.chk-item');
+        const btn = gEl(`${type}SeeMore`);
+        const isExpanded = btn?.classList.contains('expanded');
+
+        if (items.length > 0) {
+            // แสดง 5 รายการแรกเสมอ ถ้านิ้วกดกางขยายไว้ให้แสดงทั้งหมด
+            items.each((idx, el) => {
+                if (isExpanded || idx < 5) {
+                    $(el).show();
+                } else {
+                    $(el).hide();
+                }
+            });
+        }
+
+        // ✅ บังคับให้ปุ่ม "ดูเพิ่มเติม" แสดงเสมอ (หรือแสดงเมื่อมีรายการมากกว่า 5 ตัวขึ้นไป)
+        if (btn) {
+            btn.style.display = 'block'; // บังคับโชว์ปุ่มไว้ตลอดเวลา
+        }
+    });
+}
+// function _applyFiltersAndRender() {
+//     const q = (gEl('partQ')?.value || '').toLowerCase().trim();
+//     const plKeys = Object.keys(chkState.pl);
+//     const brKeys = Object.keys(chkState.br);
+//     const fitK = [...fitState];
+
+//     const activeGroupStr = String(activeGroup);
+//     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
+//     const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
+//     const filterUniversal = activeGroupStr === '99';
+
+//     const baseFiltered = BASE_PRODUCTS.filter(p => {
+//         if (filterUniversal && p.carModel !== 'Universal') return false;
+//         if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
+//         if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
+//         if (q) {
+//             let match = false;
+//             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
+//             if (activeModes.has('oe') && p.code.toLowerCase().includes(q)) match = true;
+//             if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
+//             if (!match) return false;
+//         }
+//         if (fitK.length && (p.fit.length === 0 || !fitK.every(f => p.fit.includes(f)))) return false;
+//         return true;
+//     });
+
+//     PRODUCTS_FOR_BR_COUNT = plKeys.length
+//         ? baseFiltered.filter(p => plKeys.includes(p.line))
+//         : [...baseFiltered];
+
+//     PRODUCTS_FOR_PL_COUNT = brKeys.length
+//         ? baseFiltered.filter(p => brKeys.includes(p.brand))
+//         : [...baseFiltered];
+
+//     PRODUCTS = baseFiltered.filter(p => {
+//         if (plKeys.length && !plKeys.includes(p.line)) return false;
+//         if (brKeys.length && !brKeys.includes(p.brand)) return false;
+//         return true;
+//     });
+
+//     renderProducts(PRODUCTS);
+//     _updateSidebar();
+//     renderActiveFilterChips();
+// }
 
 /* SIDEBAR UPDATE
    - pl  : อัปเดต count เท่านั้น (show/hide ดูแลโดย FilterProductionLines)
    - brand: อัปเดต count + sort + show/hide*/
 function _updateSidebar() {
-    const hasPlChecked = Object.keys(chkState.pl).length > 0;
-    const hasBrChecked = Object.keys(chkState.br).length > 0;
-    // ── อัปเดต count pl ──
-    $("#plList .chk-item").each(function () {
-        const lineName = $(this).attr('data-name');
-        const count = (PRODUCTS_FOR_PL_COUNT || []).filter(p => p.line === lineName).length;
-        $(this).find('.chk-count').text(count);
+    // ── Product Line (PL) ──
+    const plCounts = {};
+    (PRODUCTS_FOR_PL_COUNT || []).forEach(p => {
+        if (p && p.line) {
+            const name = p.line.trim();
+            plCounts[name] = (plCounts[name] || 0) + 1;
+        }
     });
-    // ── sort pl ตาม count (show/hide ยังให้ FilterProductionLines จัดการ) ──
-    if (!hasPlChecked) {
-        const $plList = $('#plList');
-        // sort เฉพาะที่ allowed (ไม่ซ่อนอยู่เพราะ not allowed)
-        const $plAllowed = $plList.find('.chk-item').filter(function () {
-            const id = $(this).attr('data-id');
-            return currentAllowed.pl.length === 0 || currentAllowed.pl.includes(id);
-        }).detach();
 
-        $plAllowed.sort((a, b) =>
-            (parseInt($(b).find('.chk-count').text()) || 0) -
-            (parseInt($(a).find('.chk-count').text()) || 0)
-        ).appendTo($plList);
-
-        // re-apply show/hide top 5 หลัง sort — เฉพาะ count > 0 เท่านั้น
-        let visibleCount = 0;
-        $plList.find('.chk-item').each(function () {
-            const id = $(this).attr('data-id');
-            const count = parseInt($(this).find('.chk-count').text()) || 0;
-            const allowed = currentAllowed.pl.length === 0 || currentAllowed.pl.includes(id);
-            if (!allowed || count === 0) {
-                $(this).hide();
-            } else {
-                visibleCount++;
-                $(this).toggle(visibleCount <= 5);
-            }
-        });
-    }
-
-    // ── อัปเดต count brand ──
-    $("#brList .chk-item").each(function () {
-        const brandName = $(this).attr('data-name');
-        const count = PRODUCTS_FOR_BR_COUNT.filter(p => p.brand === brandName).length;
+    // อัปเดตตัวเลข
+    $('#plList .chk-item').each(function () {
+        const name = $(this).attr('data-name');
+        const count = plCounts[name] ?? 0;  // ✅ ?? แทน || เพื่อให้ 0 แสดงจริงๆ
         $(this).find('.chk-count').text(count);
     });
 
-    // ── sort brand + show top 5 เฉพาะที่ count > 0 ──
-    const $brList = $('#brList');
-    const $brChecked = $brList.find('.chk-item.checked').detach();
+    // แยกChecked นำขึ้นบนสุด แล้ว sort Unchecked ตาม Count
+    const $plList = $('#plList');
+    const $plChecked = $plList.find('.chk-item.checked').detach();
+    const $plUnchecked = $plList.find('.chk-item').detach();
 
-    $brList.find('.chk-item').sort((a, b) =>
+    $plUnchecked.sort((a, b) =>
         (parseInt($(b).find('.chk-count').text()) || 0) -
         (parseInt($(a).find('.chk-count').text()) || 0)
-    ).appendTo($brList);
+    );
 
-    $brList.prepend($brChecked);
+    $plList.append($plChecked).append($plUnchecked);
 
+    // แสดงรายการที่ checked + 5 รายการแรก
+    let plVisible = 0;
+    $plList.find('.chk-item').each(function () {
+        const isChecked = $(this).hasClass('checked');
+        if (isChecked || plVisible < 5) {
+            $(this).show();
+            if (!isChecked) plVisible++;
+        } else {
+            $(this).hide();
+        }
+    });
+
+    const plBtn = gEl('plSeeMore');
+    if (plBtn) {
+        plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
+    }
+
+    // ── Brand (BR) ──
+    const brCounts = {};
+    (PRODUCTS_FOR_BR_COUNT || []).forEach(p => {
+        if (p && p.brand) {
+            const name = p.brand.trim();
+            brCounts[name] = (brCounts[name] || 0) + 1;
+        }
+    });
+
+    // อัปเดตตัวเลข
+    $('#brList .chk-item').each(function () {
+        const name = $(this).attr('data-name');
+        const count = brCounts[name] ?? 0;  // ✅
+        $(this).find('.chk-count').text(count);
+    });
+
+    // แยกChecked นำขึ้นบนสุด แล้ว sort Unchecked ตาม Count
+    const $brList = $('#brList');
+    const $brChecked = $brList.find('.chk-item.checked').detach();
+    const $brUnchecked = $brList.find('.chk-item').detach();
+
+    $brUnchecked.sort((a, b) =>
+        (parseInt($(b).find('.chk-count').text()) || 0) -
+        (parseInt($(a).find('.chk-count').text()) || 0)
+    );
+
+    $brList.append($brChecked).append($brUnchecked);
+
+    // แสดงรายการที่ checked + 5 รายการแรก
     let brVisible = 0;
     $brList.find('.chk-item').each(function () {
         const isChecked = $(this).hasClass('checked');
-        const count = parseInt($(this).find('.chk-count').text()) || 0;
-        if (isChecked) {
+        if (isChecked || brVisible < 5) {
             $(this).show().removeClass('br-extra');
-            return;
-        }
-        if (count > 0 && brVisible < 5) {
-            $(this).show().removeClass('br-extra');
-            brVisible++;
+            if (!isChecked) brVisible++;
         } else {
             $(this).hide().addClass('br-extra');
         }
     });
-}
 
+    const brBtn = gEl('brSeeMore');
+    if (brBtn) {
+        brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
+    }
+}
 /* ═══════════════ §1 — SEARCH SYNC ════════════════ */
 function syncSearch(source) {
     const headerQ = gEl('headerQ');
@@ -453,60 +545,44 @@ function clearAllFilters() {
         btn.classList.toggle('active', btn.dataset.mode === 'description');
     });
 
-    // ✅ reset group กลับเป็น "สินค้าทุกประเภท"
     activeGroup = '0';
     window.selectedGroupId = '0';
     document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
     document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
 
-    gEl('activeFilters').innerHTML = '';   // ✅ ล้าง chips ทั้งหมด
+    gEl('activeFilters').innerHTML = '';
 
     closeSpecModal({ target: gEl('specModalBackdrop') });
     closeDrawer();
-    PRODUCTS = [];
+
+    // ✅ reset ข้อมูลทั้งหมด
+    _lastSearchType = '';
     BASE_PRODUCTS = [];
+    PRODUCTS = [];
     PRODUCTS_FOR_COUNT = [];
     PRODUCTS_FOR_PL_COUNT = [];
     PRODUCTS_FOR_BR_COUNT = [];
     currentAllowed.pl = [];
     currentAllowed.br = [];
 
-    // reset count เป็น 0 ทุกตัว
-    $("#plList .chk-item .chk-count").text(0);
-    $("#brList .chk-item .chk-count").text(0);
+    // ✅ reset count เป็น 0 และแสดง 5 รายการแรก
+    $("#plList .chk-item .chk-count, #brList .chk-item .chk-count").text(0);
+    $("#plList .chk-item").each((idx, el) => $(el).toggle(idx < 5));
+    $("#brList .chk-item").each((idx, el) => $(el).toggle(idx < 5));
 
-    // แสดงแค่ 5 ตัวแรกของ product line เฉพาะ count > 0
-    let plVisible = 0;
-    $("#plList .chk-item").each(function () {
-        const count = parseInt($(this).find('.chk-count').text()) || 0;
-        if (count > 0 && plVisible < 5) {
-            $(this).show();
-            plVisible++;
-        } else {
-            $(this).hide();
-        }
-    });
-
-    // แสดงแค่ 5 ตัวแรกของ brand เฉพาะ count > 0
-    let brVisible = 0;
-    $("#brList .chk-item").each(function () {
-        const count = parseInt($(this).find('.chk-count').text()) || 0;
-        if (count > 0 && brVisible < 5) {
-            $(this).show();
-            brVisible++;
-        } else {
-            $(this).hide();
-        }
-    });
-
-    // reset ปุ่ม see more
     const plBtn = gEl('plSeeMore');
-    if (plBtn) { plBtn.classList.remove('expanded'); plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
-    const brBtn = gEl('brSeeMore');
-    if (brBtn) { brBtn.classList.remove('expanded'); brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
+    if (plBtn) {
+        plBtn.classList.remove('expanded');
+        plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+        plBtn.style.display = 'block';
+    }
 
-    hideSkel();
-    renderProducts(PRODUCTS);
+    const brBtn = gEl('brSeeMore');
+    if (brBtn) {
+        brBtn.classList.remove('expanded');
+        brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+        brBtn.style.display = 'block';
+    }
 
     [1, 2, 3, 4].forEach(i => {
         gEl('lb' + i)?.classList.remove('active-badge');
@@ -515,45 +591,145 @@ function clearAllFilters() {
     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
 
-    _vehiclePromptShown = false; // ✅ reset ให้โชว์ popup ได้ใหม่หลัง clear
+    hideSkel();
+    renderProducts([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    _vehiclePromptShown = false;
 }
 
+// function clearAllFilters() {
+//     vfData = {};
+//     ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
+//         const el = gEl(id); if (el) el.value = '';
+//     });
+//     const yrFrom = gEl('yearFrom'); if (yrFrom) yrFrom.value = '';
+//     const yrTo = gEl('yearTo'); if (yrTo) yrTo.value = '';
+//     gEl('vfTags').innerHTML = '';
+
+//     gEl('vehSummary').innerHTML = `
+//         <div class="veh-empty">
+//             <i class="bi bi-car-front" style="font-size:1.1rem"></i>
+//             <span>Select vehicle attributes in the left panel to filter parts</span>
+//         </div>`;
+
+//     chkState = { pl: {}, br: {} };
+//     document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
+
+//     fitState = new Set();
+//     document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
+
+//     const pq = gEl('partQ'); if (pq) pq.value = '';
+//     const hq = gEl('headerQ'); if (hq) hq.value = '';
+
+//     currentSort = 'carModel';
+//     gEl('sortSelect').value = 'carModel';
+
+//     activeModes = new Set(['description']);
+//     document.querySelectorAll('.smode-btn').forEach(btn => {
+//         btn.classList.toggle('active', btn.dataset.mode === 'description');
+//     });
+
+//     activeGroup = '0';
+//     window.selectedGroupId = '0';
+//     document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
+//     document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
+
+//     gEl('activeFilters').innerHTML = '';
+
+//     closeSpecModal({ target: gEl('specModalBackdrop') });
+//     closeDrawer();
+
+//     _lastSearchType = '';
+//     BASE_PRODUCTS = [];
+//     PRODUCTS_FOR_PL_COUNT = [];
+//     PRODUCTS_FOR_BR_COUNT = [];
+//     PRODUCTS = [];
+//     renderProducts([]);
+//     _rebuildSidebarFromProducts(); จะ set count = 0 และ hide ทั้งหมด — ถูกต้องเพราะยังไม่ search
+
+//     PRODUCTS = [];
+//     BASE_PRODUCTS = [];
+//     PRODUCTS_FOR_COUNT = [];
+//     PRODUCTS_FOR_PL_COUNT = [];
+//     PRODUCTS_FOR_BR_COUNT = [];
+//     currentAllowed.pl = [];
+//     currentAllowed.br = [];
+
+//     reset count + ซ่อนทุกตัว (count = 0 หมด)
+//     $("#plList .chk-item .chk-count").text(0);
+//     $("#brList .chk-item .chk-count").text(0);
+//     $("#plList .chk-item, #brList .chk-item").hide();
+
+//     const plBtn = gEl('plSeeMore');
+//     if (plBtn) { plBtn.classList.remove('expanded'); plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
+//     const brBtn = gEl('brSeeMore');
+//     if (brBtn) { brBtn.classList.remove('expanded'); brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
+
+//     [1, 2, 3, 4].forEach(i => {
+//         gEl('lb' + i)?.classList.remove('active-badge');
+//         gEl('rb' + i)?.classList.remove('active-badge');
+//     });
+//     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
+//     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
+
+//     hideSkel();
+//     renderProducts(PRODUCTS); PRODUCTS = [] → render หน้าว่าง
+//     _lastSearchType = '';
+//     window.scrollTo({ top: 0, behavior: 'smooth' });
+//     _vehiclePromptShown = false;
+// }
 function _rebuildSidebarFromProducts() {
-    // ── Product Line: อัปเดต count + show/hide จาก BASE_PRODUCTS ──
+    if (!BASE_PRODUCTS) return;
+
+    // ── 1. ประมวลผล Product Line (PL) ──
     const lineCount = {};
     BASE_PRODUCTS.forEach(p => {
-        if (p.line) lineCount[p.line] = (lineCount[p.line] || 0) + 1;
-    });
-
-    let plVisible = 0;
-    $('#plList .chk-item').each(function () {
-        const name = $(this).attr('data-name');
-        const count = lineCount[name] || 0;
-        $(this).find('.chk-count').text(count);
-        // แสดงเฉพาะที่มี count > 0 และ top 5
-        if (count > 0) {
-            plVisible++;
-            $(this).toggle(plVisible <= 5);
-        } else {
-            $(this).hide();
+        if (p.line) {
+            const name = p.line.trim();
+            lineCount[name] = (lineCount[name] || 0) + 1;
         }
     });
 
-    // sort by count desc
     const $plList = $('#plList');
-    const $items = $plList.find('.chk-item').detach();
-    $items.sort((a, b) =>
+
+    // สร้าง Element ใหม่ถ้ายังไม่มีใน DOM
+    Object.keys(lineCount).forEach(name => {
+        if ($plList.find(`.chk-item[data-name="${name}"]`).length === 0) {
+            const isChecked = !!(chkState.pl && chkState.pl[name]);
+            $plList.append(`
+                <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" onclick="toggleChk('pl', '${name.replace(/'/g, "\\'")}')">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''}>
+                    <span class="chk-label">${name}</span>
+                    <span class="chk-count">0</span>
+                </div>
+            `);
+        }
+    });
+
+    // อัปเดต Count ให้รายการทั้งหมด
+    $plList.find('.chk-item').each(function () {
+        const name = $(this).attr('data-name');
+        $(this).find('.chk-count').text(lineCount[name] || 0);
+    });
+
+    // แยกรายการที่ Checked ออกมาไว้ด้านบนสุด แล้วเรียงตัวเหลือตาม Count มากไปน้อย
+    const $plChecked = $plList.find('.chk-item.checked').detach();
+    const $plUnchecked = $plList.find('.chk-item').detach();
+
+    $plUnchecked.sort((a, b) =>
         (parseInt($(b).find('.chk-count').text()) || 0) -
         (parseInt($(a).find('.chk-count').text()) || 0)
-    ).appendTo($plList);
+    );
 
-    // re-apply show/hide top 5 หลัง sort
-    plVisible = 0;
+    $plList.append($plChecked).append($plUnchecked);
+
+    // แสดง 5 รายการแรกเสมอ (รายการที่ checked บังคับโชว์เสมอ)
+    let plVisible = 0;
     $plList.find('.chk-item').each(function () {
-        const count = parseInt($(this).find('.chk-count').text()) || 0;
-        if (count > 0) {
-            plVisible++;
-            $(this).toggle(plVisible <= 5);
+        const isChecked = $(this).hasClass('checked');
+        if (isChecked || plVisible < 5) {
+            $(this).show();
+            if (!isChecked) plVisible++;
         } else {
             $(this).hide();
         }
@@ -563,31 +739,58 @@ function _rebuildSidebarFromProducts() {
     if (plBtn) {
         plBtn.classList.remove('expanded');
         plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+        plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
     }
 
-    // ── Brand: อัปเดต count + show/hide จาก BASE_PRODUCTS ──
+    // ── 2. ประมวลผล Brand (BR) ──
     const brandCount = {};
     BASE_PRODUCTS.forEach(p => {
-        if (p.brand && p.brand !== '—') brandCount[p.brand] = (brandCount[p.brand] || 0) + 1;
+        if (p.brand && p.brand !== '—') {
+            const name = p.brand.trim();
+            brandCount[name] = (brandCount[name] || 0) + 1;
+        }
     });
 
-    let brVisible = 0;
     const $brList = $('#brList');
-    const $brItems = $brList.find('.chk-item').detach();
-    $brItems.each(function () {
+
+    // สร้าง Element ใหม่ถ้ายังไม่มีใน DOM
+    Object.keys(brandCount).forEach(name => {
+        if ($brList.find(`.chk-item[data-name="${name}"]`).length === 0) {
+            const isChecked = !!(chkState.br && chkState.br[name]);
+            $brList.append(`
+                <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" onclick="toggleChk('br', '${name.replace(/'/g, "\\'")}')">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''}>
+                    <span class="chk-label">${name}</span>
+                    <span class="chk-count">0</span>
+                </div>
+            `);
+        }
+    });
+
+    // อัปเดต Count
+    $brList.find('.chk-item').each(function () {
         const name = $(this).attr('data-name');
         $(this).find('.chk-count').text(brandCount[name] || 0);
     });
-    $brItems.sort((a, b) =>
+
+    // จัดเรียง
+    const $brChecked = $brList.find('.chk-item.checked').detach();
+    const $brUnchecked = $brList.find('.chk-item').detach();
+
+    $brUnchecked.sort((a, b) =>
         (parseInt($(b).find('.chk-count').text()) || 0) -
         (parseInt($(a).find('.chk-count').text()) || 0)
-    ).appendTo($brList);
+    );
 
+    $brList.append($brChecked).append($brUnchecked);
+
+    // แสดง 5 รายการแรก
+    let brVisible = 0;
     $brList.find('.chk-item').each(function () {
-        const count = parseInt($(this).find('.chk-count').text()) || 0;
-        if (count > 0) {
-            brVisible++;
-            $(this).toggle(brVisible <= 5);
+        const isChecked = $(this).hasClass('checked');
+        if (isChecked || brVisible < 5) {
+            $(this).show();
+            if (!isChecked) brVisible++;
         } else {
             $(this).hide();
         }
@@ -597,6 +800,7 @@ function _rebuildSidebarFromProducts() {
     if (brBtn) {
         brBtn.classList.remove('expanded');
         brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+        brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
     }
 }
 
@@ -649,19 +853,21 @@ function applySorting(list) {
 
 /* ═══════════════ §5 — BOTTOM BAR ═══════════════════ */
 function renderBottomBar() {
-    gEl('bbScroll').innerHTML = GROUPS.map(g => `
-        <div class="bb-item ${g.id === activeGroup ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" 
-             data-id="${g.id}" 
-             onclick="selectGroup('${g.id}')">
-            <i class="bi ${g.icon}"></i>
-            <span class="bb-label">${g.label}</span>
-        </div>`).join('');
-}
-function scrollBottom(dx) {
-    gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
+    const activeStr = String(activeGroup || '0');
+
+    gEl('bbScroll').innerHTML = GROUPS.map(g => {
+        const gidStr = String(g.id);
+        const isActive = gidStr === activeStr;
+        return `
+            <div class="bb-item ${isActive ? 'active' : ''} ${g.id === 'Universal' ? 'bb-universal' : ''}" 
+                 data-id="${g.id}" 
+                 onclick="selectGroup('${g.id}')">
+                <i class="bi ${g.icon}"></i>
+                <span class="bb-label">${g.label}</span>
+            </div>`;
+    }).join('');
 }
 
-// ── ใน selectGroup (truscripts.js) ──
 function selectGroup(id) {
     if (window._isSearchingCategory) return;
 
@@ -674,11 +880,17 @@ function selectGroup(id) {
         function () {
             window._isSearchingCategory = true;
 
-            activeGroup = id;
-            window.selectedGroupId = id;
+            const targetIdStr = String(id);
+            activeGroup = targetIdStr;
+            window.selectedGroupId = targetIdStr;
 
-            document.querySelectorAll('.bb-item').forEach((b, i) => {
-                b.classList.toggle('active', GROUPS[i].id === id);
+            // ✅ 1. ล้างค่า Filter ใน Sidebar เดิมออกก่อนสลับหมวดหมู่
+            _resetSidebarFilters();
+
+            // ✅ 2. อัปเดตคลาส active โดยแปลง id เป็น String ทั้งคู่
+            document.querySelectorAll('.bb-item').forEach(b => {
+                const bIdStr = String(b.getAttribute('data-id'));
+                b.classList.toggle('active', bIdStr === targetIdStr);
             });
 
             document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none');
@@ -694,6 +906,43 @@ function selectGroup(id) {
         }
     );
 }
+function scrollBottom(dx) {
+    gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
+}
+
+// ── ใน selectGroup (truscripts.js) ──
+// function selectGroup(id) {
+//     if (window._isSearchingCategory) return;
+
+//     showVehiclePrompt(
+//         Yes → ไปเลือกรถ ยังไม่ค้นหา
+//         function () {
+//             goToVehicleFilter();
+//         },
+//         No → ค้นหาต่อปกติ
+//         function () {
+//             window._isSearchingCategory = true;
+
+//             activeGroup = id;
+//             window.selectedGroupId = id;
+
+//             document.querySelectorAll('.bb-item').forEach((b, i) => {
+//                 b.classList.toggle('active', GROUPS[i].id === id);
+//             });
+
+//             document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none');
+
+//             const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
+//             if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+//             const activeBB = document.querySelector('.bb-item.active');
+//             if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+//             updateBreadcrumb(id, 'Parts Catalog');
+//             showSkel();
+//             ClickedMatchData();
+//         }
+//     );
+// }
 function _clickedMatchDataAndRender() {
     const grpId = window.selectedGroupId || null;
 
@@ -1170,10 +1419,12 @@ function renderActiveFilterChips() {
     const chips = [];
 
     // group chip (ถ้าไม่ใช่ "สินค้าทุกประเภท")
-    if (activeGroup && activeGroup !== '0') {
-        const groupObj = GROUPS.find(g => g.id === activeGroup);
+    const activeGroupStr = String(activeGroup || '0');
+    if (activeGroupStr !== '0') {
+        // ✅ แปลง g.id เป็น String ก่อนเทียบ
+        const groupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
         if (groupObj) {
-            chips.push({ t: 'group', v: groupObj.label, id: groupObj.id, cls: 'af-group' });
+            chips.push({ t: 'group', v: groupObj.label || groupObj.name, id: groupObj.id, cls: 'af-group' });
         }
     }
 
@@ -1198,7 +1449,6 @@ function renderActiveFilterChips() {
         `<span class="af-chip ${c.cls}" onclick="removeActiveChip('${c.t}','${(c.v || '').replace(/'/g, "\\'")}')">${c.v} <i class="bi bi-x-circle"></i></span>`
     ).join('');
 }
-
 /* ── ลบ chip ตัวเดียว แล้ว re-fetch ── */
 function removeActiveChip(t, v) {
     if (t === 'group') {
@@ -1231,6 +1481,25 @@ function removeActiveChip(t, v) {
     }, 200);
 }
 
+function _resetSidebarFilters() {
+    if (typeof chkState !== 'undefined') {
+        chkState.pl = {};
+        chkState.br = {};
+    }
+    if (typeof fitState !== 'undefined') {
+        fitState.clear();
+    }
+
+    // Uncheck Checkbox ใน Sidebar
+    document.querySelectorAll('#plList .chk-item, #brList .chk-item').forEach(el => {
+        el.classList.remove('checked');
+        const chk = el.querySelector('input[type="checkbox"]');
+        if (chk) chk.checked = false;
+    });
+
+    // Reset Fitting Chips
+    document.querySelectorAll('.fit-chip').forEach(c => c.classList.remove('active'));
+}
 /* ═════════════ §1 — VEHICLE FILTER ═════════════════════ */
 function vfChange(sel, key) {
     activateSec(1);
@@ -1360,24 +1629,42 @@ function runSearch() {
 
 /* ══════════════ §3 — CHECKBOX FILTERS ══════════════════ */
 // ── 1. toggleChk — อย่า override currentSort โดยไม่จำเป็น ──
+// ── 1. toggleChk — อย่า override currentSort โดยไม่จำเป็น ──
+// ── 1. toggleChk — อย่า override currentSort โดยไม่จำเป็น ──
+// แก้เป็น — reset count ก่อน render เพื่อกัน count ค้าง
+// แก้
 function toggleChk(label, type, val) {
     label.classList.toggle('checked');
     if (label.classList.contains('checked')) {
         chkState[type][val] = true;
-        // ✅ ลบ block ที่บังคับ currentSort = 'part' ออกทั้งหมด
     } else {
         delete chkState[type][val];
     }
     activateSec(3);
-    showSkel();
+
+    const hasFilter = Object.keys(chkState.pl).length > 0 || Object.keys(chkState.br).length > 0;
+
+    if (!hasFilter) {
+        BASE_PRODUCTS = [];
+        PRODUCTS = [];
+        PRODUCTS_FOR_COUNT = [];
+        PRODUCTS_FOR_PL_COUNT = [];
+        PRODUCTS_FOR_BR_COUNT = [];
+        $("#plList .chk-item .chk-count, #brList .chk-item .chk-count").text(0);
+        renderProducts([]);
+        removeActiveChip('pl', val); // ✅
+        return;
+    }
 
     if (BASE_PRODUCTS.length > 0) {
+        showSkel();
         setTimeout(() => {
-            hideSkel();
             _applyFiltersAndRender();
+            hideSkel();
             gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 200);
     } else {
+        showSkel();
         searchProductByCategory().finally(() => {
             hideSkel();
             gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1393,17 +1680,16 @@ function toggleFit(chip, val) {
 
     if (BASE_PRODUCTS.length > 0) {
         setTimeout(() => {
-            hideSkel();
             _applyFiltersAndRender();
+            hideSkel();
         }, 200);
     } else {
         searchProductByCategory().finally(() => {
-            //hideSkel();
+            hideSkel();
             renderActiveFilterChips();
         });
     }
 }
-
 /* ════════════════ CART ══════════════════ */
 /* จาก Product Card — ใช้ PRODUCTS[] + id integer */
 // ✅ แก้แล้ว
@@ -2211,12 +2497,15 @@ setupDropdown('trigger1', 'dropdown1');
 
 /* ══════════════ API HELPER ══════════════════ */
 async function ajaxCallApiService(url, params) {
-    const response = await fetch(`${url}?${new URLSearchParams(params)}`, { method: 'GET' });
-    if (!response.ok) {
-        const text = await response.text();
-        console.error('API Error:', response.status, text);
-        throw new Error(`HTTP ${response.status}`);
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(params || {})) {
+        if (Array.isArray(value)) {
+            value.forEach(v => qs.append(key, v));
+        } else if (value !== undefined && value !== null) {
+            qs.append(key, value);
+        }
     }
+    const response = await fetch(`${url}?${qs}`, { method: 'GET' });
     return await response.json();
 }
 
@@ -2393,16 +2682,22 @@ function _renderAfterGroupChange() {
         renderActiveFilterChips();
         hideSkel();
     } else {
-        searchProductByCategory().finally(() => {
-            window._isSearchingCategory = false;
-            document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
-            PRODUCTS_FOR_COUNT = [...PRODUCTS];
-            _updateSidebar();
-            renderActiveFilterChips();
-        });
+        // ✅ ดักจับ Error ด้วย .catch() ป้องกัน Error หลุดไป Console
+        searchProductByCategory()
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error("Group change search failed:", err);
+                }
+            })
+            .finally(() => {
+                window._isSearchingCategory = false;
+                document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+                PRODUCTS_FOR_COUNT = [...PRODUCTS];
+                _updateSidebar();
+                renderActiveFilterChips();
+            });
     }
 }
-
 // function _renderAfterGroupChange() {
 //     hideSkel();
 //     searchProductByCategory().finally(() => {

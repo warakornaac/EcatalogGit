@@ -3,28 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Ecatalog.Models
 {
     // ── REQUEST ──────────────────────────────────────────────
     public class ProductSearchCatagoryRequestModel
     {
-        public List<int> productGroupId { get; set; }
-        public List<int> productLineId { get; set; }
-        public List<int> brandId { get; set; }
+        public List<string> productGroupId { get; set; }  // ✅ string ตาม External API
+        public List<string> productLineId { get; set; }  // ✅
+        public List<string> brandId { get; set; }  // ✅
         public List<string> fittingFilter { get; set; }
-        public List<string> marketSegmentId { get; set; }
-        public List<string> segmentId { get; set; }
-        public List<string> makerId { get; set; }
-        public List<string> rangeId { get; set; }
-        public List<string> bodyId { get; set; }
-        public List<string> engineId { get; set; }
-        public List<string> yearFrom { get; set; }
-        public List<string> yearTo { get; set; }
-        public List<string> driveType { get; set; }
-        public List<string> slmCode { get; set; }
-        public List<string> cusCode { get; set; }
-        public List<string> company { get; set; }
+        public string marketSegmentId { get; set; }
+        public string segmentId { get; set; }
+        public string makerId { get; set; }
+        public string rangeId { get; set; }
+        public string bodyId { get; set; }
+        public string engineId { get; set; }
+        public string yearFrom { get; set; }
+        public string yearTo { get; set; }
+        public string driveType { get; set; }
+
+        [JsonProperty("SlmCode")]
+        public string SlmCode { get; set; }
+
+        [JsonProperty("CusCode")]
+        public string CusCode { get; set; }
+
+        [JsonProperty("Company")]
+        public List<string> Company { get; set; }
     }
 
     // ── RESPONSE ─────────────────────────────────────────────

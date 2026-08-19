@@ -18,14 +18,33 @@ namespace Ecatalog.Controllers
     public class ProductController : Controller
     {
         // GET: Product
-        public async Task<ActionResult> GetProductBySearchVio(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string engineId, string yearFrom, string yearTo, string driveType, string imagePath, string slmCode, string cusCode, string company)
+        public async Task<ActionResult> GetProductBySearchVio(
+            string marketSegmentId, string segmentId, string makerId, string rangeId,
+            string bodyId, string engineId, string yearFrom, string yearTo,
+            string driveType, string imagePath, string slmCode, string cusCode,
+            string[] company)   // ✅ เปลี่ยนจาก string เป็น string[]
         {
             try
             {
                 var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
                     "Ecatalog/GetProductBySearchVio",
                     "GET",
-                    new { marketSegmentId, segmentId, makerId, rangeId, bodyId, engineId, yearFrom, yearTo, driveType, imagePath, slmCode, cusCode, company },
+                    new
+                    {
+                        marketSegmentId,
+                        segmentId,
+                        makerId,
+                        rangeId,
+                        bodyId,
+                        engineId,
+                        yearFrom,
+                        yearTo,
+                        driveType,
+                        imagePath,
+                        SlmCode = slmCode,   // ✅ ตัวใหญ่ตาม External API
+                        CusCode = cusCode,   // ✅
+                        Company = company    // ✅
+                    },
                     true,
                     30);
 
@@ -45,7 +64,7 @@ namespace Ecatalog.Controllers
                         IsSuccess = result.IsSuccess,
                         IsFromCache = result.IsFromCache,
                         ExecutionTime = result.ExecutionTime,
-                        Data = groupData   // <-- ใช้ groupData ที่จัดกลุ่มแล้ว ไม่ใช่ result ดิบ
+                        Data = groupData
                     },
                     JsonRequestBehavior = JsonRequestBehavior.AllowGet
                 };

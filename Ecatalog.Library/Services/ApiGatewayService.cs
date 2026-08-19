@@ -275,23 +275,42 @@ namespace Ecatalog.Library.Services
         // BUILD QUERY STRING
         // =====================
 
-        private string BuildQueryString(
-            object obj) {
-            if (obj == null) {
-                return "";
+        private string BuildQueryString(object obj)
+        {
+            if (obj == null) return "";
+
+            var pairs = new System.Collections.Generic.List<string>();
+
+            foreach (var p in obj.GetType().GetProperties())
+            {
+                // ✅ อ่านชื่อจาก JsonProperty attribute ถ้ามี ไม่งั้นใช้ p.Name
+                var jsonProp = p.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
+                                .FirstOrDefault() as JsonPropertyAttribute;
+                string key = jsonProp?.PropertyName ?? p.Name;
+
+                var value = p.GetValue(obj);
+
+                if (value == null)
+                {
+                    pairs.Add(key + "=");
+                    continue;
+                }
+
+                // ✅ รองรับ array / IEnumerable — append ทีละตัว
+                if (value is System.Collections.IEnumerable enumerable && !(value is string))
+                {
+                    foreach (var item in enumerable)
+                    {
+                        pairs.Add(key + "=" + Uri.EscapeDataString(Convert.ToString(item ?? "")));
+                    }
+                }
+                else
+                {
+                    pairs.Add(key + "=" + Uri.EscapeDataString(Convert.ToString(value)));
+                }
             }
 
-            var properties =
-                obj.GetType().GetProperties();
-
-            var list =
-                properties.Select(p =>
-                    p.Name + "=" +
-                    Uri.EscapeDataString(
-                        Convert.ToString(
-                            p.GetValue(obj) ?? "")));
-
-            return string.Join("&", list);
+            return string.Join("&", pairs);
         }
     }
 }

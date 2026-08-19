@@ -23,19 +23,18 @@ async function loadSearchProductVio() {
     const yearFrom = $("#yearFrom").val();
     const yearTo = $("#yearTo").val();
     const driveId = $("#driveId").val();
+    const slmCode = $("#salesmanId").val() || "";
+    const cusCode = $("#customerId").val() || "";
+    const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
 
-
-    // ✅ ต้องเลือก Maker หรือ (Market Segment + Vehicle Segment)
     const hasMaker = !!makerId;
     const hasMarketAndSegment = !!(marketSegmentId && segmentId);
 
     if (!hasMaker && !hasMarketAndSegment) {
         Swal.fire({
             icon: 'warning',
-            title: 'กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา',
-            text: result.Message || "Search Error"
+            title: 'กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา'
         });
-        //alert("กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา");
         return;
     }
 
@@ -43,21 +42,24 @@ async function loadSearchProductVio() {
     showSkel();
 
     try {
-        const result = await ajaxCallApiService(
-            API_URLS.getProductBySearchVio,
-            {
-                marketSegmentId: marketSegmentId || "",
-                segmentId: segmentId || "",
-                makerId: makerId || "",
-                rangeId: rangeId || "",
-                bodyId: bodyId || "",
-                engineId: engineId || "",
-                yearFrom: yearFrom || "",
-                yearTo: yearTo || "",
-                driveType: driveId || "",
-                imagePath: $("#imagePath").val() || ""
-            }
-        );
+        // ✅ build URLSearchParams เองเพื่อรองรับ array
+        const params = new URLSearchParams();
+        params.append('marketSegmentId', marketSegmentId || '');
+        params.append('segmentId', segmentId || '');
+        params.append('makerId', makerId || '');
+        params.append('rangeId', rangeId || '');
+        params.append('bodyId', bodyId || '');
+        params.append('engineId', engineId || '');
+        params.append('yearFrom', yearFrom || '');
+        params.append('yearTo', yearTo || '');
+        params.append('driveType', driveId || '');
+        params.append('slmCode', slmCode);
+        params.append('cusCode', cusCode);
+        // ✅ append ทีละตัวเพื่อให้ได้ company=TAC&company=AAC
+        companies.forEach(c => params.append('company', c));
+
+        const response = await fetch(`${API_URLS.getProductBySearchVio}?${params}`, { method: 'GET' });
+        const result = await response.json();
 
         if (result.IsSuccess) {
             $("#cacheStatus").html(
@@ -66,10 +68,7 @@ async function loadSearchProductVio() {
             );
 
             const previousGroup = activeGroup;
-
             document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
-
-            // ส่ง skipRender=true เพื่อไม่ให้ _setBaseProducts เรียก _applyFiltersAndRender เอง
             _setBaseProducts(result.Data, 'vehicle', false, true);
 
             const groupStillExists = previousGroup !== '0' &&
@@ -85,7 +84,6 @@ async function loadSearchProductVio() {
                 document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
             }
 
-            // render ครั้งเดียวหลัง activeGroup ถูก set แล้ว
             _applyFiltersAndRender();
 
         } else {
@@ -100,7 +98,6 @@ async function loadSearchProductVio() {
         btn.prop("disabled", false);
     }
 }
-
 /*SearchGlobal*/
 async function searchProductGlobal(keyword) {
     if (!keyword || keyword.trim().length < 2) return;

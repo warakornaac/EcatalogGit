@@ -68,7 +68,7 @@
             </select>*@
             <select class="fselect" id="rangeId" onchange="loadBody(); loadEngine();" disabled>
                 <option value="">— Select Range —</option>
-            </select>Model
+            </select>
         </div>
         <div class="mb-2">
             <div class="flabel">Model Body</div>
@@ -154,6 +154,7 @@
 
 <div class="collapse show" id="sfBody">
     <div class="filter-body">
+        @*<span class="sec-title mb-2">Filter (ตัวกรองสินค้า)</span>*@
         <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
         <div class="chk-list" id="plList"></div>
 
@@ -161,7 +162,7 @@
             <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
         </button>
 
-        <div class="flabel mt-3">Fitting</div>
+        <div class="flabel mt-3">Fitting (ตำแหน่งติดตั้ง)</div>
         <div class="fit-grid" id="fitGrid">
             <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
             <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
@@ -171,7 +172,7 @@
             <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
         </div>
 
-        <div class="flabel mt-3">Brand</div>
+        <div class="flabel mt-3">Brand (ยี่ห้อ)</div>
         <div class="chk-list" id="brList"></div>
 
         <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
@@ -382,7 +383,7 @@
             .map(function () { return $(this).data("id"); })
             .get()
             .filter(id => id !== '0' && id !== 0)
-            .map(id => parseInt(id));
+            .map(id => String(id));  // ✅ string ไม่ใช่ parseInt
 
         const axisMap = { 'หน้า': 'FR', 'หลัง': 'RR', 'กลาง': 'MID', 'เครื่องยนต์': 'ENGINE' };
         const sideMap = { 'ซ้าย': 'LH', 'ขวา': 'RH', 'กลาง': 'CENTER' };
@@ -390,7 +391,6 @@
         const dirMap = { 'ใน': 'INNER', 'นอก': 'OUTER' };
 
         const fits = [...fitState];
-
         const fittingFilter = [...new Set([
             ...fits.map(f => axisMap[f]).filter(Boolean),
             ...fits.map(f => sideMap[f]).filter(Boolean),
@@ -398,96 +398,98 @@
             ...fits.map(f => dirMap[f]).filter(Boolean),
         ])];
 
-        // ✅ อ่านจาก chkState โดยตรง ไม่อ่านจาก DOM
         const checkedLineNames = Object.keys(chkState.pl);
         const checkedBrandNames = Object.keys(chkState.br);
 
-        // แปลง name → id จาก DOM (data-id อยู่บน element)
         const checkedLineIds = checkedLineNames.length > 0
             ? checkedLineNames.map(name => {
                 const el = document.querySelector(`#plList .chk-item[data-name="${CSS.escape(name)}"]`);
-                return el ? parseInt(el.getAttribute('data-id')) : null;
-            }).filter(id => id !== null && !isNaN(id))
+                return el ? String(el.getAttribute('data-id')) : null;  // ✅
+            }).filter(id => id !== null)
             : [];
 
         const checkedBrandIds = checkedBrandNames.length > 0
             ? checkedBrandNames.map(name => {
                 const el = document.querySelector(`#brList .chk-item[data-name="${CSS.escape(name)}"]`);
-                return el ? parseInt(el.getAttribute('data-id')) : null;
-            }).filter(id => id !== null && !isNaN(id))
+                return el ? String(el.getAttribute('data-id')) : null;  // ✅
+            }).filter(id => id !== null)
             : [];
+
+        // ✅ อ่าน vehicle params จาก DOM
+        const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
 
         return {
             productGroupId: activeGroupIds,
-            // ✅ ไม่มี fallback currentAllowed.pl อีกต่อไป — ถ้าไม่เลือก = ไม่ filter by line
             productLineId: checkedLineIds,
             brandId: checkedBrandIds,
-            fittingFilter,
-
-            marketSegmentId: marketSegmentId,
-            segmentId: segmentId,
-            makerId: makerId,
-            rangeId: rangeId,
-            bodyId: bodyId,
-            engineId: engineId,
-            yearFrom: yearFrom,
-            yearTo: yearTo,
-            driveType: driveType,
-
-            slmCode: slmCode,
-            cusCode: cusCode,
-            company: company
+            fittingFilter: fittingFilter,
+            marketSegmentId: $("#marketsegId").val() || "",
+            segmentId: $("#segmentId").val() || "",
+            makerId: $("#makerId").val() || "",
+            rangeId: $("#rangeId").val() || "",
+            bodyId: $("#bodyId").val() || "",
+            engineId: $("#engineId").val() || "",
+            yearFrom: $("#yearFrom").val() || "",
+            yearTo: $("#yearTo").val() || "",
+            driveType: $("#driveId").val() || "",
+            SlmCode: $("#salesmanId").val() || "",  // ✅ ตัวใหญ่
+            CusCode: $("#customerId").val() || "",  // ✅
+            Company: typeof getActiveCompanies === 'function' ? getActiveCompanies() : []  // ✅
         };
     }
     //send params send to controller searchByCategory
     async function searchProductByCategory() {
-        try {
-            const filters = getSearchCatagoryObject();
+    try {
+        const filters = getSearchCatagoryObject();
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout ฝั่ง client
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s
 
-            const response = await fetch(
-                '@Url.Action("GetProductBySearchCatagory","Product")',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(filters),
-                    signal: controller.signal
-                });
-
-            clearTimeout(timeoutId);
-
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.Message || "API Error");
-            if (result.IsSuccess) {
-                _setBaseProducts(result.Data, 'category');
-
-                // ✅ re-render plList จาก BASE_PRODUCTS จริงของ category นี้
-                _rebuildSidebarFromProducts();
-
-                gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'ค้นหาไม่สำเร็จ',
-                    text: 'ระบบใช้เวลานานกว่าปกติ กรุณาลองใหม่อีกครั้ง'
-                });
-            }
-        } catch (ex) {
-            console.error("searchProductByCategory Error:", ex);
-            const isTimeout = ex.name === 'AbortError';
-            Swal.fire({
-                icon: 'error',
-                title: isTimeout ? 'หมดเวลาค้นหา' : 'เกิดข้อผิดพลาด',
-                text: isTimeout
-                    ? 'ระบบค้นหาช้ากว่าปกติ กรุณาลองใหม่อีกครั้ง'
-                    : (ex.message || "System Error")
+        const response = await fetch(
+            '@Url.Action("GetProductBySearchCatagory","Product")',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters),
+                signal: controller.signal
             });
-        }finally {
-            hideSkel(); // ← hideSkel อยู่ที่นี่ที่เดียว ทั้ง success และ fail
+
+        clearTimeout(timeoutId);
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.Message || "API Error");
+
+        if (result.IsSuccess) {
+            _setBaseProducts(result.Data, 'category', false, true);
+            
+            // Rebuild DOM ของ Sidebar ใหม่ทั้งหมดตาม BASE_PRODUCTS ชุดใหม่
+            _rebuildSidebarFromProducts();
+            
+            // กรองข้อมูล นำไป Render ตาราง และอัปเดต Badge/Visibility ของ Sidebar (_updateSidebar)
+            _applyFiltersAndRender();
+            
+            gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ค้นหาไม่สำเร็จ',
+                text: 'ระบบใช้เวลานานกว่าปกติ กรุณาลองใหม่อีกครั้ง'
+            });
         }
+    } catch (ex) {
+        console.error("searchProductByCategory Error:", ex);
+        const isTimeout = ex.name === 'AbortError';
+        Swal.fire({
+            icon: 'error',
+            title: isTimeout ? 'หมดเวลาค้นหา' : 'เกิดข้อผิดพลาด',
+            text: isTimeout
+                ? 'ระบบค้นหาช้ากว่าปกติ กรุณาลองใหม่อีกครั้ง'
+                : (ex.message || "System Error")
+        });
+    } finally {
+        hideSkel();
     }
+}
     //get value text, checkbox
     async function getSearchFieldObject() {
         const request = {
@@ -736,15 +738,12 @@
             html: `
             <p style="margin:0;font-size:14px;color:#555;">
                 เพื่อให้ระบบค้นหาสินค้าได้รวดเร็วยิ่งขึ้น<br>
-                กรุณาเลือก<strong>รุ่นรถ</strong>ที่ต้องการค้นหาเพิ่มเติม
-            </p>
-            <p style="margin:10px 0 0;font-size:12px;color:#888;">
-                การเลือกรุ่นรถจะช่วยลดระยะเวลาในการค้นหาและแสดงผลสินค้าได้เร็วขึ้น
+                กรุณาเลือก<strong> รุ่นรถ </strong>ที่ต้องการค้นหาเพิ่มเติม
             </p>
         `,
             showCancelButton: true,
-            confirmButtonText: 'Yes',
-            cancelButtonText: 'No',
+            confirmButtonText: 'ค้นหาโดยรุ่นรถ',
+            cancelButtonText: 'ยืนยันการค้นหา',
             confirmButtonColor: '#e63946',
             cancelButtonColor: '#aaa',
             allowOutsideClick: false,
