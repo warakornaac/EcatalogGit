@@ -1644,18 +1644,19 @@ function toggleChk(label, type, val) {
 
     const hasFilter = Object.keys(chkState.pl).length > 0 || Object.keys(chkState.br).length > 0;
 
-    if (!hasFilter) {
-        BASE_PRODUCTS = [];
+    // ✅ ถ้าไม่มี filter เหลือ และไม่มี BASE_PRODUCTS (search จาก PL อย่างเดียว) → clear
+    if (!hasFilter && BASE_PRODUCTS.length === 0) {
+        $("#plList .chk-item .chk-count, #brList .chk-item .chk-count").text(0);
         PRODUCTS = [];
         PRODUCTS_FOR_COUNT = [];
         PRODUCTS_FOR_PL_COUNT = [];
         PRODUCTS_FOR_BR_COUNT = [];
-        $("#plList .chk-item .chk-count, #brList .chk-item .chk-count").text(0);
         renderProducts([]);
-        removeActiveChip('pl', val); // ✅
+        renderActiveFilterChips();
         return;
     }
 
+    // ✅ มี BASE_PRODUCTS อยู่ (vehicle search) → filter local
     if (BASE_PRODUCTS.length > 0) {
         showSkel();
         setTimeout(() => {
