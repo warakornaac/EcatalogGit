@@ -109,7 +109,7 @@ namespace Ecatalog.Controllers
                     })
                     .ToList();
 
-                return Json(new
+                return CustomJson(new
                 {
                     IsSuccess = result.IsSuccess,
                     IsFromCache = result.IsFromCache,
@@ -119,7 +119,7 @@ namespace Ecatalog.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new
+                return CustomJson(new
                 {
                     IsSuccess = false,
                     IsFromCache = false,
@@ -682,6 +682,18 @@ namespace Ecatalog.Controllers
             {
                 return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
+        }
+
+        private JsonResult CustomJson(object data)
+        {
+            return new JsonResult
+            {
+                Data = data,
+                ContentType = "application/json",
+                ContentEncoding = System.Text.Encoding.UTF8,
+                JsonRequestBehavior = JsonRequestBehavior.DenyGet, 
+                MaxJsonLength = int.MaxValue 
+            };
         }
     }
 }
