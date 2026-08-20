@@ -648,7 +648,7 @@ body {
 /* ── Salesman / Customer top bar ── */
 .sb-sc-bar {
     padding: 10px 14px 10px;
-    background: #fafafa;
+    background-color: #ffffff;
     border-bottom: 1px solid #ebebeb;
     flex-shrink: 0;
     display: flex;
@@ -821,7 +821,7 @@ body {
     border-radius: 6px;
     font-size: 12px;
     color: #333;
-    background: #fafafa;
+    background-color: #fafafa;
     appearance: none;
     -webkit-appearance: none;
     box-sizing: border-box;
@@ -833,6 +833,7 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23bbb'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 9px center;
+    background-color: #fafafa; /* แยก color ออกมา */
     padding-right: 26px;
     cursor: pointer;
 }
@@ -958,10 +959,9 @@ body {
     padding: 5px 10px;
     border-radius: 6px;
     border: 1.5px solid #e0e0e0;
-    background: #fafafa;
+    background-color: #fff;
     font-size: 11px;
     font-weight: 500;
-    color: #666;
     cursor: pointer;
     user-select: none;
     transition: all .15s;
@@ -1012,12 +1012,11 @@ body {
 .fit-chip {
     position: relative;
     padding: 4px 4px 4px 4px;
-    border: 1.5px solid #e2e2e2;
+    border: 1.7px solid #ffe0e6;
     border-radius: 6px;
-    background: #fafafa;
+    background-color: #fff;
     font-size: 12px;
     font-weight: 500;
-    color: #555;
     cursor: pointer;
     text-align: center;
     transition: all .15s;
@@ -1206,7 +1205,7 @@ body {
     }
 
     .sb-sc-bar {
-        background: #1a1a30;
+        background-color: #1a1a30;
         border-color: #2a2a48;
     }
 
@@ -1355,7 +1354,7 @@ body {
     border-radius: var(--r-sm);
     padding: .20rem .75rem;
     font-size: 13px;
-    background: var(--surface);
+    background-color: var(--surface);
     color: var(--text);
     width: 100%;
     transition: border-color var(--tr),box-shadow var(--tr);
@@ -3845,7 +3844,7 @@ body {
     font-family: 'Noto Sans Thai', sans-serif;
     font-size: 13px;
     color: var(--text);
-    background: var(--surface-2);
+    background-color: var(--surface-2);
     outline: none;
     appearance: none;
     -webkit-appearance: none;
