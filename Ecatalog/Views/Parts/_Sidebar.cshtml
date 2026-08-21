@@ -51,7 +51,7 @@
         </div>
         <div class="mb-2">
             <div class="flabel">Vehicle Segment</div>
-            <select class="fselect" id="segmentId" onchange="loadModelRange();">
+            <select class="fselect" id="segmentId" onchange="loadMaker(); loadModelRange();">
                 <option value="">— Select Segment —</option>
             </select>
         </div>
@@ -236,7 +236,8 @@
     async function loadMaker() {
         try {
             const marketSegmentId = $("#marketsegId").val();
-            const params = new URLSearchParams({ marketSegmentId});
+            const vehicleSegmentId = $("#segmentId").val();
+            const params = new URLSearchParams({ marketSegmentId, vehicleSegmentId });
             const response = await fetch(`@Url.Action("GetMakerCar", "Master")?${params}`, { method: 'GET' });
             const result = await response.json();
             const ddl = $("#makerId");

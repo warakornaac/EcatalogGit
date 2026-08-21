@@ -54,7 +54,7 @@ namespace Ecatalog.Controllers
             }
         }
 
-        public async Task<ActionResult> GetMakerCar(string marketSegmentId)
+        public async Task<ActionResult> GetMakerCar(string marketSegmentId, string vehicleSegmentId)
         {
             try
             {
@@ -64,7 +64,8 @@ namespace Ecatalog.Controllers
                         "GET",
                         new
                         {
-                            marketSegmentId = marketSegmentId
+                            marketSegmentId = marketSegmentId,
+                            vehicleSegmentId = vehicleSegmentId
                         },
                         true,
                         10);
