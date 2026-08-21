@@ -243,7 +243,7 @@ function _applyFiltersAndRender() {
     const baseFiltered = BASE_PRODUCTS.filter(p => {
         if (filterUniversal && p.carModel !== 'Universal') return false;
         if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
-        if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
+        //if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
         if (q) {
             let match = false;
             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;

@@ -1632,13 +1632,13 @@ body {
     }
 
     .hz.g2 {
-        box-shadow: 0 0 0 2.5px var(--purple),var(--sh);
-        background: #f5f3ff;
+        box-shadow: 0 0 0 2.5px #dceaff,var(--sh);
+        background: #fff;
     }
 
     .hz.g3 {
-        box-shadow: 0 0 0 2.5px var(--green),var(--sh);
-        background: #f0fdf9;
+        box-shadow: 0 0 0 2.5px #ffd8cb,var(--sh);
+        background: #fff;
     }
 
     .hz.g4 {
