@@ -492,18 +492,25 @@
 }
     //get value text, checkbox
     async function getSearchFieldObject() {
+        const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
         const request = {
-            searchText:
-                $("#txtSearchField")
-                    .val()
-                    .trim(),
-
-            searchFields:
-                $(".smode-btn.active").map(function () {
-                    return $(this).data("mode");
-                }).get()
+            searchText: $("#txtSearchField").val().trim(),
+            searchFields: $(".smode-btn.active").map(function () {
+                return $(this).data("mode");
+            }).get(),
+            marketSegmentId: $("#marketsegId").val() || "",
+            segmentId: $("#segmentId").val() || "",
+            makerId: $("#makerId").val() || "",
+            rangeId: $("#rangeId").val() || "",
+            bodyId: $("#bodyId").val() || "",
+            engineId: $("#engineId").val() || "",
+            yearFrom: $("#yearFrom").val() || "",
+            yearTo: $("#yearTo").val() || "",
+            driveType: $("#driveId").val() || "",
+            SlmCode: $("#salesmanId").val() || "",
+            CusCode: $("#customerId").val() || "",
+            Company: companies
         };
-        //console.log(request);
         return request;
     }
     //get search by field data by value

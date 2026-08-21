@@ -53,10 +53,9 @@ async function loadSearchProductVio() {
         params.append('yearFrom', yearFrom || '');
         params.append('yearTo', yearTo || '');
         params.append('driveType', driveId || '');
-        params.append('slmCode', slmCode);
-        params.append('cusCode', cusCode);
-        // ✅ append ทีละตัวเพื่อให้ได้ company=TAC&company=AAC
-        companies.forEach(c => params.append('company', c));
+        params.append('SlmCode', slmCode);
+        params.append('CusCode', cusCode);
+        companies.forEach(c => params.append('Company', c));
 
         const response = await fetch(`${API_URLS.getProductBySearchVio}?${params}`, { method: 'GET' });
         const result = await response.json();
