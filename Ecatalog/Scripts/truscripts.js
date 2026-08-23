@@ -358,17 +358,6 @@ function _updateSidebar() {
 
     $plList.append($plChecked).append($plUnchecked);
 
-    // แสดงรายการที่ checked + 5 รายการแรก
-    // let plVisible = 0;
-    // $plList.find('.chk-item').each(function () {
-    //     const isChecked = $(this).hasClass('checked');
-    //     if (isChecked || plVisible < 5) {
-    //         $(this).show();
-    //         if (!isChecked) plVisible++;
-    //     } else {
-    //         $(this).hide();
-    //     }
-    // });
     // แสดงรายการตามสถานะ Filter
     const hasAnyFilter =
         Object.keys(chkState.pl).length > 0 ||
@@ -429,17 +418,6 @@ function _updateSidebar() {
 
     $brList.append($brChecked).append($brUnchecked);
 
-    // แสดงรายการที่ checked + 5 รายการแรก
-    // let brVisible = 0;
-    // $brList.find('.chk-item').each(function () {
-    //     const isChecked = $(this).hasClass('checked');
-    //     if (isChecked || brVisible < 5) {
-    //         $(this).show().removeClass('br-extra');
-    //         if (!isChecked) brVisible++;
-    //     } else {
-    //         $(this).hide().addClass('br-extra');
-    //     }
-    // });
     // แสดงรายการตามสถานะ Filter
     if (hasAnyFilter) {
         // มี Filter → แสดงเฉพาะ count > 0
@@ -586,87 +564,6 @@ function clearAllFilters() {
     _vehiclePromptShown = false;
 }
 
-// function clearAllFilters() {
-//     vfData = {};
-//     ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
-//         const el = gEl(id); if (el) el.value = '';
-//     });
-//     const yrFrom = gEl('yearFrom'); if (yrFrom) yrFrom.value = '';
-//     const yrTo = gEl('yearTo'); if (yrTo) yrTo.value = '';
-//     gEl('vfTags').innerHTML = '';
-
-//     gEl('vehSummary').innerHTML = `
-//         <div class="veh-empty">
-//             <i class="bi bi-car-front" style="font-size:1.1rem"></i>
-//             <span>Select vehicle attributes in the left panel to filter parts</span>
-//         </div>`;
-
-//     chkState = { pl: {}, br: {} };
-//     document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
-
-//     fitState = new Set();
-//     document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
-
-//     const pq = gEl('partQ'); if (pq) pq.value = '';
-//     const hq = gEl('headerQ'); if (hq) hq.value = '';
-
-//     currentSort = 'carModel';
-//     gEl('sortSelect').value = 'carModel';
-
-//     activeModes = new Set(['description']);
-//     document.querySelectorAll('.smode-btn').forEach(btn => {
-//         btn.classList.toggle('active', btn.dataset.mode === 'description');
-//     });
-
-//     activeGroup = '0';
-//     window.selectedGroupId = '0';
-//     document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
-//     document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
-
-//     gEl('activeFilters').innerHTML = '';
-
-//     closeSpecModal({ target: gEl('specModalBackdrop') });
-//     closeDrawer();
-
-//     _lastSearchType = '';
-//     BASE_PRODUCTS = [];
-//     PRODUCTS_FOR_PL_COUNT = [];
-//     PRODUCTS_FOR_BR_COUNT = [];
-//     PRODUCTS = [];
-//     renderProducts([]);
-//     _rebuildSidebarFromProducts(); จะ set count = 0 และ hide ทั้งหมด — ถูกต้องเพราะยังไม่ search
-
-//     PRODUCTS = [];
-//     BASE_PRODUCTS = [];
-//     PRODUCTS_FOR_COUNT = [];
-//     PRODUCTS_FOR_PL_COUNT = [];
-//     PRODUCTS_FOR_BR_COUNT = [];
-//     currentAllowed.pl = [];
-//     currentAllowed.br = [];
-
-//     reset count + ซ่อนทุกตัว (count = 0 หมด)
-//     $("#plList .chk-item .chk-count").text(0);
-//     $("#brList .chk-item .chk-count").text(0);
-//     $("#plList .chk-item, #brList .chk-item").hide();
-
-//     const plBtn = gEl('plSeeMore');
-//     if (plBtn) { plBtn.classList.remove('expanded'); plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
-//     const brBtn = gEl('brSeeMore');
-//     if (brBtn) { brBtn.classList.remove('expanded'); brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม'; }
-
-//     [1, 2, 3, 4].forEach(i => {
-//         gEl('lb' + i)?.classList.remove('active-badge');
-//         gEl('rb' + i)?.classList.remove('active-badge');
-//     });
-//     gEl('rz1')?.classList.remove('g1', 'g2', 'g3', 'g4');
-//     gEl('rz2')?.classList.remove('g1', 'g2', 'g3', 'g4');
-
-//     hideSkel();
-//     renderProducts(PRODUCTS); PRODUCTS = [] → render หน้าว่าง
-//     _lastSearchType = '';
-//     window.scrollTo({ top: 0, behavior: 'smooth' });
-//     _vehiclePromptShown = false;
-// }
 function _rebuildSidebarFromProducts() {
     if (!BASE_PRODUCTS) return;
 
@@ -1525,36 +1422,6 @@ function removeActiveChip(t, v) {
         });
     }, 200);
 }
-// function removeActiveChip(t, v) {
-//     if (t === 'group') {
-//         กลับไปกลุ่ม "สินค้าทุกประเภท"
-//         selectGroup('0');
-//         return;
-//     }
-//     if (t === 'pl') {
-//         delete chkState.pl[v];
-//         document.querySelectorAll('#plList .chk-item').forEach(l => {
-//             if (l.getAttribute('data-name') === v) l.classList.remove('checked');
-//         });
-//     } else if (t === 'br') {
-//         delete chkState.br[v];
-//         document.querySelectorAll('#brList .chk-item').forEach(l => {
-//             if (l.getAttribute('data-name') === v) l.classList.remove('checked');
-//         });
-//     } else if (t === 'fi') {
-//         fitState.delete(v);
-//         document.querySelectorAll('.fit-chip').forEach(c => {
-//             if (c.textContent.trim() === v) c.classList.remove('active');
-//         });
-//     }
-
-//     showSkel();
-//     setTimeout(() => {
-//         hideSkel();
-//         _applyFiltersAndRender();
-//         gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-//     }, 200);
-// }
 
 function _resetSidebarFilters() {
     if (typeof chkState !== 'undefined') {
@@ -3025,10 +2892,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionSlm = config?.dataset.slmcode ?? '';
     const sessionCus = config?.dataset.cuscode ?? '';
 
-    // console.log('Session →', { userType, sessionSlm, sessionCus });
+    if (!window.APP_SESSION) window.APP_SESSION = {};
+    if (sessionSlm) window.APP_SESSION.slmcode = sessionSlm;
+    if (sessionCus) window.APP_SESSION.cuscode = sessionCus;
 
     if (userType === '1') {
-        // admin → ดึง salesman ทั้งหมดมาให้เลือกเสมอ (ไม่ว่าจะมี sessionSlm หรือไม่)
         getSalesmanAll(sessionSlm, sessionCus);
     } else if (sessionCus) {
         getInfomantionCustomer(sessionCus);
@@ -3311,3 +3179,19 @@ function initTheme() {
 }
 initTheme();
 //-----------------กันคลิกขวา คัดลอกรูป save img และคีย์ลัด------------------//
+//-------------Helper ตอนเปลี่ยน ส่วนเซลลูกค้า
+function _syncSessionFromUI() {
+    const slm = $("#salesmanId").val() || "";
+    const cus = $("#customerId").val() || "";
+    const companies = getActiveCompanies();
+
+    if (!window.APP_SESSION) window.APP_SESSION = {};
+    if (cus) window.APP_SESSION.cuscode = cus;
+    if (companies.length) window.APP_SESSION.company = companies[0];
+
+    // fallback: ถ้า UI ยังไม่มีค่า ให้ดึงจาก APP_SESSION มาใส่ select
+    if (!slm && window.APP_SESSION?.slmcode)
+        $("#salesmanId").val(window.APP_SESSION.slmcode);
+    if (!cus && window.APP_SESSION?.cuscode)
+        $("#customerId").val(window.APP_SESSION.cuscode);
+}

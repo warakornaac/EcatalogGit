@@ -26,7 +26,7 @@ async function loadSearchProductVio() {
     const slmCode = $("#salesmanId").val() || "";
     const cusCode = $("#customerId").val() || "";
     const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
-
+    _syncSessionFromUI();
     const hasMaker = !!makerId;
     const hasMarketAndSegment = !!(marketSegmentId && segmentId);
 
@@ -53,10 +53,10 @@ async function loadSearchProductVio() {
         params.append('yearFrom', yearFrom || '');
         params.append('yearTo', yearTo || '');
         params.append('driveType', driveId || '');
-        params.append('SlmCode', slmCode);
-        params.append('CusCode', cusCode);
+        params.append('slmCode', slmCode);  // ← ตัวเล็ก ตรงกับ controller
+        params.append('cusCode', cusCode);  // ← ตัวเล็ก
         companies.forEach(c => params.append('Company', c));
-
+        console.log('ส่งไป API →', { slmCode, cusCode, companies });
         const response = await fetch(`${API_URLS.getProductBySearchVio}?${params}`, { method: 'GET' });
         const result = await response.json();
 

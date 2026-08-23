@@ -380,6 +380,7 @@
     }
     //set params obj by select catagory
     function getSearchCatagoryObject() {
+        _syncSessionFromUI();
         const activeGroupIds = $(".bb-item.active")
             .map(function () { return $(this).data("id"); })
             .get()
@@ -433,8 +434,8 @@
             yearFrom: $("#yearFrom").val() || "",
             yearTo: $("#yearTo").val() || "",
             driveType: $("#driveId").val() || "",
-            SlmCode: $("#salesmanId").val() || "",  // ✅ ตัวใหญ่
-            CusCode: $("#customerId").val() || "",  // ✅
+            SlmCode: $("#salesmanId").val() || window.APP_SESSION?.slmcode || "",
+            CusCode: $("#customerId").val() || window.APP_SESSION?.cuscode || "",
             Company: typeof getActiveCompanies === 'function' ? getActiveCompanies() : []  // ✅
         };
     }
@@ -493,6 +494,7 @@
 }
     //get value text, checkbox
     async function getSearchFieldObject() {
+        _syncSessionFromUI();
         const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
         const request = {
             searchText: $("#txtSearchField").val().trim(),
@@ -521,6 +523,7 @@
         showSkel();
         try {
             const request = await getSearchFieldObject();
+            console.log('Field request →', request); // ← เพิ่ม
             if (!request.searchText) {
                 Swal.fire({
                     icon: 'warning',
@@ -548,6 +551,7 @@
                 });
 
             const result = await response.json();
+            console.log('Field request →', request); // ← เพิ่ม
             if (!result.IsSuccess) {
                 throw new Error(result.Message || "Search Error");
             }
@@ -557,7 +561,8 @@
                 " (" + result.ExecutionTime + " ms)"
             );
 
-            const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
+            // const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
+            const filteredData = (result.Data || []).filter(g => g.productList?.length > 0);
             _setBaseProducts(filteredData, 'part');
 
         } catch (ex) {

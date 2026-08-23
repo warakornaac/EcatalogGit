@@ -24,6 +24,7 @@ namespace Ecatalog.Controllers
             string driveType, string imagePath, string slmCode, string cusCode,
             string[] company)   // ✅ เปลี่ยนจาก string เป็น string[]
         {
+            System.Diagnostics.Debug.WriteLine($"[VIO] slmCode={slmCode} | cusCode={cusCode} | company={string.Join(",", company ?? new string[0])}");
             try
             {
                 var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
@@ -45,17 +46,38 @@ namespace Ecatalog.Controllers
                         CusCode = cusCode,   // ✅
                         Company = company    // ✅
                     },
-                    true,
+                    false,
                     30);
 
+
                 var groupData = result.Data?.result?
-                    .GroupBy(x => x.productGroup)
-                    .Select(g => new
-                    {
-                        productGroupNameMain = g.Key,
-                        productList = g.ToList()
-                    })
-                    .ToList();
+                 .GroupBy(x => x.productGroup)
+                 .Select(g => new
+                 {
+                     productGroupNameMain = g.Key,
+                     productList = g.Select(item => new
+                     {
+                         stkcode = item.stkcode,
+                         stkcodeDescription = item.stkcodeDescription,
+                         brand = item.brand,
+                         makerName = item.makerName,
+                         modelName = item.modelName,
+                         qtyReady = item.qtyReady,
+                         price = item.price,
+                         productGroup = item.productGroup,
+                         productLine = item.productLine,
+                         imagePath = item.imagePath,
+                         fittingDescription = item.fittingDescription,
+
+                         // ← patch ค่าที่ SP ไม่ return
+                         company = item.company != null && item.company.Any()
+                            ? item.company.First()
+                            : (company != null && company.Any() ? company.First() : ""),
+                         slmCode = item.slmCode ?? slmCode ?? "",
+                         cusCode = item.cusCode ?? cusCode ?? ""
+                     }).ToList()
+                 })
+                 .ToList();
 
                 return new LargeJsonResult
                 {
@@ -132,15 +154,16 @@ namespace Ecatalog.Controllers
         [HttpPost]
         public async Task<ActionResult> GetProductBySearchField(ProductSearchFieldRequestModel request) {
             try {
+                System.Diagnostics.Debug.WriteLine($"[FIELD] searchText={request.searchText} | SlmCode={request.SlmCode} | CusCode={request.CusCode}");
                 var result =
                     await Utils.CallApiAsyncMemory<
                         ProductSearchVioModel>(
                         "Ecatalog/GetProductBySearchField",
                         "POST",
                         request,
-                        true,
+                        false,
                         30);
-
+                System.Diagnostics.Debug.WriteLine($"[FIELD] IsSuccess={result.IsSuccess} | ErrorMessage={result.ErrorMessage}");
                 if (result == null) {
                     return Json(new {
                         IsSuccess = false,
