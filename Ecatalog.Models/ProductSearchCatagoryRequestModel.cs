@@ -60,7 +60,7 @@ namespace Ecatalog.Models
         public string imageUrl { get; set; }
         public string slmCode { get; set; }
         public string cusCode { get; set; }
-        public string company { get; set; }
-        public string fittingDescription { get; set; } // ✅
+        public List<string> company { get; set; } // ← เปลี่ยนจาก string เป็น List<string>
+        public string fittingDescription { get; set; }
     }
 }

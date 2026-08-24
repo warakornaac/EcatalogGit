@@ -106,13 +106,14 @@ namespace Ecatalog.Controllers
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[CAT] SlmCode={request.SlmCode} | CusCode={request.CusCode} | Company={string.Join(",", request.Company ?? new List<string>())} | GroupId={string.Join(",", request.productGroupId ?? new List<string>())}");
                 var result = await Utils.CallApiAsyncMemory<ProductSearchCatagoryResponseModel> ( // ✅ เปลี่ยน
                     "Ecatalog/GetProductBySearchCatagory",
                     "POST",
                     request,
                     false,
                     300);
-
+                System.Diagnostics.Debug.WriteLine($"[CAT] IsSuccess={result.IsSuccess} | ErrorMessage={result.ErrorMessage}");
                 if (result == null)
                 {
                     return Json(new
@@ -122,14 +123,35 @@ namespace Ecatalog.Controllers
                     });
                 }
 
-                var groupData =
-                    result.Data?.result?
-                    .GroupBy(x => x.productGroup)
-                    .Select(g => new {
-                        productGroupNameMain = g.Key,
-                        productList = g.ToList()
-                    })
-                    .ToList();
+                var groupData = result.Data?.result?
+                .GroupBy(x => x.productGroup)
+                .Select(g => new {
+                    productGroupNameMain = g.Key,
+                    productList = g.Select(item => new {
+                        productGroupId = item.productGroupId,
+                        productGroup = item.productGroup,
+                        productLineId = item.productLineId,
+                        productLine = item.productLine,
+                        brandId = item.brandId,
+                        brand = item.brand,
+                        stkcode = item.stkcode,
+                        stkcodeDescription = item.stkcodeDescription,
+                        price = item.price,
+                        qtyReady = item.qtyReady,
+                        makerName = item.makerName,
+                        modelName = item.modelName,
+                        imagePath = item.imagePath,
+                        imageUrl = item.imageUrl,
+                        slmCode = item.slmCode ?? request.SlmCode ?? "",
+                        cusCode = item.cusCode ?? request.CusCode ?? "",
+                        company = item.company != null && item.company.Any()
+                                                ? item.company.First()
+                                                : (request.Company != null && request.Company.Any()
+                                                    ? request.Company.First() : ""),
+                        fittingDescription = item.fittingDescription
+                    }).ToList()
+                })
+                .ToList();
 
                 return CustomJson(new
                 {

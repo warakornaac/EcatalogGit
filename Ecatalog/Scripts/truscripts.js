@@ -244,6 +244,7 @@ function _applyFiltersAndRender() {
         if (filterUniversal && p.carModel !== 'Universal') return false;
         if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
         //if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
+        if (_lastSearchType === 'vehicle' && (!p.carModel || p.carModel === 'Universal' || p.carModel.trim() === '')) return false;
         if (q) {
             let match = false;
             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
@@ -371,10 +372,14 @@ function _updateSidebar() {
             $(this).toggle(count > 0);
         });
     } else {
-        // ไม่มี Filter → แสดง 5 รายการแรก
+        // ไม่มี Filter → แสดง 5 รายการแรก (ซ่อน count = 0)
         let plVisible = 0;
-
         $plList.find('.chk-item').each(function () {
+            const count = parseInt($(this).find('.chk-count').text()) || 0;
+            if (count === 0) {
+                $(this).hide();
+                return;
+            }
             if (plVisible < 5) {
                 $(this).show();
                 plVisible++;
@@ -431,10 +436,14 @@ function _updateSidebar() {
             }
         });
     } else {
-        // ไม่มี Filter → แสดง 5 รายการแรก
+        // ไม่มี Filter → แสดง 5 รายการแรก (ซ่อน count = 0)
         let brVisible = 0;
-
         $brList.find('.chk-item').each(function () {
+            const count = parseInt($(this).find('.chk-count').text()) || 0;
+            if (count === 0) {
+                $(this).hide().addClass('br-extra');
+                return;
+            }
             if (brVisible < 5) {
                 $(this).show().removeClass('br-extra');
                 brVisible++;
@@ -608,11 +617,15 @@ function _rebuildSidebarFromProducts() {
     );
 
     $plList.append($plChecked).append($plUnchecked);
-
     // แสดง 5 รายการแรกเสมอ (รายการที่ checked บังคับโชว์เสมอ)
     let plVisible = 0;
     $plList.find('.chk-item').each(function () {
         const isChecked = $(this).hasClass('checked');
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
+        if (count === 0 && !isChecked) {
+            $(this).hide();
+            return;
+        }
         if (isChecked || plVisible < 5) {
             $(this).show();
             if (!isChecked) plVisible++;
@@ -674,11 +687,16 @@ function _rebuildSidebarFromProducts() {
     let brVisible = 0;
     $brList.find('.chk-item').each(function () {
         const isChecked = $(this).hasClass('checked');
+        const count = parseInt($(this).find('.chk-count').text()) || 0;
+        if (count === 0 && !isChecked) {
+            $(this).hide().addClass('br-extra');
+            return;
+        }
         if (isChecked || brVisible < 5) {
-            $(this).show();
+            $(this).show().removeClass('br-extra');
             if (!isChecked) brVisible++;
         } else {
-            $(this).hide();
+            $(this).hide().addClass('br-extra');
         }
     });
 
@@ -1153,12 +1171,41 @@ window.addEventListener('resize', () => {
 });
 
 /* ═════════════════ GROUP BY HELPER ══════════════════ */
+// function groupByLine(list, forceByLine) {
+//     if (!list || !list.length) return [];
+
+//     const keyFn = p => {
+//         if (forceByLine) return p.line || 'อื่นๆ';
+//         if (currentSort === 'carModel') return p.carModel && p.carModel.trim() ? p.carModel : 'ใช้ได้ทั่วไป';
+//         if (currentSort === 'brand') return p.brand || 'อื่นๆ';
+//         if (currentSort === 'part') return p.line || 'อื่นๆ';
+//         if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
+//         if (currentSort === 'price-asc' || currentSort === 'price-desc') return 'ทั้งหมด';
+//         return p.line || 'อื่นๆ';
+//     };
+
+//     const map = {};
+//     list.forEach(p => {
+//         const key = keyFn(p);
+//         if (!map[key]) map[key] = [];
+//         map[key].push(p);
+//     });
+
+//     return Object.entries(map).sort((a, b) =>
+//         (a[0] || '').localeCompare(b[0] || '', 'th')
+//     );
+// }
 function groupByLine(list, forceByLine) {
     if (!list || !list.length) return [];
 
     const keyFn = p => {
         if (forceByLine) return p.line || 'อื่นๆ';
-        if (currentSort === 'carModel') return p.carModel && p.carModel.trim() ? p.carModel : 'ใช้ได้ทั่วไป';
+        if (currentSort === 'carModel') {
+            // ← แก้ตรงนี้: ถ้า carModel ว่าง ให้ใช้ชื่อรถจริงๆ ไม่ใช่ 'ใช้ได้ทั่วไป'
+            return p.carModel && p.carModel.trim() && p.carModel !== 'Universal'
+                ? p.carModel
+                : null; // ← return null แทน
+        }
         if (currentSort === 'brand') return p.brand || 'อื่นๆ';
         if (currentSort === 'part') return p.line || 'อื่นๆ';
         if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
@@ -1169,6 +1216,7 @@ function groupByLine(list, forceByLine) {
     const map = {};
     list.forEach(p => {
         const key = keyFn(p);
+        if (key === null) return; // ← ข้าม Universal เมื่อค้นหาตามรถ
         if (!map[key]) map[key] = [];
         map[key].push(p);
     });
@@ -3107,33 +3155,27 @@ function clearCustomerSelect() {
 function getActiveCompanies() {
     return [...document.querySelectorAll('.company-btn[aria-pressed="true"]')]
         .map(btn => btn.dataset.company);
+    console.log('getActiveCompanies →', result);
+    return result;
 }
 
 // ฟังก์ชันบันทึกและจัดการการคลิก
 function toggleCompany(btn) {
-    const container = btn.closest('.company-group');
     const isCurrentlyPressed = btn.getAttribute('aria-pressed') === 'true';
 
-    // 1. ปิดสถานะของทุกปุ่มในกลุ่มก่อน
-    if (container) {
-        container.querySelectorAll('.company-btn').forEach(b => {
-            b.setAttribute('aria-pressed', 'false');
-        });
-    }
+    // 1. toggle เฉพาะปุ่มที่กด ไม่ reset ปุ่มอื่น
+    btn.setAttribute('aria-pressed', isCurrentlyPressed ? 'false' : 'true');
 
-    // 2. ถ้าปุ่มที่กดไม่ได้เปิดอยู่ ให้เปิดใช้งาน (ถ้าเปิดอยู่แล้วกดซ้ำ จะเป็นการยกเลิกเลือก)
-    let selectedCompany = '';
-    if (!isCurrentlyPressed) {
-        btn.setAttribute('aria-pressed', 'true');
-        selectedCompany = btn.getAttribute('data-company');
-    }
+    // 2. รวบรวมปุ่มที่ active ทั้งหมด
+    const selected = getActiveCompanies();
 
-    // 3. บันทึกลง window.APP_SESSION
+    // 3. บันทึกลง APP_SESSION เป็น array
     if (!window.APP_SESSION) window.APP_SESSION = {};
-    window.APP_SESSION.company = selectedCompany || 'TAC';
+    window.APP_SESSION.companies = selected; // ← เก็บ array ไว้ใช้
+    window.APP_SESSION.company = selected.length > 0 ? selected[0] : 'TAC'; // backward compat
 
-    // 4. ✅ เซฟลง sessionStorage (หรือ localStorage) เพื่อให้ค่าไม่หายตอนรีเฟรช
-    sessionStorage.setItem('selected_company', window.APP_SESSION.company);
+    // 4. เซฟลง sessionStorage
+    sessionStorage.setItem('selected_company', getActiveCompanies().join(','));
 
     // 5. โหลดข้อมูลลูกค้าใหม่
     const selectedSlm = document.getElementById('salesmanId')?.value;
@@ -3146,19 +3188,16 @@ function toggleCompany(btn) {
 function initCompanySelection() {
     if (!window.APP_SESSION) window.APP_SESSION = {};
 
-    // อ่านค่าจาก sessionStorage (ถ้าไม่มีให้ใช้ 'TAC' เป็นค่าเริ่มต้น)
-    const savedCompany = sessionStorage.getItem('selected_company') || window.APP_SESSION.company || 'TAC';
-    window.APP_SESSION.company = savedCompany;
+    const saved = sessionStorage.getItem('selected_company') || 'TAC'; // ← default TAC อย่างเดียว
+    const savedList = saved.split(',').filter(Boolean);
+    window.APP_SESSION.company = savedList[0] || 'TAC';
+    window.APP_SESSION.companies = savedList;
 
-    // ค้นหาปุ่มที่ตรงกับค่าที่บันทึกไว้ แล้วตั้งค่า aria-pressed="true"
-    const targetBtn = document.querySelector(`.company-btn[data-company="${savedCompany}"]`);
-    if (targetBtn) {
-        const container = targetBtn.closest('.company-group');
-        if (container) {
-            container.querySelectorAll('.company-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-        }
-        targetBtn.setAttribute('aria-pressed', 'true');
-    }
+    document.querySelectorAll('.company-btn').forEach(btn => {
+        btn.setAttribute('aria-pressed',
+            savedList.includes(btn.dataset.company) ? 'true' : 'false'
+        );
+    });
 }
 
 // เรียกทำงานทันทีเมื่อโหลด DOM เสร็จสิ้น

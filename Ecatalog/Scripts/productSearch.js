@@ -421,7 +421,7 @@ function _normalizeProduct(p) {
 ═══════════════════════════════════════════════════════ */
 async function _callAddToCartAPI(p, qty, btnEl) {
     const cuscode = window.APP_SESSION?.cuscode || '';
-    const company = window.APP_SESSION?.company || 'TAC';
+    const company = getActiveCompanies()[0] || window.APP_SESSION?.company || 'TAC';
     const isBO = p.isBO ?? ((parseInt(p.stock ?? p.qtyReady ?? 99)) === 0);
     const stkcode = p.code || p.stkcode || '';
     const price = parseFloat(p.price) || 0;
