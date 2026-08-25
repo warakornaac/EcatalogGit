@@ -56,7 +56,7 @@ async function loadSearchProductVio() {
         params.append('slmCode', slmCode);  // ← ตัวเล็ก ตรงกับ controller
         params.append('cusCode', cusCode);  // ← ตัวเล็ก
         companies.forEach(c => params.append('Company', c));
-        console.log('ส่งไป API →', { slmCode, cusCode, companies });
+        //console.log('ส่งไป API →', { slmCode, cusCode, companies });
         const response = await fetch(`${API_URLS.getProductBySearchVio}?${params}`, { method: 'GET' });
         const result = await response.json();
 
@@ -68,20 +68,13 @@ async function loadSearchProductVio() {
 
             const previousGroup = activeGroup;
             document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
+
+            activeGroup = '0';
+            window.selectedGroupId = '0';
+
+            document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
+            fitState = new Set();
             _setBaseProducts(result.Data, 'vehicle', false, true);
-
-            const groupStillExists = previousGroup !== '0' &&
-                GROUPS.some(g => String(g.id) === String(previousGroup));
-
-            if (groupStillExists) {
-                activeGroup = previousGroup;
-                window.selectedGroupId = previousGroup;
-                document.querySelector(`.bb-item[data-id="${previousGroup}"]`)?.classList.add('active');
-            } else {
-                activeGroup = '0';
-                window.selectedGroupId = '0';
-                document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
-            }
 
             _applyFiltersAndRender();
 

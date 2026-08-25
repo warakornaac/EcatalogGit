@@ -202,12 +202,17 @@ namespace Ecatalog.Controllers
                   })
                   .ToList();
 
-                return Json(new {
-                    IsSuccess = result.IsSuccess,
-                    IsFromCache = result.IsFromCache,
-                    ExecutionTime = result.ExecutionTime,
-                    Data = groupData
-                });
+                return new JsonResult
+                {
+                    Data = new
+                    {
+                        IsSuccess = result.IsSuccess,
+                        IsFromCache = result.IsFromCache,
+                        ExecutionTime = result.ExecutionTime,
+                        Data = groupData
+                    },
+                    MaxJsonLength = int.MaxValue
+                };
             }
             catch (Exception ex) {
                 return Json(new {

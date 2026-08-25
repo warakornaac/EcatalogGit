@@ -115,7 +115,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
-    const seen = new Set();
+    //const seen = new Set();
 
     (groups || []).forEach(group => {
         // ✅ ลบ guard นี้ออก — อย่าทิ้ง group ที่ productGroupNameMain ว่าง
@@ -124,8 +124,9 @@ function mapApiResponseToProducts(groups) {
         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
 
         (group.productList || []).forEach(item => {
-            if (!item.stkcode || seen.has(item.stkcode)) return;
-            seen.add(item.stkcode);
+            //if (!item.stkcode || seen.has(item.stkcode)) return;
+            if (!item.stkcode) return;
+            //seen.add(item.stkcode);
 
             const qty = parseInt(item.qtyReady, 10);
             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
@@ -244,7 +245,10 @@ function _applyFiltersAndRender() {
         if (filterUniversal && p.carModel !== 'Universal') return false;
         if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
         //if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
-        if (_lastSearchType === 'vehicle' && (!p.carModel || p.carModel === 'Universal' || p.carModel.trim() === '')) return false;
+        // if (_lastSearchType === 'vehicle') {
+        //     const universalItems = BASE_PRODUCTS.filter(p => !p.carModel || p.carModel === 'Universal' || p.carModel.trim() === '');
+        //     console.log('Universal items →', universalItems.map(p => ({ code: p.code, carModel: p.carModel })));
+        // }
         if (q) {
             let match = false;
             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
@@ -1200,23 +1204,26 @@ function groupByLine(list, forceByLine) {
 
     const keyFn = p => {
         if (forceByLine) return p.line || 'อื่นๆ';
+
         if (currentSort === 'carModel') {
-            // ← แก้ตรงนี้: ถ้า carModel ว่าง ให้ใช้ชื่อรถจริงๆ ไม่ใช่ 'ใช้ได้ทั่วไป'
             return p.carModel && p.carModel.trim() && p.carModel !== 'Universal'
                 ? p.carModel
-                : null; // ← return null แทน
+                : 'ใช้ได้ทั่วไป';
         }
+
         if (currentSort === 'brand') return p.brand || 'อื่นๆ';
         if (currentSort === 'part') return p.line || 'อื่นๆ';
         if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
         if (currentSort === 'price-asc' || currentSort === 'price-desc') return 'ทั้งหมด';
+
         return p.line || 'อื่นๆ';
     };
 
     const map = {};
+
     list.forEach(p => {
         const key = keyFn(p);
-        if (key === null) return; // ← ข้าม Universal เมื่อค้นหาตามรถ
+
         if (!map[key]) map[key] = [];
         map[key].push(p);
     });
@@ -2661,32 +2668,49 @@ function ClickedMatchData() {
     });
 }
 
+// function _renderAfterGroupChange() {
+//     ✅ ถ้ามี BASE_PRODUCTS อยู่แล้ว (จาก vehicle/field search) → filter local ไม่ต้อง API ใหม่
+//     if (BASE_PRODUCTS.length > 0) {
+//         _applyFiltersAndRender();
+//         window._isSearchingCategory = false;
+//         document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+//         PRODUCTS_FOR_COUNT = [...PRODUCTS];
+//         _updateSidebar();
+//         renderActiveFilterChips();
+//         hideSkel();
+//     } else {
+//         ✅ ดักจับ Error ด้วย .catch() ป้องกัน Error หลุดไป Console
+//         searchProductByCategory()
+//             .catch(err => {
+//                 if (err.name !== 'AbortError') {
+//                     console.error("Group change search failed:", err);
+//                 }
+//             })
+//             .finally(() => {
+//                 window._isSearchingCategory = false;
+//                 document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+//                 PRODUCTS_FOR_COUNT = [...PRODUCTS];
+//                 _updateSidebar();
+//                 renderActiveFilterChips();
+//             });
+//     }
+// }
+
 function _renderAfterGroupChange() {
-    // ✅ ถ้ามี BASE_PRODUCTS อยู่แล้ว (จาก vehicle/field search) → filter local ไม่ต้อง API ใหม่
-    if (BASE_PRODUCTS.length > 0) {
-        _applyFiltersAndRender();
-        window._isSearchingCategory = false;
-        document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
-        PRODUCTS_FOR_COUNT = [...PRODUCTS];
-        _updateSidebar();
-        renderActiveFilterChips();
-        hideSkel();
-    } else {
-        // ✅ ดักจับ Error ด้วย .catch() ป้องกัน Error หลุดไป Console
-        searchProductByCategory()
-            .catch(err => {
-                if (err.name !== 'AbortError') {
-                    console.error("Group change search failed:", err);
-                }
-            })
-            .finally(() => {
-                window._isSearchingCategory = false;
-                document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
-                PRODUCTS_FOR_COUNT = [...PRODUCTS];
-                _updateSidebar();
-                renderActiveFilterChips();
-            });
-    }
+    searchProductByCategory()
+        .catch(err => {
+            if (err.name !== 'AbortError') {
+                console.error("Group change search failed:", err);
+            }
+        })
+        .finally(() => {
+            window._isSearchingCategory = false;
+            document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+            PRODUCTS_FOR_COUNT = [...PRODUCTS];
+            _updateSidebar();
+            renderActiveFilterChips();
+            hideSkel();
+        });
 }
 
 function FilterProductionLines(allowedIds) {
