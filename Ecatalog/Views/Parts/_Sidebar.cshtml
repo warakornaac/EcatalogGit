@@ -563,6 +563,12 @@
 
             // const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
             const filteredData = (result.Data || []).filter(g => g.productList?.length > 0);
+            console.log('filteredData →', JSON.stringify(filteredData.map(g => ({
+                group: g.productGroupNameMain,
+                count: g.productList.length,
+                codes: g.productList.map(p => p.stkcode)
+            }))));
+
             _setBaseProducts(filteredData, 'part');
 
         } catch (ex) {

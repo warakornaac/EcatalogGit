@@ -112,29 +112,71 @@ window.addEventListener('DOMContentLoaded', () => {
 
 /* ══════════════ API: MAP RESPONSE → FLAT PRODUCTS ═══════════════ */
 
+// function mapApiResponseToProducts(groups) {
+//     const list = [];
+//     let autoId = 1;
+//     const seen = new Set();
+
+//     (groups || []).forEach(group => {
+//         ✅ ลบ guard นี้ออก — อย่าทิ้ง group ที่ productGroupNameMain ว่าง
+//         if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
+
+//         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
+
+//         (group.productList || []).forEach(item => {
+//             if (!item.stkcode || seen.has(item.stkcode)) return;
+//             if (!item.stkcode) return;
+//             seen.add(item.stkcode);
+
+//             const qty = parseInt(item.qtyReady, 10);
+//             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
+//             const maker = (item.makerName || '').trim();
+//             const model = (item.modelName || '').trim();
+//             const carParts = [maker, model].filter(v =>
+//                 v && !PLACEHOLDER.includes(v) &&
+//                 !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
+//             );
+
+//             list.push({
+//                 id: autoId++,
+//                 code: item.stkcode || '',
+//                 name: item.stkcodeDescription || item.stkcode || '—',
+//                 price: parseFloat(item.price) || 0,
+//                 stock: isNaN(qty) ? 99 : qty,
+//                 cat: item.productGroup || groupLabel,
+//                 brand: item.brand || '—',
+//                 line: item.productLine || 'อื่นๆ',
+//                 carModel: carParts.join(' ') || '',
+//                 img: item.imagePath || item.imageUrl || '',
+//                 fit: parseFittingDescription(item.fittingDescription)
+//             });
+//         });
+//     });
+
+//     return list;
+// }
+
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
-    //const seen = new Set();
+    const seen = new Set(); // ✅ เปิดใช้ seen อีกครั้ง
 
     (groups || []).forEach(group => {
-        // ✅ ลบ guard นี้ออก — อย่าทิ้ง group ที่ productGroupNameMain ว่าง
-        // if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
-
         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
 
         (group.productList || []).forEach(item => {
-            //if (!item.stkcode || seen.has(item.stkcode)) return;
             if (!item.stkcode) return;
-            //seen.add(item.stkcode);
+
+            // ✅ dedup ตาม stkcode เมื่อ sort=part
+            if (currentSort === 'part' && seen.has(item.stkcode)) return;
+            seen.add(item.stkcode);
 
             const qty = parseInt(item.qtyReady, 10);
-            const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
             const maker = (item.makerName || '').trim();
             const model = (item.modelName || '').trim();
+            const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
             const carParts = [maker, model].filter(v =>
-                v && !PLACEHOLDER.includes(v) &&
-                !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
+                v && !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
             );
 
             list.push({
@@ -204,6 +246,7 @@ function parseFittingDescription(fittingDescription) {
 function _setBaseProducts(groups, searchType, keepSort = false, skipRender = false) {
     
     _lastSearchType = searchType
+    window._lastApiGroups = groups; // ✅ เก็บ raw ไว้ re-map ภายหลัง
     BASE_PRODUCTS = mapApiResponseToProducts(groups || []);
 
     if (searchType === 'vehicle' || searchType === 'part') {
@@ -741,12 +784,27 @@ function switchSortbyPart() {
 
 
 // ── 3. sortProducts — ซิงก์ dropdown กลับด้วย (กันกรณี call จากที่อื่น) ──
+// function sortProducts(val) {
+//     currentSort = val;
+//     const sel = gEl('sortSelect');
+//     if (sel && sel.value !== val) sel.value = val;  ✅ sync UI
+//     applyAllFilters();
+// }
+
 function sortProducts(val) {
     currentSort = val;
     const sel = gEl('sortSelect');
-    if (sel && sel.value !== val) sel.value = val;  // ✅ sync UI
+    if (sel && sel.value !== val) sel.value = val;
+
+    // ✅ re-map เพื่อ dedup ใหม่ตาม sort ที่เลือก
+    // (BASE_PRODUCTS ถูก set จาก _lastGroups ที่เก็บไว้)
+    if (window._lastApiGroups) {
+        BASE_PRODUCTS = mapApiResponseToProducts(window._lastApiGroups);
+    }
+
     applyAllFilters();
 }
+
 function applySorting(list) {
     const arr = [...list];
     if (currentSort === 'price-asc') return arr.sort((a, b) => a.price - b.price);
@@ -1199,32 +1257,68 @@ window.addEventListener('resize', () => {
 //         (a[0] || '').localeCompare(b[0] || '', 'th')
 //     );
 // }
+// function groupByLine(list, forceByLine) {
+//     if (!list || !list.length) return [];
+
+//     const keyFn = p => {
+//         if (forceByLine) return p.line || 'อื่นๆ';
+
+//         if (currentSort === 'carModel') {
+//             return p.carModel && p.carModel.trim() && p.carModel !== 'Universal'
+//                 ? p.carModel
+//                 : 'ใช้ได้ทั่วไป';
+//         }
+
+//         if (currentSort === 'brand') return p.brand || 'อื่นๆ';
+//         if (currentSort === 'part') return p.line || 'อื่นๆ';
+//         if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
+//         if (currentSort === 'price-asc' || currentSort === 'price-desc') return 'ทั้งหมด';
+
+//         return p.line || 'อื่นๆ';
+//     };
+
+//     const map = {};
+
+//     list.forEach(p => {
+//         const key = keyFn(p);
+
+//         if (!map[key]) map[key] = [];
+//         map[key].push(p);
+//     });
+
+//     return Object.entries(map).sort((a, b) =>
+//         (a[0] || '').localeCompare(b[0] || '', 'th')
+//     );
+// }
+
 function groupByLine(list, forceByLine) {
     if (!list || !list.length) return [];
 
     const keyFn = p => {
         if (forceByLine) return p.line || 'อื่นๆ';
-
         if (currentSort === 'carModel') {
             return p.carModel && p.carModel.trim() && p.carModel !== 'Universal'
                 ? p.carModel
                 : 'ใช้ได้ทั่วไป';
         }
-
         if (currentSort === 'brand') return p.brand || 'อื่นๆ';
         if (currentSort === 'part') return p.line || 'อื่นๆ';
         if (currentSort === 'name') return p.name?.charAt(0).toUpperCase() || 'อื่นๆ';
         if (currentSort === 'price-asc' || currentSort === 'price-desc') return 'ทั้งหมด';
-
         return p.line || 'อื่นๆ';
     };
 
     const map = {};
+    const seenPerGroup = {}; // ✅ เพิ่ม
 
     list.forEach(p => {
         const key = keyFn(p);
-
-        if (!map[key]) map[key] = [];
+        if (!map[key]) {
+            map[key] = [];
+            seenPerGroup[key] = new Set(); // ✅ เพิ่ม
+        }
+        if (seenPerGroup[key].has(p.code)) return; // ✅ ถ้า stkcode ซ้ำในแถวเดียวกัน ข้ามไป
+        seenPerGroup[key].add(p.code); // ✅ เพิ่ม
         map[key].push(p);
     });
 
@@ -1232,6 +1326,7 @@ function groupByLine(list, forceByLine) {
         (a[0] || '').localeCompare(b[0] || '', 'th')
     );
 }
+
 function nfScroll(rowId, dir) {
     const el = gEl(rowId);
     if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
@@ -3044,7 +3139,7 @@ function getCustomerbySalesman(slmcode, sessionCus) {
 
             $.each(data.Data, function (i, cus) {
                 if (cus.inactive === 'Y' || cus.block === 1) return;
-                if (activeCompanies.length > 0 && !activeCompanies.includes(cus.company)) return;
+                //if (activeCompanies.length > 0 && !activeCompanies.includes(cus.company)) return;
 
                 const fullText = `${cus.cuscode} - ${cus.cusname}`;
                 select.append(
