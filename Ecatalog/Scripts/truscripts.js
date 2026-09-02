@@ -1315,11 +1315,19 @@ function groupByLine(list, forceByLine) {
         const key = keyFn(p);
         if (!map[key]) {
             map[key] = [];
-            seenPerGroup[key] = new Set(); // ✅ เพิ่ม
+            seenPerGroup[key] = new Map(); // ✅ เปลี่ยน Set → Map เพื่อเก็บ index
         }
-        if (seenPerGroup[key].has(p.code)) return; // ✅ ถ้า stkcode ซ้ำในแถวเดียวกัน ข้ามไป
-        seenPerGroup[key].add(p.code); // ✅ เพิ่ม
-        map[key].push(p);
+
+        const existing = seenPerGroup[key].get(p.code);
+
+        if (existing === undefined) {
+            // ยังไม่มี → เพิ่มเลย
+            seenPerGroup[key].set(p.code, map[key].length);
+            map[key].push(p);
+        } else if (p.stock > 0 && map[key][existing].stock === 0) {
+            // ✅ มีอยู่แล้วแต่ stock = 0 → แทนด้วยตัวที่มี stock
+            map[key][existing] = p;
+        }
     });
 
     return Object.entries(map).sort((a, b) =>

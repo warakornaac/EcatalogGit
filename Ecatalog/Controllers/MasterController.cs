@@ -325,9 +325,8 @@ namespace Ecatalog.Controllers
         }
         public async Task<ActionResult> GetSalesmanAll(string slmcode)
         {
-            // ✅ ใช้ค่าจาก Session เป็นหลัก ถ้าว่างให้ fallback เป็น "All"
-            slmcode = Session["slmcode"]?.ToString() ?? "";
-            if (string.IsNullOrWhiteSpace(slmcode)) slmcode = "All";
+            var userType = Session["userType"]?.ToString() ?? "";
+            slmcode = userType == "1" ? "All" : (Session["slmcode"]?.ToString() ?? "All");
 
             try
             {

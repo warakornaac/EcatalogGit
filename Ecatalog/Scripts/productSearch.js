@@ -35,7 +35,7 @@ async function loadSearchProductVio() {
             icon: 'warning',
             title: 'กรุณาเลือก Maker หรือเลือก Market Segment + Vehicle Segment ก่อนทำการค้นหา'
         });
-        return;
+        return false;
     }
 
     btn.prop("disabled", true);

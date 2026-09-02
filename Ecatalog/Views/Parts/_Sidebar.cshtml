@@ -107,7 +107,17 @@
             </select>
         </div>
         <div class="ftags" id="vfTags"></div>
-        <button class="search-btn" id="btnSearchProductVio" onclick="loadSearchProductVio()">
+        <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
+            const hasMaker = $('#makerId').val();
+            const hasMarketAndSegment = $('#marketsegId').val() && $('#segmentId').val();
+            const hasText = $('#txtSearchField').val().trim();
+            if (!hasMaker && !hasMarketAndSegment && hasText) {
+                loadSearchProductField();
+            } else {
+                const ok = await loadSearchProductVio();
+                if (ok !== false && hasText) loadSearchProductField();
+            }
+        })();">
             <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
         </button>
         @*<div class="mb-1">
@@ -155,7 +165,7 @@
 <div class="collapse show" id="sfBody">
     <div class="filter-body">
         @*<span class="sec-title mb-2">Filter (ตัวกรองสินค้า)</span>*@
-        <div class="flabel">Product Line (สายผลิตภัณฑ์)</div>
+        <div class="flabel">Product Line (หมวดหมู่)</div>
         <div class="chk-list" id="plList"></div>
 
         <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
