@@ -25,8 +25,12 @@ async function loadSearchProductVio() {
     const driveId = $("#driveId").val();
     const slmCode = $("#salesmanId").val() || "";
     const cusCode = $("#customerId").val() || "";
-    const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
+    const companies = typeof getActiveCompanies === 'function'
+        ? getActiveCompanies()
+        : [];
+
     _syncSessionFromUI();
+
     const hasMaker = !!makerId;
     const hasMarketAndSegment = !!(marketSegmentId && segmentId);
 
@@ -38,12 +42,31 @@ async function loadSearchProductVio() {
         return false;
     }
 
+    // ⚠️ เพิ่มใหม่: ถ้ามี Category เลือกอยู่แล้ว ข้ามการยิง Vio ไปเลย
+    // เรียก searchProductByCategory() ตัวเดียวพอ (กรอง Category+Vehicle ครบในตัว)
+    const hasCategorySelected = typeof activeGroup !== 'undefined'
+        && String(activeGroup) !== '0';
+
+    if (hasCategorySelected && typeof searchProductByCategory === 'function') {
+        _syncSessionFromUI();
+        showSkel();
+        window._isVehicleSearching = true;
+        try {
+            await searchProductByCategory();
+        } finally {
+            window._isVehicleSearching = false;
+            hideSkel();
+        }
+        return true;
+    }
+
     btn.prop("disabled", true);
     showSkel();
+    window._isVehicleSearching = true;
 
     try {
-        // ✅ build URLSearchParams เองเพื่อรองรับ array
         const params = new URLSearchParams();
+
         params.append('marketSegmentId', marketSegmentId || '');
         params.append('segmentId', segmentId || '');
         params.append('makerId', makerId || '');
@@ -53,11 +76,20 @@ async function loadSearchProductVio() {
         params.append('yearFrom', yearFrom || '');
         params.append('yearTo', yearTo || '');
         params.append('driveType', driveId || '');
-        params.append('slmCode', slmCode);  // ← ตัวเล็ก ตรงกับ controller
-        params.append('cusCode', cusCode);  // ← ตัวเล็ก
+        params.append('slmCode', slmCode);
+        params.append('cusCode', cusCode);
+
         companies.forEach(c => params.append('Company', c));
-        //console.log('ส่งไป API →', { slmCode, cusCode, companies });
-        const response = await fetch(`${API_URLS.getProductBySearchVio}?${params}`, { method: 'GET' });
+
+        // ❌ ไม่ส่ง productGroupId ไปกับ Vehicle API
+        // เพราะ Category ต้องถูกกรองด้วย logic เดียวกันภายหลัง
+        // params.append('productGroupId', String(activeGroup));
+
+        const response = await fetch(
+            `${API_URLS.getProductBySearchVio}?${params}`,
+            { method: 'GET' }
+        );
+
         const result = await response.json();
 
         if (result.IsSuccess) {
@@ -66,15 +98,16 @@ async function loadSearchProductVio() {
                 " (" + result.ExecutionTime + " ms)"
             );
 
-            const previousGroup = activeGroup;
-            document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
-
-            activeGroup = '0';
-            window.selectedGroupId = '0';
-
-            document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
             fitState = new Set();
-            _setBaseProducts(result.Data, 'vehicle', false, true);
+
+            const dataToSet = result.Data || [];
+
+            _setBaseProducts(
+                dataToSet,
+                'vehicle',
+                false,
+                true
+            );
 
             _applyFiltersAndRender();
 
@@ -85,11 +118,14 @@ async function loadSearchProductVio() {
     } catch (ex) {
         console.error(ex);
         toast("System Error", "warn");
+
     } finally {
+        window._isVehicleSearching = false;
         hideSkel();
         btn.prop("disabled", false);
     }
 }
+
 /*SearchGlobal*/
 async function searchProductGlobal(keyword) {
     if (!keyword || keyword.trim().length < 2) return;
