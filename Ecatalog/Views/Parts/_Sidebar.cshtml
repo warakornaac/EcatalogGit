@@ -18,13 +18,13 @@
             <div class="sb-sc-row">
                 <div class="sb-sc-field">
                     <label class="sb-sc-label" for="salesmanId">Salesman</label>
-                    <select class="sb-select sb-select-sm" id="salesmanId">
+                    <select class="sb-select sb-select-sm select2-target" id="salesmanId">
                         <option value="">-- เลือก Salesman --</option>
                     </select>
                 </div>
                 <div class="sb-sc-field">
                     <label class="sb-sc-label" for="customerId">Customer</label>
-                    <select class="sb-select sb-select-sm" id="customerId">
+                    <select class="sb-select sb-select-sm select2-target" id="customerId">
                         <option value="">-- เลือก Customer --</option>
                     </select>
                 </div>
@@ -473,13 +473,13 @@
 
         if (result.IsSuccess) {
             _setBaseProducts(result.Data, 'category', false, true);
-            
+
             // Rebuild DOM ของ Sidebar ใหม่ทั้งหมดตาม BASE_PRODUCTS ชุดใหม่
             _rebuildSidebarFromProducts();
-            
+
             // กรองข้อมูล นำไป Render ตาราง และอัปเดต Badge/Visibility ของ Sidebar (_updateSidebar)
             _applyFiltersAndRender();
-            
+
             gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             Swal.fire({
@@ -552,7 +552,7 @@
                 //alert("Please select search mode.");
                 return;
             }
-            const response = await fetch(
+            @*const response = await fetch(
                 '@Url.Action("GetProductBySearchField","Product")',
                 {
                     method: "POST",
@@ -562,6 +562,37 @@
 
             const result = await response.json();
             console.log('Field request →', request); // ← เพิ่ม
+            if (!result.IsSuccess) {
+                throw new Error(result.Message || "Search Error");
+            }*@
+
+            const response = await fetch(
+                '@Url.Action("GetProductBySearchField","Product")',
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify(request)
+                }
+            );
+
+            console.log("HTTP Status →", response.status);
+            console.log("Response Content-Type →", response.headers.get("content-type"));
+
+            const responseText = await response.text();
+
+            console.log("Response Body →", responseText);
+
+            let result;
+
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                throw new Error("Server response is not JSON: " + responseText);
+            }
+
             if (!result.IsSuccess) {
                 throw new Error(result.Message || "Search Error");
             }

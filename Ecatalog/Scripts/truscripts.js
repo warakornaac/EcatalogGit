@@ -120,13 +120,9 @@ function mapApiResponseToProducts(groups) {
 
     (groups || []).forEach(group => {
         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
-        const seenInGroup = new Set();
 
         (group.productList || []).forEach(item => {
             if (!item.stkcode) return;
-
-            if (seenInGroup.has(item.stkcode)) return;
-            seenInGroup.add(item.stkcode);
 
             const qty = parseInt(item.qtyReady, 10);
             const maker = (item.makerName || '').trim();
@@ -136,6 +132,7 @@ function mapApiResponseToProducts(groups) {
             const carParts = [maker, model].filter(v =>
                 v && !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
             );
+            const carModel = carParts.join(' ') || '';
 
             list.push({
                 id: autoId++,
@@ -147,7 +144,7 @@ function mapApiResponseToProducts(groups) {
                 catId: String(item.productGroupId || group.productGroupId || ''),
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
-                carModel: carParts.join(' ') || '',
+                carModel,
                 img: item.imagePath || item.imageUrl || '',
                 fit: parseFittingDescription(item.fittingDescription)
             });
@@ -373,26 +370,23 @@ function _ensureSidebarVisibility() {
         const isExpanded = btn?.classList.contains('expanded');
 
         if (items.length > 0) {
-
             if (hasAnyFilter) {
-                // ✅ มี Filter → แสดงเฉพาะ count > 0
                 items.each((idx, el) => {
-                    const count = parseInt(
-                        $(el).find('.chk-count').text()
-                    ) || 0;
-
-                    if (count > 0) {
-                        $(el).show();
-                    } else {
-                        $(el).hide();
-                    }
+                    const count = parseInt($(el).find('.chk-count').text()) || 0;
+                    $(el).toggle(count > 0);
                 });
-
             } else {
-                // ✅ ไม่มี Filter → แสดง 5 รายการแรก
+                // ✅ แสดงเฉพาะ count > 0 และไม่เกิน 5
+                let visible = 0;
                 items.each((idx, el) => {
-                    if (isExpanded || idx < 5) {
+                    const count = parseInt($(el).find('.chk-count').text()) || 0;
+                    if (count === 0) {
+                        $(el).hide();
+                        return;
+                    }
+                    if (isExpanded || visible < 5) {
                         $(el).show();
+                        visible++;
                     } else {
                         $(el).hide();
                     }
@@ -401,19 +395,27 @@ function _ensureSidebarVisibility() {
         }
 
         if (btn) {
-            btn.style.display = items.length > 5 ? 'block' : 'none';
+            // ✅ นับเฉพาะ count > 0
+            const countAboveZero = items.filter((_, el) =>
+                (parseInt($(el).find('.chk-count').text()) || 0) > 0
+            ).length;
+            btn.style.display = countAboveZero > 5 ? 'block' : 'none';
         }
     });
 }
-
 function _updateSidebar() {
     // ── Product Line (PL) ──
 
     const plCounts = {};
+    const plSeen = new Set();
     (PRODUCTS_FOR_PL_COUNT || []).forEach(p => {
         if (p && p.line) {
-            const name = p.line.trim();
-            plCounts[name] = (plCounts[name] || 0) + 1;
+            const key = p.line.trim() + '|' + p.code;  // unique per line+code
+            if (!plSeen.has(key)) {
+                plSeen.add(key);
+                const name = p.line.trim();
+                plCounts[name] = (plCounts[name] || 0) + 1;
+            }
         }
     });
 
@@ -469,15 +471,21 @@ function _updateSidebar() {
 
     const plBtn = gEl('plSeeMore');
     if (plBtn) {
-        plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
+        // plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
+        plBtn.style.display = $plList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
     }
 
     // ── Brand (BR) ──
     const brCounts = {};
+    const brSeen = new Set();
     (PRODUCTS_FOR_BR_COUNT || []).forEach(p => {
         if (p && p.brand) {
-            const name = p.brand.trim();
-            brCounts[name] = (brCounts[name] || 0) + 1;
+            const key = p.brand.trim() + '|' + p.code;  // unique per brand+code
+            if (!brSeen.has(key)) {
+                brSeen.add(key);
+                const name = p.brand.trim();
+                brCounts[name] = (brCounts[name] || 0) + 1;
+            }
         }
     });
 
@@ -505,7 +513,6 @@ function _updateSidebar() {
         // มี Filter → แสดงเฉพาะ count > 0
         $brList.find('.chk-item').each(function () {
             const count = parseInt($(this).find('.chk-count').text()) || 0;
-
             if (count > 0) {
                 $(this).show().removeClass('br-extra');
             } else {
@@ -532,7 +539,8 @@ function _updateSidebar() {
 
     const brBtn = gEl('brSeeMore');
     if (brBtn) {
-        brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
+        //brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
+        brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
     }
 }
 /* ═══════════════ §1 — SEARCH SYNC ════════════════ */
@@ -655,10 +663,15 @@ function _rebuildSidebarFromProducts() {
 
     // ── 1. ประมวลผล Product Line (PL) ──
     const lineCount = {};
+    const lineSeen = new Set();
     BASE_PRODUCTS.forEach(p => {
         if (p.line) {
-            const name = p.line.trim();
-            lineCount[name] = (lineCount[name] || 0) + 1;
+            const key = p.line.trim() + '|' + p.code;
+            if (!lineSeen.has(key)) {
+                lineSeen.add(key);
+                const name = p.line.trim();
+                lineCount[name] = (lineCount[name] || 0) + 1;
+            }
         }
     });
 
@@ -715,15 +728,21 @@ function _rebuildSidebarFromProducts() {
     if (plBtn) {
         plBtn.classList.remove('expanded');
         plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
-        plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
+        // plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
+        plBtn.style.display = $plList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
     }
 
     // ── 2. ประมวลผล Brand (BR) ──
     const brandCount = {};
+    const brandSeen = new Set();
     BASE_PRODUCTS.forEach(p => {
         if (p.brand && p.brand !== '—') {
-            const name = p.brand.trim();
-            brandCount[name] = (brandCount[name] || 0) + 1;
+            const key = p.brand.trim() + '|' + p.code;
+            if (!brandSeen.has(key)) {
+                brandSeen.add(key);
+                const name = p.brand.trim();
+                brandCount[name] = (brandCount[name] || 0) + 1;
+            }
         }
     });
 
@@ -781,7 +800,8 @@ function _rebuildSidebarFromProducts() {
     if (brBtn) {
         brBtn.classList.remove('expanded');
         brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
-        brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
+        //brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
+        brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
     }
 }
 
@@ -1391,7 +1411,9 @@ function renderProducts(list) {
     const nfRows = gEl('nfRows');
     const hasFilter = Object.keys(chkState.pl).length || fitState.size || Object.keys(chkState.br).length;
 
-    gEl('rcount').textContent = sorted.length + ' items';
+    // gEl('rcount').textContent = sorted.length + ' items';
+    const uniqueCount = new Set(sorted.map(p => p.code)).size;
+    gEl('rcount').textContent = uniqueCount + ' items';
 
     const stockLabel = s =>
         s === 0 ? `<span class="pstock out-stock"><i class="bi bi-exclamation-circle-fill"></i> หมดสต็อก</span>` :
@@ -3198,7 +3220,12 @@ function getSalesmanAll(sessionSlm, sessionCus) {
                 }
             });
 
-            _bindSelectToggle('salesmanId');   // ✅ bind mousedown/focus/blur ครั้งเดียวพอ
+            //_bindSelectToggle('salesmanId');   // ✅ bind mousedown/focus/blur ครั้งเดียวพอ
+            $('#salesmanId').select2({
+                placeholder: '-- เลือก Salesman --',
+                allowClear: true,
+                width: '250px'
+            });
         },
         error: function (xhr, status, error) {
             console.error('getSalesmanAll error:', error);
@@ -3260,7 +3287,15 @@ function getCustomerbySalesman(slmcode, sessionCus) {
                 }
             });
 
-            _bindSelectToggle('customerId');
+            //_bindSelectToggle('customerId');
+            if ($('#customerId').data('select2')) {
+                $('#customerId').select2('destroy');
+            }
+            $('#customerId').select2({
+                placeholder: '-- เลือก Customer --',
+                allowClear: true,
+                width: '250px'
+            });
         },
         error: function (xhr, status, error) {
             console.error('getCustomerbySalesman error:', error);

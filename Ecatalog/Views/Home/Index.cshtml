@@ -14,6 +14,7 @@
     <link href="~/Content/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="~/Content/bootstrap-icons.css">
     <link rel="stylesheet" href="~/Content/Site.css">
+    <link rel="stylesheet" href="~/Content/select2.min.css">
 </head>
 <body>
     @Html.Partial("~/Views/Parts/_Header.cshtml")
@@ -141,6 +142,7 @@
     <script src="@Url.Content("~/Scripts/truscripts.js")"></script>
     <script src="@Url.Content("~/Scripts/productSearch.js")"></script>
     <script src="@Url.Content("~/Scripts/productTabLoader.js")"></script>
+    <script src="@Url.Content("~/Scripts/select2.min.js")"></script>
     <script>
     window.APP_SESSION = {
         cuscode : '@Session["cuscode"]',
