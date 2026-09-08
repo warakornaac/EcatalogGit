@@ -29,6 +29,7 @@ let acSbItems = [];
 let _osSetQtyTimer = null;
 let _isChangingQty = false;
 let _lastSearchType = '';     // 'vehicle' | 'category' | 'part' | ''
+let _searchRequestVersion = 0;
 const currentAllowed = {
     pl: [],
     br: []
@@ -102,6 +103,7 @@ document.addEventListener("keydown", function (e) {
 });
 /* ═══════════════ INIT ═══════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+    initBottomBar();
     renderBottomBar();
     renderProducts(PRODUCTS);
     setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
@@ -112,69 +114,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
 /* ══════════════ API: MAP RESPONSE → FLAT PRODUCTS ═══════════════ */
 
-// function mapApiResponseToProducts(groups) {
-//     const list = [];
-//     let autoId = 1;
-//     const seen = new Set();
-
-//     (groups || []).forEach(group => {
-//         ✅ ลบ guard นี้ออก — อย่าทิ้ง group ที่ productGroupNameMain ว่าง
-//         if (!group.productGroupNameMain || group.productGroupNameMain.trim() === '') return;
-
-//         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
-
-//         (group.productList || []).forEach(item => {
-//             if (!item.stkcode || seen.has(item.stkcode)) return;
-//             if (!item.stkcode) return;
-//             seen.add(item.stkcode);
-
-//             const qty = parseInt(item.qtyReady, 10);
-//             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
-//             const maker = (item.makerName || '').trim();
-//             const model = (item.modelName || '').trim();
-//             const carParts = [maker, model].filter(v =>
-//                 v && !PLACEHOLDER.includes(v) &&
-//                 !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
-//             );
-
-//             list.push({
-//                 id: autoId++,
-//                 code: item.stkcode || '',
-//                 name: item.stkcodeDescription || item.stkcode || '—',
-//                 price: parseFloat(item.price) || 0,
-//                 stock: isNaN(qty) ? 99 : qty,
-//                 cat: item.productGroup || groupLabel,
-//                 brand: item.brand || '—',
-//                 line: item.productLine || 'อื่นๆ',
-//                 carModel: carParts.join(' ') || '',
-//                 img: item.imagePath || item.imageUrl || '',
-//                 fit: parseFittingDescription(item.fittingDescription)
-//             });
-//         });
-//     });
-
-//     return list;
-// }
-
 function mapApiResponseToProducts(groups) {
     const list = [];
     let autoId = 1;
-    const seen = new Set(); // ✅ เปิดใช้ seen อีกครั้ง
 
     (groups || []).forEach(group => {
         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
+        const seenInGroup = new Set();
 
         (group.productList || []).forEach(item => {
             if (!item.stkcode) return;
 
-            // ✅ dedup ตาม stkcode เมื่อ sort=part
-            if (currentSort === 'part' && seen.has(item.stkcode)) return;
-            seen.add(item.stkcode);
+            if (seenInGroup.has(item.stkcode)) return;
+            seenInGroup.add(item.stkcode);
 
             const qty = parseInt(item.qtyReady, 10);
             const maker = (item.makerName || '').trim();
             const model = (item.modelName || '').trim();
             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
+
             const carParts = [maker, model].filter(v =>
                 v && !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
             );
@@ -186,6 +144,7 @@ function mapApiResponseToProducts(groups) {
                 price: parseFloat(item.price) || 0,
                 stock: isNaN(qty) ? 99 : qty,
                 cat: item.productGroup || groupLabel,
+                catId: String(item.productGroupId || group.productGroupId || ''),
                 brand: item.brand || '—',
                 line: item.productLine || 'อื่นๆ',
                 carModel: carParts.join(' ') || '',
@@ -197,6 +156,70 @@ function mapApiResponseToProducts(groups) {
 
     return list;
 }
+
+// function mapApiResponseToProducts(groups) {
+//     const list = [];
+//     let autoId = 1;
+//     const seen = new Set(); ✅ เปิดใช้ seen อีกครั้ง
+
+//     (groups || []).forEach(group => {
+//         console.log('[group obj]', Object.keys(group), JSON.stringify(group).slice(0, 200));
+//         const groupLabel = (group.productGroupNameMain || '').trim() || 'อื่นๆ';
+//         const seenInGroup = new Set();
+//         (group.productList || []).forEach(item => {
+//             if (!item.stkcode) return;
+
+//             ✅ dedup ตาม stkcode เมื่อ sort=part
+//             if (currentSort === 'part' && seen.has(item.stkcode)) return;
+//             seen.add(item.stkcode);
+
+//             ✅ dedup ตาม stkcode เสมอ ไม่ขึ้นกับ currentSort
+//             (จำนวนสินค้าจริงต้องคงที่ ไม่ว่าจะเรียงลำดับ/จัดกลุ่มแบบไหน
+//             การจัดกลุ่มแสดงผลเป็นหน้าที่ของ groupByLine() ไม่ใช่ที่นี่)
+//             if (seen.has(item.stkcode)) return;
+//             seen.add(item.stkcode);
+//             console.log('[catId debug]', {
+//                 stkcode: item.stkcode,
+//                 itemProductGroupId: item.productGroupId,
+//                 groupProductGroupId: group.productGroupId,
+//                 groupKeys: Object.keys(group)
+//             });
+//             const qty = parseInt(item.qtyReady, 10);
+//             const maker = (item.makerName || '').trim();
+//             const model = (item.modelName || '').trim();
+//             const PLACEHOLDER = ['makername', 'modelname', 'makerName', 'modelName'];
+//             const carParts = [maker, model].filter(v =>
+//                 v && !PLACEHOLDER.map(p => p.toLowerCase()).includes(v.toLowerCase())
+//             );
+
+//             const carModel = carParts.join(' ') || '';
+
+//             👇 เพิ่มชั่วคราว
+//             if (!carModel || carModel === 'Universal') {
+//                 console.log('[universal candidate]', item.stkcode, { maker, model, groupLabel });
+//             }
+
+//             const catName = (item.productGroup || groupLabel).trim();
+
+//             list.push({
+//                 id: autoId++,
+//                 code: item.stkcode || '',
+//                 name: item.stkcodeDescription || item.stkcode || '—',
+//                 price: parseFloat(item.price) || 0,
+//                 stock: isNaN(qty) ? 99 : qty,
+//                 cat: catName,
+//                 catId: catName, ✅ ใช้ชื่อเป็น key แทน id ที่เป็น 0 ทุกตัว
+//                 brand: item.brand || '—',
+//                 line: item.productLine || 'อื่นๆ',
+//                 carModel,
+//                 img: item.imagePath || item.imageUrl || '',
+//                 fit: parseFittingDescription(item.fittingDescription)
+//             });
+//         });
+//     });
+
+//     return list;
+// }
 
 function parseFittingDescription(fittingDescription) {
     if (!fittingDescription) return [];
@@ -274,6 +297,7 @@ function _setBaseProducts(groups, searchType, keepSort = false, skipRender = fal
 }
 
 function _applyFiltersAndRender() {
+    console.trace('_applyFiltersAndRender called');
     const q = (gEl('partQ')?.value || '').toLowerCase().trim();
     const plKeys = Object.keys(chkState.pl);
     const brKeys = Object.keys(chkState.br);
@@ -283,10 +307,16 @@ function _applyFiltersAndRender() {
     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
     const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
     const filterUniversal = activeGroupStr === '99';
-
+    console.log('activeGroup:', activeGroupStr);
+    console.log('activeGroupObj:', activeGroupObj);
+    console.log('filterByCat:', filterByCat);
+    console.log('sample p.cat values:', BASE_PRODUCTS.slice(0, 5).map(p => p.cat));
+    console.log('sample p.catId values:', BASE_PRODUCTS.slice(0, 5).map(p => p.catId));
     const baseFiltered = BASE_PRODUCTS.filter(p => {
         if (filterUniversal && p.carModel !== 'Universal') return false;
-        if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
+        //if (filterByCat && _lastSearchType !== 'category' && p.cat !== activeGroupObj.label) return false;
+        //if (filterByCat && p.catId !== activeGroupStr && p.cat !== activeGroupObj.label) return false;
+        if (filterByCat && p.carModel !== 'Universal' && p.catId !== activeGroupStr && p.cat !== activeGroupObj.label) return false;
         //if (_lastSearchType === 'vehicle' && !p.carModel && p.carModel !== 'Universal') return false;
         // if (_lastSearchType === 'vehicle') {
         //     const universalItems = BASE_PRODUCTS.filter(p => !p.carModel || p.carModel === 'Universal' || p.carModel.trim() === '');
@@ -820,7 +850,6 @@ function applySorting(list) {
 /* ═══════════════ §5 — BOTTOM BAR ═══════════════════ */
 function renderBottomBar() {
     const activeStr = String(activeGroup || '0');
-
     const sortedGroups = [...GROUPS].sort((a, b) => {
         if (String(a.id) === '99') return 1;
         if (String(b.id) === '99') return -1;
@@ -830,36 +859,52 @@ function renderBottomBar() {
     gEl('bbScroll').innerHTML = sortedGroups.map(g => {
         const gidStr = String(g.id);
         const isActive = gidStr === activeStr;
-
         return `
             <div class="bb-item ${isActive ? 'active' : ''} ${g.id === '99' ? 'bb-universal' : ''}" 
-                 data-id="${g.id}" 
-                 onclick="selectGroup('${g.id}')">
+                 data-id="${g.id}">
                 <i class="bi ${g.icon}"></i>
                 <span class="bb-label">${g.label}</span>
             </div>`;
     }).join('');
 }
+
+// เรียกครั้งเดียวตอน init — ไม่อยู่ใน renderBottomBar()
+function initBottomBar() {
+    const bottomBar = document.querySelector('.bottom-bar');
+    if (!bottomBar || bottomBar._bbBound) return;
+    bottomBar._bbBound = true;
+    bottomBar.addEventListener('click', function (e) {
+        const item = e.target.closest('.bb-item');
+        if (!item) return;
+        e.stopPropagation();
+        selectGroup(item.dataset.id);
+    });
+}
+
 function selectGroup(id) {
-    if (window._isSearchingCategory) return;
+    console.log('selectGroup called, _swalShowing:', window._swalShowing, '_isSearchingCategory:', window._isSearchingCategory);
+    console.log('selectGroup called, id:', id, 'stack:', new Error().stack);
+    const now = Date.now();
+    if (window._lastSelectGroupTime && now - window._lastSelectGroupTime < 5000) {
+        console.log('selectGroup blocked, too soon');
+        return;
+    }
+    // if (window._isSearchingCategory) return;
 
     showVehiclePrompt(
-        // Yes → ไปเลือกรถ ยังไม่ค้นหา
         function () {
             goToVehicleFilter();
         },
-        // No → ค้นหาต่อปกติ
         function () {
+            if (window._isSearchingCategory) return; // ✅ กัน onNo ถูกเรียก 2 ครั้ง
             window._isSearchingCategory = true;
 
             const targetIdStr = String(id);
             activeGroup = targetIdStr;
             window.selectedGroupId = targetIdStr;
 
-            // ✅ 1. ล้างค่า Filter ใน Sidebar เดิมออกก่อนสลับหมวดหมู่
             _resetSidebarFilters();
 
-            // ✅ 2. อัปเดตคลาส active โดยแปลง id เป็น String ทั้งคู่
             document.querySelectorAll('.bb-item').forEach(b => {
                 const bIdStr = String(b.getAttribute('data-id'));
                 b.classList.toggle('active', bIdStr === targetIdStr);
@@ -1334,7 +1379,6 @@ function groupByLine(list, forceByLine) {
         (a[0] || '').localeCompare(b[0] || '', 'th')
     );
 }
-
 function nfScroll(rowId, dir) {
     const el = gEl(rowId);
     if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
@@ -2749,6 +2793,8 @@ function RenderProductionLines(lines) {
     });
 }
 function ClickedMatchData() {
+    if (window._clickedMatchPending) return; // ✅ กัน double call
+    window._clickedMatchPending = true;
     const grpId = window.selectedGroupId || null;
 
     $.ajax({
@@ -2767,6 +2813,9 @@ function ClickedMatchData() {
         error: function (xhr, status, error) {
             console.error('ClickedMatchData error:', error);
             _renderAfterGroupChange();
+        },
+        complete: function () {
+            window._clickedMatchPending = false; // ✅ reset หลังเสร็จ
         }
     });
 }
@@ -2800,6 +2849,29 @@ function ClickedMatchData() {
 // }
 
 function _renderAfterGroupChange() {
+    // ✅ ถ้ามี Vehicle Search อยู่แล้ว
+    // ไม่ต้องยิง Category API ใหม่
+    // ให้กรอง Category จาก BASE_PRODUCTS ชุด Vehicle เดิม
+    const hasVehicleSelected = !!(gEl('makerId')?.value);
+
+    if (!hasVehicleSelected && (window._isVehicleSearching || BASE_PRODUCTS.length > 0)) {
+        _applyFiltersAndRender();
+
+        window._isSearchingCategory = false;
+
+        document.querySelectorAll('.bb-item').forEach(b => {
+            b.style.pointerEvents = '';
+        });
+
+        PRODUCTS_FOR_COUNT = [...PRODUCTS];
+        _updateSidebar();
+        renderActiveFilterChips();
+        hideSkel();
+
+        return;
+    }
+
+    // ✅ ยังไม่มี Vehicle data → ใช้ Category API
     searchProductByCategory()
         .catch(err => {
             if (err.name !== 'AbortError') {
@@ -2808,14 +2880,17 @@ function _renderAfterGroupChange() {
         })
         .finally(() => {
             window._isSearchingCategory = false;
-            document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = '');
+
+            document.querySelectorAll('.bb-item').forEach(b => {
+                b.style.pointerEvents = '';
+            });
+
             PRODUCTS_FOR_COUNT = [...PRODUCTS];
             _updateSidebar();
             renderActiveFilterChips();
             hideSkel();
         });
 }
-
 function FilterProductionLines(allowedIds) {
     currentAllowed.pl = allowedIds;
 

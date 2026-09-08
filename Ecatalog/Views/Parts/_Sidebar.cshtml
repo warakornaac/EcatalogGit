@@ -751,6 +751,9 @@
     let _vehiclePromptShown = false;
 
     function showVehiclePrompt(onYes, onNo) {
+        console.log('showVehiclePrompt called, _swalShowing:', window._swalShowing);
+        if (window._swalShowing) return; // ✅ ถ้า Swal กำลังแสดงอยู่ → ไม่ทำอะไรเลย
+
         const hasMaker = $("#makerId").val();
         const hasRange = $("#rangeId").val();
         const hasAnyFilter = hasMaker || hasRange
@@ -763,13 +766,13 @@
             || Object.keys(chkState.br).length > 0
             || fitState.size > 0;
 
-        // โชว์เฉพาะ: ยังไม่เคยโชว์ + ไม่มี filter ใดๆ เลย
         if (_vehiclePromptShown || hasAnyFilter) {
             onNo();
             return;
         }
 
         _vehiclePromptShown = true;
+        window._swalShowing = true;
 
         Swal.fire({
             icon: false,
@@ -787,6 +790,7 @@
             cancelButtonColor: '#aaa',
             allowOutsideClick: false,
         }).then((result) => {
+            window._swalShowing = false;
             if (result.isConfirmed) {
                 onYes();
             } else {
