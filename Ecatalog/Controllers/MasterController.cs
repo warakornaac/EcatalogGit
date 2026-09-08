@@ -126,7 +126,7 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }  
-        public async Task<ActionResult> GetBody(string marketSegmentId, string segmentId, string makerId, string rangeId) {
+        public async Task<ActionResult> GetBody(string marketSegmentId, string segmentId, string makerId, string rangeId, string modelRangeId) {
             try {
                 var result = await Utils.CallApiAsyncMemory<
                     ModelBodyFilterModel>(
@@ -136,7 +136,8 @@ namespace Ecatalog.Controllers
                         marketSegmentId,
                         segmentId,
                         makerId,
-                        rangeId
+                        rangeId,
+                        modelRangeId
                     },
                     true,
                     10);

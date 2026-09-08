@@ -66,7 +66,7 @@
             @*<select class="fselect" id="rangeId" onchange="loadBody();" disabled>
                 <option value="">— Select Range —</option>
             </select>*@
-            <select class="fselect" id="rangeId" onchange="loadBody(); loadEngine();" disabled>
+            <select class="fselect" id="rangeId" onchange="loadBody(); loadEngine();" >
                 <option value="">— Select Range —</option>
             </select>
         </div>
@@ -222,7 +222,7 @@
             const result = await response.json();
             const ddl = $("#" + selectId);
             ddl.empty();
-            ddl.append('<option value="">— ' + selectDefaultText + ' —</option>');
+            ddl.append('<option value="ALL">— ' + selectDefaultText + ' —</option>');
             if (result.IsSuccess && result.Data) {
                 result.Data.forEach(item => {
                     ddl.append(`
@@ -294,21 +294,21 @@
             });
             setYearRangeDisabled(!allThreeSelected);
 
-            if (!allThreeSelected) {
-                $("#rangeId").empty().append('<option value="">— Select Range —</option>');
-                updateVehSummary();
-                return;
-            }
+            // if (!allThreeSelected) {
+            //     $("#rangeId").empty().append('<option value="">— Select Range —</option>');
+            //     updateVehSummary();
+            //     return;
+            // }
 
             const params = new URLSearchParams({ marketSegmentId, segmentId, makerId });
             const response = await fetch(`@Url.Action("GetModelRange", "Master")?${params}`, { method: 'GET' });
             const result = await response.json();
 
             const ddl = $("#rangeId");
-            ddl.empty().append('<option value="">— Select Range —</option>');
+            ddl.empty().append('<option value="ALL" data-modelrange="ALL" data-market="ALL">— Select Range —</option>');
             if (result.IsSuccess && result.Data) {
                 result.Data.forEach(item => {
-                    ddl.append(`<option value="${item.Id}">${item.Model}</option>`);
+                    ddl.append(`<option value="${item.Id}" data-modelrange="${item.ModelRangeId || ''}" data-market="${item.MarketSegmentId}" >${item.Model}</option>`);
                 });
             }
         } catch (error) {
@@ -323,18 +323,24 @@
         try {
             $("#engineId").empty().append('<option value="">— Select Engine —</option>');
 
-            const marketSegmentId = $("#marketsegId").val();
+            // const marketSegmentId = $("#marketsegId").val();
+            // const segmentId = $("#segmentId").val();
+            // const makerId = $("#makerId").val();
+            // const rangeId = $("#rangeId").val();
+
+            const marketSegmentId = $("#rangeId option:selected").data("market");
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
             const rangeId = $("#rangeId").val();
+            const modelRangeId = $("#rangeId option:selected").data("modelrange");
 
-            if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
-                $("#bodyId").empty().append('<option value="">— Select Body —</option>');
-                updateVehSummary();
-                return;
-            }
+            // if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
+            //     $("#bodyId").empty().append('<option value="">— Select Body —</option>');
+            //     updateVehSummary();
+            //     return;
+            // }
 
-            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId });
+            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId, modelRangeId });
             const response = await fetch(`@Url.Action("GetBody", "Master")?${params}`, { method: 'GET' });
             const result = await response.json();
 
@@ -361,6 +367,8 @@
             const rangeId = $("#rangeId").val();
             const bodyId = $("#bodyId").val(); // optional
 
+            const modelRangeId = $("#rangeId option:selected").data("modelrange") || ''; // optional
+
             // ✅ บังคับแค่ครบ 3 ตัวแรก + rangeId เท่านั้น
             if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
                 $("#engineId").empty().append('<option value="">— Select Engine —</option>');
@@ -378,7 +386,9 @@
             ddl.empty().append('<option value="">— Select Engine —</option>');
             if (result.IsSuccess && result.Data) {
                 result.Data.forEach(item => {
-                    ddl.append(`<option value="${item.id}">${item.engineType}</option>`);
+                    if (item.modelRangeId == modelRangeId) {                        
+                        ddl.append(`<option value="${item.id}">${item.engineType}</option>`);
+                    }
                 });
             }
         } catch (error) {
