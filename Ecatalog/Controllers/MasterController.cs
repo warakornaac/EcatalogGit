@@ -157,7 +157,7 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> GetEngine(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId) {
+        public async Task<ActionResult> GetEngine(string marketSegmentId, string segmentId, string makerId, string rangeId, string bodyId, string modelRangeId) {
             try {
                 var result = await Utils.CallApiAsyncMemory<
                     ModelEngineFilterModel>(
@@ -168,7 +168,8 @@ namespace Ecatalog.Controllers
                         segmentId,
                         makerId,
                         rangeId,
-                        bodyId
+                        bodyId,
+                        modelRangeId
                     },
                     true,
                     10);

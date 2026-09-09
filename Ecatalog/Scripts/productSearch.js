@@ -18,6 +18,7 @@ async function loadSearchProductVio() {
     const segmentId = $("#segmentId").val();
     const makerId = $("#makerId").val();
     const rangeId = $("#rangeId").val();
+    const modelRangeId = $("#rangeId option:selected").data("modelrange");
     const bodyId = $("#bodyId").val();
     const engineId = $("#engineId").val();
     const yearFrom = $("#yearFrom").val();
@@ -71,6 +72,7 @@ async function loadSearchProductVio() {
         params.append('segmentId', segmentId || '');
         params.append('makerId', makerId || '');
         params.append('rangeId', rangeId || '');
+        params.append('modelRangeId', modelRangeId || '');
         params.append('bodyId', bodyId || '');
         params.append('engineId', engineId || '');
         params.append('yearFrom', yearFrom || '');
