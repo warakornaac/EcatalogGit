@@ -274,6 +274,7 @@
             });
             // alert("Load Maker Failed");
         } finally {
+            $("#makerId").val('');   // ← เพิ่มบรรทัดนี้
             updateVehSummary();
         }
     }

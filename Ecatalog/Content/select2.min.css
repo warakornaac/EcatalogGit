@@ -17,8 +17,7 @@
 
 .select2-container .select2-selection--single .select2-selection__rendered {
     display: block;
-    padding-left: 8px;
-    padding-right: 20px;
+    padding-left: 5px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap
@@ -192,8 +191,8 @@
     cursor: pointer;
     float: right;
     font-weight: bold;
-    height: 25px;
-    margin-right: 20px;
+    height: 28px;
+    margin-right: 12px;
     padding-right: 0px
 }
 
@@ -206,7 +205,7 @@
     position: absolute;
     top: 1px;
     right: 1px;
-    width: 20px
+    width: 15px
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow b {
@@ -707,7 +706,7 @@
 }
 
 .sb-sc-label {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     color: #333;
 }
@@ -724,7 +723,7 @@
 
 .sb-sc-field .select2-selection__rendered {
     line-height: 28px !important;
-    padding-right: 25px !important;
+    padding-right: 5px !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

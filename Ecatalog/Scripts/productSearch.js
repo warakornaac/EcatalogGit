@@ -416,7 +416,7 @@ function updateVehSummary() {
     ];
     const pills = fields.map(f => {
         const el = document.getElementById(f.id);
-        if (!el || !el.value) return null;
+        if (!el || !el.value || el.value === 'ALL') return null;
         const label = el.options[el.selectedIndex]?.text?.trim() || el.value;
         return `<div class="veh-pill"><i class="bi ${f.icon}"></i><span>${label}</span></div>`;
     }).filter(Boolean);

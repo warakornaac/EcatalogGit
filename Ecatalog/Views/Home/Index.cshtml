@@ -153,12 +153,14 @@
     <script>
         $(document).ready(async function () {
             // โหลด dropdown
-            await Promise.all([
-                loadMasterMarketDefault(1),
-                loadMasterMarketDefault(2),
-                loadMaker()
-                //loadMasterMarketDefault(3)
-            ]);
+            $(document).ready(async function () {
+                await Promise.all([
+                    loadMasterMarketDefault(1),
+                    loadMasterMarketDefault(2),
+                    loadMaker()
+                ]);
+                setTimeout(() => updateVehSummary(), 300);  // ← เปลี่ยนเป็น setTimeout
+            });                   
 
             // ✅ ย้ายเข้ามาอยู่ใน ready ด้วย
             $('#yearTo').on('input', function () {

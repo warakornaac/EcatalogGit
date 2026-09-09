@@ -1415,10 +1415,14 @@ function renderProducts(list) {
     const uniqueCount = new Set(sorted.map(p => p.code)).size;
     gEl('rcount').textContent = uniqueCount + ' items';
 
+    // const stockLabel = s =>
+    //     s === 0 ? `<span class="pstock out-stock"><i class="bi bi-exclamation-circle-fill"></i> หมดสต็อก</span>` :
+    //         s <= 5 ? `<span class="pstock low-stock"><i class="bi bi-exclamation-circle-fill"></i> เหลือ ${s}</span>` :
+    //             `<span class="pstock in-stock"><i class="bi bi-check-circle-fill"></i> ${s} ชิ้น</span>`;
     const stockLabel = s =>
         s === 0 ? `<span class="pstock out-stock"><i class="bi bi-exclamation-circle-fill"></i> หมดสต็อก</span>` :
-            s <= 5 ? `<span class="pstock low-stock"><i class="bi bi-exclamation-circle-fill"></i> เหลือ ${s}</span>` :
-                `<span class="pstock in-stock"><i class="bi bi-check-circle-fill"></i> ${s} ชิ้น</span>`;
+            s <= 5 ? `<span class="pstock low-stock"><i class="bi bi-exclamation-circle-fill"></i> เหลือ ${s.toLocaleString()}</span>` :
+                `<span class="pstock in-stock"><i class="bi bi-check-circle-fill"></i> ${s.toLocaleString()} ชิ้น</span>`;
 
     const pcardHTML = p => `
         <div class="pcard ${hasFilter ? 'highlight-filter' : ''}" id="pc-${p.id}"
@@ -1689,8 +1693,10 @@ function updateVehSummary() {
     ];
     const pills = fields.map(f => {
         const el = document.getElementById(f.id);
-        if (!el || !el.value) return null;
+        console.log(f.id, '→ value:', JSON.stringify(el?.value), 'text:', el?.options[el?.selectedIndex]?.text?.trim());
+        if (!el || !el.value || el.value === 'ALL') return null;
         const label = el.options[el.selectedIndex]?.text?.trim() || el.value;
+        if (!label || label.startsWith('—') || label.startsWith('-')) return null;
         return `<div class="veh-pill"><i class="bi ${f.icon}"></i><span>${label}</span></div>`;
     }).filter(Boolean);
 
@@ -3170,18 +3176,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (userType === '1') {
         getSalesmanAll(sessionSlm, sessionCus);
+    } else if (userType === '2' && sessionSlm) {
+        // ✅ userType 2: โหลด salesman ทั้งหมด แต่ lock ค่าไว้ที่ตัวเอง
+        getSalesmanAll(sessionSlm, sessionCus, true);  // true = lockMode
     } else if (sessionCus) {
         getInfomantionCustomer(sessionCus);
     } else if (sessionSlm) {
         getCustomerbySalesman(sessionSlm, '');
     } else {
-        // ไม่มีทั้ง slmcode/cuscode ผูกมากับ user นี้ → โหลด customer ทั้งหมด
         getCustomerbySalesman('', '');
     }
 });
 
 // ================ 1. GET SALESMAN ALL ========================
-function getSalesmanAll(sessionSlm, sessionCus) {
+function getSalesmanAll(sessionSlm, sessionCus, lockMode = false) {
     $.ajax({
         url: urls.getSalesmanAll,
         method: 'GET',
@@ -3206,6 +3214,12 @@ function getSalesmanAll(sessionSlm, sessionCus) {
             if (sessionSlm) {
                 select.val(sessionSlm);
             }
+
+            // ✅ userType 2: ล็อก salesman ไม่ให้เปลี่ยนได้
+            if (lockMode) {
+                select.prop('disabled', true);
+            }
+
             _shortenSelected('salesmanId');   // ✅ ตอน init ให้เหลือแค่ชื่อทันทีถ้ามีค่าอยู่แล้ว
             getCustomerbySalesman(sessionSlm || '', sessionCus);
 
