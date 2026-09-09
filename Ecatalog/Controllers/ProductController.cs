@@ -19,7 +19,7 @@ namespace Ecatalog.Controllers
     {
         // GET: Product
         public async Task<ActionResult> GetProductBySearchVio(
-            string marketSegmentId, string segmentId, string makerId, string rangeId,
+            string marketSegmentId, string segmentId, string makerId, string rangeId, string modelRangeId,
             string bodyId, string engineId, string yearFrom, string yearTo,
             string driveType, string imagePath, string slmCode, string cusCode,
             string[] company)   // ✅ เปลี่ยนจาก string เป็น string[]
@@ -35,7 +35,7 @@ namespace Ecatalog.Controllers
                         marketSegmentId,
                         segmentId,
                         makerId,
-                        rangeId,
+                        rangeId,                        
                         bodyId,
                         engineId,
                         yearFrom,
@@ -44,7 +44,8 @@ namespace Ecatalog.Controllers
                         imagePath,
                         SlmCode = slmCode,   // ✅ ตัวใหญ่ตาม External API
                         CusCode = cusCode,   // ✅
-                        Company = company    // ✅
+                        Company = company,    // ✅
+                        modelRangeId
                     },
                     false,
                     30);

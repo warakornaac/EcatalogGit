@@ -367,7 +367,6 @@
             const makerId = $("#makerId").val();
             const rangeId = $("#rangeId").val();
             const bodyId = $("#bodyId").val(); // optional
-
             const modelRangeId = $("#rangeId option:selected").data("modelrange") || ''; // optional
 
             // ✅ บังคับแค่ครบ 3 ตัวแรก + rangeId เท่านั้น
@@ -377,7 +376,7 @@
                 return;
             }
 
-            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId });
+            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId, modelRangeId });
             if (bodyId) params.append('bodyId', bodyId); // ✅ ส่ง bodyId ถ้ามี เพื่อ filter เพิ่มเติม
 
             const response = await fetch(`@Url.Action("GetEngine", "Master")?${params}`, { method: 'GET' });
