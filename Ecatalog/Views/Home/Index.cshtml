@@ -160,7 +160,7 @@
                     loadMaker()
                 ]);
                 setTimeout(() => updateVehSummary(), 300);  // ← เปลี่ยนเป็น setTimeout
-            });                   
+            });
 
             // ✅ ย้ายเข้ามาอยู่ใน ready ด้วย
             $('#yearTo').on('input', function () {
@@ -178,7 +178,8 @@
         getSalesmanAll: '@Url.Action("GetSalesmanAll", "Master")',
         getCustomerbySalesman: '@Url.Action("GetCustomerbySalesman", "Master")',
         getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',
-        getShiptoByCuscode: '@Url.Action("GetShiptoByCuscode", "Master")'
+        getShiptoByCuscode: '@Url.Action("GetShiptoByCuscode", "Master")',
+        getCustomerByCuscode: '@Url.Action("GetCustomerByCuscode", "Master")',
     };
 
     const urlsPro = {

@@ -3177,8 +3177,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (userType === '1') {
         getSalesmanAll(sessionSlm, sessionCus);
     } else if (userType === '2' && sessionSlm) {
-        // ✅ userType 2: โหลด salesman ทั้งหมด แต่ lock ค่าไว้ที่ตัวเอง
-        getSalesmanAll(sessionSlm, sessionCus, true);  // true = lockMode
+        getSalesmanAll(sessionSlm, sessionCus, true);
+    } else if (userType === '3') {
+        $('#salesmanId').closest('.sb-sc-field').hide(); // ซ่อน salesman
+        getCustomerByCuscode(sessionCus);
     } else if (sessionCus) {
         getInfomantionCustomer(sessionCus);
     } else if (sessionSlm) {
@@ -3216,9 +3218,9 @@ function getSalesmanAll(sessionSlm, sessionCus, lockMode = false) {
             }
 
             // ✅ userType 2: ล็อก salesman ไม่ให้เปลี่ยนได้
-            if (lockMode) {
-                select.prop('disabled', true);
-            }
+            // if (lockMode) {
+            //     select.prop('disabled', true);
+            // }
 
             _shortenSelected('salesmanId');   // ✅ ตอน init ให้เหลือแค่ชื่อทันทีถ้ามีค่าอยู่แล้ว
             getCustomerbySalesman(sessionSlm || '', sessionCus);
@@ -3316,6 +3318,47 @@ function getCustomerbySalesman(slmcode, sessionCus) {
         }
     });
 }
+
+function getCustomerByCuscode(sessionCus) {
+    $.ajax({
+        url: urls.getCustomerByCuscode,
+        method: 'GET',
+        data: { cuscode: sessionCus },
+        success: function (data) {
+            if (!data.IsSuccess) return;
+
+            const select = $('#customerId');
+            select.empty().append('<option value="">-- เลือก Customer --</option>');
+
+            $.each(data.Data, function (i, cus) {
+                select.append($('<option>', {
+                    value: cus.cuscode,
+                    text: `${cus.cuscode} - ${cus.cusname}`,
+                    'data-full': `${cus.cuscode} - ${cus.cusname}`,
+                    'data-name': cus.cusname
+                }));
+            });
+
+            // โหลดร้านแม่ขึ้นมาเป็น default
+            select.val(sessionCus);
+            getInfomantionCustomer(sessionCus);
+
+            if ($('#customerId').data('select2')) $('#customerId').select2('destroy');
+            $('#customerId').select2({ placeholder: '-- เลือก Customer --', allowClear: false, width: '250px' });
+
+            select.off('change').on('change', function () {
+                const selectedCus = $(this).val();
+                if (window.APP_SESSION) window.APP_SESSION.cuscode = selectedCus || '';
+                if (selectedCus) { getInfomantionCustomer(selectedCus); _fetchCartFromServer(true); }
+                else { clearCustomerCard(); cart = []; updateCart(); }
+            });
+        },
+        error: function (xhr, status, error) {
+            console.error('getCustomerByCuscode error:', error);
+        }
+    });
+}
+
 /* ── คืนค่าเต็ม (code - name) ให้ทุก option ก่อนเปิด list ── */
 function _restoreFullText(selectId) {
     const select = document.getElementById(selectId);

@@ -355,7 +355,6 @@ namespace Ecatalog.Controllers
 
         public async Task<ActionResult> GetCustomerbySalesman(string slmcode)
         {
-            // ✅ guard: ถ้า caller ส่งค่าว่างมา (ไม่มี slmcode เจาะจง) ให้ดึงลูกค้าทั้งหมด
             if (string.IsNullOrWhiteSpace(slmcode)) slmcode = "All";
 
             try
@@ -365,19 +364,24 @@ namespace Ecatalog.Controllers
                     "GET",
                     new { slmcode },
                     true,
-                    10);
+                    30);  // ← เพิ่ม timeout จาก 10 → 30
 
-                return Json(new
+                var json = new
                 {
                     IsSuccess = result.IsSuccess,
                     IsFromCache = result.IsFromCache,
                     ExecutionTime = result.ExecutionTime,
                     Data = result.Data?.result
-                }, JsonRequestBehavior.AllowGet);
+                };
+
+                // ← ใช้ Newtonsoft แทน Json() เพื่อหลีก maxJsonLength
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(json), "application/json");
             }
             catch (Exception ex)
             {
-                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(
+                    new { IsSuccess = false, Message = ex.Message, Detail = ex.ToString() }
+                ), "application/json");
             }
         }
         public async Task<ActionResult> GetInfomantionCustomer(string cuscode)
@@ -446,6 +450,28 @@ namespace Ecatalog.Controllers
                     Message = ex.Message
                 },
                 JsonRequestBehavior.AllowGet);
+            }
+        }
+        public async Task<ActionResult> GetCustomerByCuscode(string cuscode)
+        {
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<GetCustomerbySalesmanModel>(
+                    "Ecatalog/CustomerByCuscode",
+                    "GET",
+                    new { cuscode },
+                    true, 10);
+
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    IsSuccess = result.IsSuccess,
+                    Data = result.Data?.result
+                }), "application/json");
+            }
+            catch (Exception ex)
+            {
+                return Content(Newtonsoft.Json.JsonConvert.SerializeObject(
+                    new { IsSuccess = false, Message = ex.Message }), "application/json");
             }
         }
     }
