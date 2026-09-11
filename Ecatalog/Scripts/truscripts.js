@@ -395,10 +395,11 @@ function _ensureSidebarVisibility() {
         }
 
         if (btn) {
-            // ✅ นับเฉพาะ count > 0
+            const totalVisible = items.filter((_, el) => $(el).is(':visible')).length;
             const countAboveZero = items.filter((_, el) =>
                 (parseInt($(el).find('.chk-count').text()) || 0) > 0
             ).length;
+            // ✅ แสดง button ถ้ามี item ที่ count > 0 มากกว่า 5 แม้บางตัวจะถูกซ่อนอยู่
             btn.style.display = countAboveZero > 5 ? 'block' : 'none';
         }
     });
@@ -472,7 +473,9 @@ function _updateSidebar() {
     const plBtn = gEl('plSeeMore');
     if (plBtn) {
         // plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
-        plBtn.style.display = $plList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+        plBtn.style.display = $plList.find('.chk-item').filter(function () {
+            return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+        }).length > 5 ? 'block' : 'none';
     }
 
     // ── Brand (BR) ──
@@ -540,7 +543,9 @@ function _updateSidebar() {
     const brBtn = gEl('brSeeMore');
     if (brBtn) {
         //brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
-        brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+        brBtn.style.display = $brList.find('.chk-item').filter(function () {
+            return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+        }).length > 5 ? 'block' : 'none';
     }
 }
 /* ═══════════════ §1 — SEARCH SYNC ════════════════ */
@@ -570,14 +575,22 @@ function toggleMode(btn) {
         btn.classList.add('active');
     }
     activateSec(2);
-    applyAllFilters();
+    if (BASE_PRODUCTS && BASE_PRODUCTS.length > 0) {
+        applyAllFilters();
+    }
 }
 
 /* ════════════ §3 — CLEAR ALL FILTERS ═════════════ */
 function clearAllFilters() {
     vfData = {};
+    // แทนที่ forEach เดิม
     ['marketsegId', 'segmentId', 'makerId', 'rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
-        const el = gEl(id); if (el) el.value = '';
+        const el = gEl(id);
+        if (!el) return;
+        el.value = '';
+        if ($(el).data('select2')) {
+            $(el).val('').trigger('change.select2'); // ← reset Select2 โดยไม่ destroy container
+        }
     });
     const yrFrom = gEl('yearFrom'); if (yrFrom) yrFrom.value = '';
     const yrTo = gEl('yearTo'); if (yrTo) yrTo.value = '';
@@ -656,6 +669,9 @@ function clearAllFilters() {
     renderProducts([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     _vehiclePromptShown = false;
+    loadMasterMarketDefault(1);
+    loadMasterMarketDefault(2);
+    loadModelRange()
 }
 
 function _rebuildSidebarFromProducts() {
@@ -726,11 +742,27 @@ function _rebuildSidebarFromProducts() {
 
     const plBtn = gEl('plSeeMore');
     if (plBtn) {
-        plBtn.classList.remove('expanded');
-        plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
-        // plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
-        plBtn.style.display = $plList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+        const visCount = $plList.find('.chk-item:visible').length;
+        const totalCount = $plList.find('.chk-item').length;
+        const aboveZero = $plList.find('.chk-item').filter(function () {
+            return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+        }).length;
+        console.log('plSeeMore → visible:', visCount, 'total:', totalCount, 'aboveZero:', aboveZero);
+        plBtn.style.display = $plList.find('.chk-item').filter(function () {
+            return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+        }).length > 5 ? 'block' : 'none';
     }
+
+    // const plBtn = gEl('plSeeMore');
+    // if (plBtn) {
+    //     plBtn.classList.remove('expanded');
+    //     plBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+    //     plBtn.style.display = $plList.find('.chk-item').length > 5 ? 'block' : 'none';
+    //     plBtn.style.display = $plList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+    //     plBtn.style.display = $plList.find('.chk-item').filter(function () {
+    //         return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+    //     }).length > 5 ? 'block' : 'none';
+    // }
 
     // ── 2. ประมวลผล Brand (BR) ──
     const brandCount = {};
@@ -801,7 +833,10 @@ function _rebuildSidebarFromProducts() {
         brBtn.classList.remove('expanded');
         brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
         //brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
-        brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+        //brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+        brBtn.style.display = $brList.find('.chk-item').filter(function () {
+            return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+        }).length > 5 ? 'block' : 'none';
     }
 }
 
@@ -2328,6 +2363,7 @@ async function openOrderSummary(clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     if (!cart.length) {
         await _fetchCartFromServer();
+        console.log('before render:', cart.map(c => ({ name: c.name, isBO: c.isBO })));
         if (!cart.length) {
             toast('🛒 ยังไม่มีสินค้าในตะกร้า', 'warn');
             return;
@@ -2386,9 +2422,8 @@ function renderOrderSummary() {
             <div class="os-info">
                 <div class="os-name">
                     ${c.name}
-                    ${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}
                 </div>
-                <div class="os-sku">${c.code}</div>
+                <div class="os-sku">${c.code}${c.isBO ? '<span class="bo-tag"><i class="bi bi-hourglass-split"></i> BO</span>' : ''}</div>
                 <div class="os-price">${fmt(c.price)}</div>
             </div>
             <div class="os-stepper">
@@ -3025,7 +3060,8 @@ async function _fetchCartFromServer(forceRefresh = false) {
             : `${urlsPro.getProductToCartUrl}?cuscode=${encodeURIComponent(cuscode)}`;
         const res = await fetch(url, { method: 'GET' });
         const json = await res.json();
-
+        cart = json.Data.map(_mapCartItem);
+        console.log('cart mapped:', cart.map(c => ({ name: c.name, isBO: c.isBO })));
         if (json.IsSuccess && Array.isArray(json.Data) && json.Data.length > 0) {
             cart = json.Data.map(_mapCartItem);
         } else {
@@ -3496,6 +3532,7 @@ function initCompanySelection() {
 
 // เรียกทำงานทันทีเมื่อโหลด DOM เสร็จสิ้น
 document.addEventListener('DOMContentLoaded', initCompanySelection);
+
 
 /* ════════════ THEME SWITCH (ลบฟังก์ชันนี้ + เรียก initTheme() ทิ้งได้ถ้าเลิกใช้)════════════ */
 const THEME_KEY = 'truTheme';

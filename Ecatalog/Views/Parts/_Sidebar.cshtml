@@ -883,6 +883,9 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         initYearPickers();
+        loadMasterMarketDefault(1);  // ← โหลด Market Segment
+        loadMasterMarketDefault(2);  // ← โหลด Vehicle Segment
+        loadModelRange()
     });
 
     window.addEventListener('scroll', () => {
