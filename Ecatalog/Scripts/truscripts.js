@@ -1466,7 +1466,7 @@ function renderProducts(list) {
                 ${stockLabel(p.stock ?? 99)}
                 ${p.img
             ? `<img src="${p.img}" alt="${p.name}"
-                   onerror="this.parentElement.innerHTML='<div class=\'no-image\'>No images found.</div>'">`
+           onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;>No images found.</div>'">`
             : `<div class="no-image">
                <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
                <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
@@ -3210,7 +3210,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (sessionSlm) window.APP_SESSION.slmcode = sessionSlm;
     if (sessionCus) window.APP_SESSION.cuscode = sessionCus;
 
-    if (userType === '1') {
+    if (userType === '1' || userType === '5') {
         getSalesmanAll(sessionSlm, sessionCus);
     } else if (userType === '2' && sessionSlm) {
         getSalesmanAll(sessionSlm, sessionCus, true);

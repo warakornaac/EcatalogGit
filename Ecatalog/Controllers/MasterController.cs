@@ -328,7 +328,7 @@ namespace Ecatalog.Controllers
         public async Task<ActionResult> GetSalesmanAll(string slmcode)
         {
             var userType = Session["userType"]?.ToString() ?? "";
-            slmcode = userType == "1" ? "All" : (Session["slmcode"]?.ToString() ?? "All");
+            slmcode = userType == "1" || userType == "5" ? "All" : (Session["slmcode"]?.ToString() ?? "All");
 
             try
             {
