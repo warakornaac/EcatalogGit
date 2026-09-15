@@ -29,26 +29,37 @@ namespace Ecatalog.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AuthenUser(string Username, string Password) {
+        public async Task<ActionResult> AuthenUser(string Username, string Password, string Latitude = "", string Longitude = "")
+        {
             Boolean IsSuccess = false;
-            try {
-                var result = await Utils.CallApiAsyncMemory<
-                        AuthenApiResponseModel>(
-                        "Ecatalog/UserAuthen",
-                        "GET",
-                        new {
-                            Username = Username,
-                            Password = Password
-                        },
-                        false,
-                        10);
+            string userAgent = Request.UserAgent ?? "";
+            try
+            {
+                var result = await Utils.CallApiAsyncMemory<AuthenApiResponseModel>(
+                    "Ecatalog/UserAuthen", "GET",
+                    new
+                    {
+                        Username = Username,
+                        Password = Password,
+                        Latitude = Latitude,
+                        Longitude = Longitude,
+                        UserAgent = userAgent
+                    }, false, 10);
 
-                if (result.Data != null &&
-                    result.Data.result != null &&
-                    result.Data.result.Count > 0) {
+                if (result == null)
+                    return Json(new { IsSuccess = false, Message = "API returned null" }, JsonRequestBehavior.AllowGet);
+
+                if (result.Data == null)
+                    return Json(new
+                    {
+                        IsSuccess = false,
+                        Message = "TEST123 API Data is null",
+                        RawResult = Newtonsoft.Json.JsonConvert.SerializeObject(result)
+                    }, JsonRequestBehavior.AllowGet);
+
+                if (result.Data.result != null && result.Data.result.Count > 0)
+                {
                     var user = result.Data.result.FirstOrDefault();
-
-                    // SESSION
                     Session["username"] = Username;
                     Session["email"] = user.email;
                     Session["UserType"] = user.userType;
@@ -59,23 +70,19 @@ namespace Ecatalog.Controllers
                     IsSuccess = true;
                 }
 
-                return Json(new {
+                return Json(new
+                {
                     IsSuccess = IsSuccess,
                     IsFromCache = result.IsFromCache,
                     Data = result.Data?.result,
                     Message = result.Data.errorMessage
-                },
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
-            catch (Exception ex) {
-                return Json(new {
-                    IsSuccess = false,
-                    Message = ex.Message
-                },
-                JsonRequestBehavior.AllowGet);
+            catch (Exception ex)
+            {
+                return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
         public ActionResult Logout() {
             Session.Clear();
             Session.Abandon();

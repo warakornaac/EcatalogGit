@@ -38,7 +38,7 @@
                 </div>
                 <form id="loginForm">
                     <div class="form-group" id="fgUser">
-                        <label class="form-label" for="username">ชื่อผู้ใช้ / รหัสพนักงาน</label>
+                        <label class="form-label" for="txtUsername">ชื่อผู้ใช้ / รหัสพนักงาน</label>
                         <div class="input-wrap">
                             <i class="bi bi-person input-icon"></i>
                             <input class="form-input" type="text" id="txtUsername" value="" placeholder="กรอกชื่อผู้ใช้หรือรหัสพนักงาน" autocomplete="username">
@@ -46,7 +46,7 @@
                         <p class="form-error" id="errUser">กรุณากรอกชื่อผู้ใช้</p>
                     </div>
                     <div class="form-group" id="fgPass">
-                        <label class="form-label" for="password">รหัสผ่าน</label>
+                        <label class="form-label" for="txtPassword">รหัสผ่าน</label>
                         <div class="input-wrap">
                             <i class="bi bi-lock input-icon"></i>
                             <input class="form-input" type="password" id="txtPassword" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
@@ -62,7 +62,7 @@
                       </label>
                       <a href="#" class="forgot">ลืมรหัสผ่าน?</a>
                     </div> -->
-                    <button type="submit" class="btn-login" onclick="AuthenUser();">
+                    <button type="submit" class="btn-login">
                         <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
                     </button>
                 </form>
@@ -117,50 +117,63 @@
                 btn.style.background = '#1a9e52';
             }, 1400);
         }
+
+        // เพิ่มใน script ตอน submit login
+        function doLogin(lat, lng) {
+            $.ajax({
+                url: '/Login/AuthenUser',
+                method: 'POST',
+                data: {
+                    Username: $('#Username').val(),
+                    Password: $('#Password').val(),
+                    Latitude: lat,
+                    Longitude: lng
+                },
+                success: function (res) { /* ... */ }
+            });
+        }
+
         //function handleGuest() {
         //    const btn = event.currentTarget;
         //    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังโหลด...';
         //    setTimeout(() => { btn.innerHTML = '<i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม'; }, 1200);
         //}
         //Btn login
-        async function AuthenUser() {
-        let Username = document.getElementById("txtUsername").value || "";
-        let Password = document.getElementById("txtPassword").value || "";
-        try {
-            let response = await fetch('@Url.Action("AuthenUser","Login")', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    Username: Username,
-                    Password: Password
-                })
-            });
-            let res = await response.json();
-            if (res.IsSuccess) {
+async function AuthenUser() {
+    let Username = document.getElementById("txtUsername").value || "";
+    let Password = document.getElementById("txtPassword").value || "";
 
-                console.log(res.Data);
-                //alert("Login Success " + res.Data[0].username);
-                window.location.href = '@Url.Action("Index","Home")';
-            } else {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'ไม่สำเร็จ',
-                    text: res.Message
-                });
-            }
+    // ดึง geolocation ก่อน แล้วค่อย login
+    let lat = "", lng = "";
+    try {
+        const pos = await new Promise((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 })
+        );
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+    } catch { /* user ปฏิเสธหรือ timeout → ส่งว่าง */ }
 
-        } catch (e) {
-            console.log(e);
-            Swal.fire({
-                icon: 'error',
-                title: 'เกิดข้อผิดพลาด',
-                text: ex.message || "System Error"
-            });
-            //alert("System Error Login Fail");
+    try {
+        let response = await fetch('@Url.Action("AuthenUser","Login")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Username: Username,
+                Password: Password,
+                Latitude: lat,
+                Longitude: lng
+            })
+        });
+        let res = await response.json();
+        if (res.IsSuccess) {
+            window.location.href = '@Url.Action("Index","Home")';
+        } else {
+            Swal.fire({ icon: 'warning', title: 'ไม่สำเร็จ', text: res.Message });
         }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message || "System Error" });
     }
+        }    
     </script>
 </body>
 </html>

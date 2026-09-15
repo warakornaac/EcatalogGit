@@ -27,5 +27,6 @@ namespace Ecatalog.Models
         public int userType { get; set; }
 
         public string isActive { get; set; }
+        public string authSource { get; set; }
     }
 }
