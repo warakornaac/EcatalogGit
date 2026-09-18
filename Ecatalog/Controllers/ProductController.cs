@@ -265,21 +265,32 @@ namespace Ecatalog.Controllers
                     })
                     .ToList();
 
-                return Json(new
+                return new JsonResult
                 {
-                    IsSuccess = true,
-                    IsFromCache = result.IsFromCache,
-                    ExecutionTime = result.ExecutionTime,
-                    Data = groupData
-                }, JsonRequestBehavior.AllowGet);
+                    Data = new
+                    {
+                        IsSuccess = true,
+                        IsFromCache = result.IsFromCache,
+                        ExecutionTime = result.ExecutionTime,
+                        Data = groupData
+                    },
+                    JsonRequestBehavior = JsonRequestBehavior.AllowGet,
+                    MaxJsonLength = int.MaxValue
+                };
             }
             catch (Exception ex)
             {
-                return Json(new
+                return new JsonResult
                 {
-                    IsSuccess = false,
-                    Message = ex.Message
-                }, JsonRequestBehavior.AllowGet);
+                    Data = new
+                    {
+                        IsSuccess = false,
+                        Message = ex.Message,
+                        Detail = ex.ToString()
+                    },
+                    JsonRequestBehavior = JsonRequestBehavior.AllowGet,
+                    MaxJsonLength = int.MaxValue
+                };
             }
         }
         //get count by tab
