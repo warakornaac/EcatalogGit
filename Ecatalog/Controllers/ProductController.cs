@@ -888,7 +888,7 @@ namespace Ecatalog.Controllers
                 var result = await Utils.CallApiAsyncMemory<Newtonsoft.Json.Linq.JObject>(
                     "Ecatalog/GetProductBySearchGlobal",
                     "GET",
-                    new { Keyword, Debug },
+                    new { Keyword, CusCode, Debug },
                     false,
                     30);
 
