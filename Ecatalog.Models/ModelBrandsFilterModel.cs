@@ -16,6 +16,8 @@ namespace Ecatalog.Models
     {
         public string id { get; set; }
         public string name { get; set; }
+        public string flag { get; set; }     // ✅ เพิ่ม
+        public int seqNo { get; set; }       // ✅ เพิ่ม
 
     }
 }

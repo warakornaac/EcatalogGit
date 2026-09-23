@@ -63,9 +63,6 @@
         </div>
         <div class="mb-2">
             <div class="flabel">Model Range</div>
-            @*<select class="fselect" id="rangeId" onchange="loadBody();" disabled>
-                <option value="">— Select Range —</option>
-            </select>*@
             <select class="fselect" id="rangeId" onchange="loadBody(); loadEngine();" >
                 <option value="">— Select Range —</option>
             </select>
@@ -120,11 +117,6 @@
         })();">
             <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
         </button>
-        @*<div class="mb-1">
-            <div>
-                <span id="cacheStatus">-</span>
-            </div>
-        </div>*@
     </div>
 </div>
 
@@ -154,17 +146,11 @@
         <button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
             <i class="bi bi-lightning-charge-fill"></i> Search Parts
         </button>
-        @*<div class="mb-1">
-                <div>
-                    <span id="cacheStatusField">-</span>
-                </div>
-            </div>*@
     </div>
 </div>
 
 <div class="collapse show" id="sfBody">
     <div class="filter-body">
-        @*<span class="sec-title mb-2">Filter (ตัวกรองสินค้า)</span>*@
         <div class="flabel">Product Line (หมวดหมู่)</div>
         <div class="chk-list" id="plList"></div>
 
@@ -204,10 +190,6 @@
             selectId = "segmentId";
             selectDefaultText = "Select Segment";
         }
-        // else if (moduleId == 3) {
-        //     selectId = "makerId";
-        //     selectDefaultText = "Select Marker";
-        // }
 
         try {
             const params = new URLSearchParams({
@@ -239,7 +221,6 @@
                 title: 'Load Market Segment Failed',
                 text: ex.message
             });
-            //alert("Load Market Segment Failed");
         }
     }
 
@@ -272,7 +253,6 @@
                 title: 'Load Maker Failed',
                 text: error.message
             });
-            // alert("Load Maker Failed");
         } finally {
             $("#makerId").val('');   // ← เพิ่มบรรทัดนี้
             updateVehSummary();
@@ -294,12 +274,6 @@
                 if (el) el.disabled = !allThreeSelected;
             });
             setYearRangeDisabled(!allThreeSelected);
-
-            // if (!allThreeSelected) {
-            //     $("#rangeId").empty().append('<option value="">— Select Range —</option>');
-            //     updateVehSummary();
-            //     return;
-            // }
 
             const params = new URLSearchParams({ marketSegmentId, segmentId, makerId });
             const response = await fetch(`@Url.Action("GetModelRange", "Master")?${params}`, { method: 'GET' });
@@ -323,24 +297,11 @@
     async function loadBody() {
         try {
             $("#engineId").empty().append('<option value="">— Select Engine —</option>');
-
-            // const marketSegmentId = $("#marketsegId").val();
-            // const segmentId = $("#segmentId").val();
-            // const makerId = $("#makerId").val();
-            // const rangeId = $("#rangeId").val();
-
             const marketSegmentId = $("#rangeId option:selected").data("market");
             const segmentId = $("#segmentId").val();
             const makerId = $("#makerId").val();
             const rangeId = $("#rangeId").val();
             const modelRangeId = $("#rangeId option:selected").data("modelrange");
-
-            // if (!marketSegmentId || !segmentId || !makerId || !rangeId) {
-            //     $("#bodyId").empty().append('<option value="">— Select Body —</option>');
-            //     updateVehSummary();
-            //     return;
-            // }
-
             const params = new URLSearchParams({ marketSegmentId, segmentId, makerId, rangeId, modelRangeId });
             const response = await fetch(`@Url.Action("GetBody", "Master")?${params}`, { method: 'GET' });
             const result = await response.json();
@@ -543,14 +504,12 @@
         showSkel();
         try {
             const request = await getSearchFieldObject();
-            console.log('Field request →', request); // ← เพิ่ม
             if (!request.searchText) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'กรุณาเลือก',
                     text: 'Please enter search text.'
                 });
-                //alert("Please enter search text.");
                 return;
             }
             if (request.searchFields.length === 0) {
@@ -559,22 +518,8 @@
                     title: 'กรุณาเลือก',
                     text: 'Please select search mode.'
                 });
-                //alert("Please select search mode.");
                 return;
             }
-            @*const response = await fetch(
-                '@Url.Action("GetProductBySearchField","Product")',
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(request)
-                });
-
-            const result = await response.json();
-            console.log('Field request →', request); // ← เพิ่ม
-            if (!result.IsSuccess) {
-                throw new Error(result.Message || "Search Error");
-            }*@
 
             const response = await fetch(
                 '@Url.Action("GetProductBySearchField","Product")',
@@ -588,12 +533,7 @@
                 }
             );
 
-            console.log("HTTP Status →", response.status);
-            console.log("Response Content-Type →", response.headers.get("content-type"));
-
             const responseText = await response.text();
-
-            console.log("Response Body →", responseText);
 
             let result;
 
@@ -612,14 +552,7 @@
                 " (" + result.ExecutionTime + " ms)"
             );
 
-            // const filteredData = (result.Data || []).filter(g => g.productGroupNameMain && g.productGroupNameMain.trim() !== '');
             const filteredData = (result.Data || []).filter(g => g.productList?.length > 0);
-            console.log('filteredData →', JSON.stringify(filteredData.map(g => ({
-                group: g.productGroupNameMain,
-                count: g.productList.length,
-                codes: g.productList.map(p => p.stkcode)
-            }))));
-
             _setBaseProducts(filteredData, 'part');
 
         } catch (ex) {
@@ -629,7 +562,6 @@
                 title: 'เกิดข้อผิดพลาด',
                 text: ex.message
             });
-            //alert(ex.message);
         } finally {
             hideSkel();
             btn.prop("disabled", false);
@@ -781,15 +713,18 @@
     //---------------- Popup LoadGroup --------------------//
     let _vehiclePromptShown = false;
 
+    function _isUnselected(val) {
+        return !val || val === 'ALL';
+    }
+
     function showVehiclePrompt(onYes, onNo) {
-        console.log('showVehiclePrompt called, _swalShowing:', window._swalShowing);
         if (window._swalShowing) return; // ✅ ถ้า Swal กำลังแสดงอยู่ → ไม่ทำอะไรเลย
 
         const hasMaker = $("#makerId").val();
-        const hasRange = $("#rangeId").val();
+        const hasRange = !_isUnselected($("#rangeId").val());
         const hasAnyFilter = hasMaker || hasRange
-            || $("#marketsegId").val()
-            || $("#segmentId").val()
+            || !_isUnselected($("#marketsegId").val())
+            || !_isUnselected($("#segmentId").val())
             || $("#yearFrom").val()
             || $("#yearTo").val()
             || $("#driveId").val()

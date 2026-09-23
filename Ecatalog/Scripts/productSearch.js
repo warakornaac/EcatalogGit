@@ -135,9 +135,18 @@ async function searchProductGlobal(keyword) {
     showSkel();
 
     try {
+        _syncSessionFromUI();
+
         const result = await ajaxCallApiService(
             API_URLS.getProductBySearchGlobal,
-            { Keyword: keyword.trim() }
+            {
+                Keyword: keyword.trim(),
+                SlmCode: $("#salesmanId").val() || "",
+                CusCode: $("#customerId").val() || "",
+                Company: typeof getActiveCompanies === 'function'
+                    ? getActiveCompanies()
+                    : []
+            }
         );
 
         if (result.IsSuccess && result.Data?.length > 0) {
@@ -160,6 +169,7 @@ async function searchProductGlobal(keyword) {
                         p.stkcode, p.stkcodeDescription, p.brand,
                         p.makerName, p.modelName, p.productGroup, p.productLine, p.fittingDescription
                     ].join(' ').toLowerCase();
+
                     return tokens.every(token => searchText.includes(token));
                 })
             })).filter(group => group.productList.length > 0);
@@ -178,7 +188,6 @@ async function searchProductGlobal(keyword) {
         hideSkel();
     }
 }
-/*SearchGlobal*/
 
 /* OPEN SPEC — desktop modal หรือ mobile drawer เรียกจาก card ใน renderProductGrid (jQuery grid) */
 function showProductSpec(idx) {

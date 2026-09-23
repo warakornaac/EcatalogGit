@@ -28,7 +28,6 @@
                 </div>
             </div>
         </div>
-
         <div class="right-panel">
             <div class="login-card">
                 <div class="card-top">
@@ -56,124 +55,143 @@
                         </div>
                         <p class="form-error" id="errPass">กรุณากรอกรหัสผ่าน</p>
                     </div>
-                    <!-- <div class="options-row">
-                      <label class="remember">
-                        <input type="checkbox" id="remember"> จดจำการเข้าสู่ระบบ
-                      </label>
-                      <a href="#" class="forgot">ลืมรหัสผ่าน?</a>
-                    </div> -->
-                    <button type="submit" class="btn-login">
+                    <button type="submit" class="btn-login" id="loginBtn">
                         <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
                     </button>
                 </form>
-                <!-- <div class="divider">หรือ</div>
-                <button class="btn-guest" onclick="handleGuest()">
-                  <i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม
-                </button> -->
-                @*<div class="card-footer">
-                            มีปัญหาในการเข้าสู่ระบบ? <a href="#">ติดต่อผู้ดูแลระบบ</a>
-                    </div>*@
             </div>
         </div>
     </div>
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
     <script src="@Url.Content("~/Scripts/sweetalert2.all.min.js")"></script>
     <script>
-
     document.getElementById("loginForm").addEventListener("submit", function(event) {
         event.preventDefault(); // ป้องกันไม่ให้หน้าเว็บรีเฟรชแบบปกติ
         AuthenUser(); // เรียกฟังก์ชั่นเข้าสู่ระบบ
     });
-        function togglePwd() {
-            const inp = document.getElementById('txtPassword');
-            const ico = document.getElementById('eyeIcon');
+    function togglePwd() {
+        const inp = document.getElementById('txtPassword');
+        const ico = document.getElementById('eyeIcon');
 
-            if (inp.type === 'password') {
-                inp.type = 'text';
-                ico.classList.replace('bi-eye', 'bi-eye-slash');
-            } else {
-                inp.type = 'password';
-                ico.classList.replace('bi-eye-slash', 'bi-eye');
-            }
+        if (inp.type === 'password') {
+            inp.type = 'text';
+            ico.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            inp.type = 'password';
+            ico.classList.replace('bi-eye-slash', 'bi-eye');
         }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            const fg1 = document.getElementById('fgUser');
-            const fg2 = document.getElementById('fgPass');
-            let ok = true;
-            fg1.classList.remove('has-error');
-            fg2.classList.remove('has-error');
-            if (!u) { fg1.classList.add('has-error'); ok = false; }
-            if (!p) { fg2.classList.add('has-error'); ok = false; }
-            if (!ok) return;
-            const btn = document.getElementById('loginBtn');
-            btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังเข้าสู่ระบบ...';
-            btn.disabled = true;
-            setTimeout(() => {
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> เข้าสู่ระบบสำเร็จ';
-                btn.style.background = '#1a9e52';
-            }, 1400);
-        }
-
-        // เพิ่มใน script ตอน submit login
-        function doLogin(lat, lng) {
-            $.ajax({
-                url: '/Login/AuthenUser',
-                method: 'POST',
-                data: {
-                    Username: $('#Username').val(),
-                    Password: $('#Password').val(),
-                    Latitude: lat,
-                    Longitude: lng
-                },
-                success: function (res) { /* ... */ }
-            });
-        }
-
-        //function handleGuest() {
-        //    const btn = event.currentTarget;
-        //    btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังโหลด...';
-        //    setTimeout(() => { btn.innerHTML = '<i class="bi bi-person-dash"></i> เข้าชมในฐานะผู้เยี่ยมชม'; }, 1200);
-        //}
-        //Btn login
-async function AuthenUser() {
-    let Username = document.getElementById("txtUsername").value || "";
-    let Password = document.getElementById("txtPassword").value || "";
-
-    // ดึง geolocation ก่อน แล้วค่อย login
-    let lat = "", lng = "";
-    try {
-        const pos = await new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 })
-        );
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
-    } catch { /* user ปฏิเสธหรือ timeout → ส่งว่าง */ }
-
-    try {
-        let response = await fetch('@Url.Action("AuthenUser","Login")', {
+    }
+    function handleLogin(e) {
+        e.preventDefault();
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value.trim();
+        const fg1 = document.getElementById('fgUser');
+        const fg2 = document.getElementById('fgPass');
+        let ok = true;
+        fg1.classList.remove('has-error');
+        fg2.classList.remove('has-error');
+        if (!u) { fg1.classList.add('has-error'); ok = false; }
+        if (!p) { fg2.classList.add('has-error'); ok = false; }
+        if (!ok) return;
+        const btn = document.getElementById('loginBtn');
+        btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังเข้าสู่ระบบ...';
+        btn.disabled = true;
+        setTimeout(() => {
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> เข้าสู่ระบบสำเร็จ';
+            btn.style.background = '#1a9e52';
+        }, 1400);
+    }
+    function doLogin(lat, lng) {
+        $.ajax({
+            url: '/Login/AuthenUser',
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                Username: Username,
-                Password: Password,
+            data: {
+                Username: $('#Username').val(),
+                Password: $('#Password').val(),
                 Latitude: lat,
                 Longitude: lng
-            })
+            },
+            success: function (res) { /* ... */ }
         });
-        let res = await response.json();
-        if (res.IsSuccess) {
-            window.location.href = '@Url.Action("Index","Home")';
-        } else {
-            Swal.fire({ icon: 'warning', title: 'ไม่สำเร็จ', text: res.Message });
-        }
-    } catch (e) {
-        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: e.message || "System Error" });
     }
-        }    
-    </script>
+    async function AuthenUser() {
+        const btn = document.getElementById("loginBtn");
+        const Username = document.getElementById("txtUsername").value.trim();
+        const Password = document.getElementById("txtPassword").value;
+
+        // กันกดซ้ำ
+        if (btn.disabled) return;
+
+        // Validation
+        document.getElementById("fgUser").classList.toggle("has-error", !Username);
+        document.getElementById("fgPass").classList.toggle("has-error", !Password);
+
+        if (!Username || !Password) return;
+
+        // Lock ปุ่มทันที
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังเข้าสู่ระบบ...';
+
+        let lat = "";
+        let lng = "";
+
+        // ขอ location แบบไม่ทำให้ login ต้องรอ
+        try {
+            const pos = await new Promise((resolve, reject) =>
+                navigator.geolocation.getCurrentPosition(
+                    resolve,
+                    reject,
+                    { timeout: 1000, maximumAge: 300000 }
+                )
+            );
+
+            lat = pos.coords.latitude;
+            lng = pos.coords.longitude;
+        } catch (e) {
+            // ไม่ได้ location ก็ login ต่อ
+        }
+
+        try {
+            const response = await fetch('@Url.Action("AuthenUser","Login")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Username: Username,
+                    Password: Password,
+                    Latitude: lat,
+                    Longitude: lng
+                })
+            });
+
+            const res = await response.json();
+
+            if (res.IsSuccess) {
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> เข้าสู่ระบบสำเร็จ';
+                window.location.href = '@Url.Action("Index","Home")';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ';
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ไม่สำเร็จ',
+                    text: res.Message
+                });
+            }
+
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ';
+
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: e.message || "System Error"
+            });
+        }
+    }
+</script>
 </body>
 </html>

@@ -114,6 +114,7 @@
     <Compile Include="Services\ApiLogService.cs" />
     <Compile Include="Services\CacheLogService.cs" />
     <Compile Include="Services\MemoryCacheService.cs" />
+    <Compile Include="Services\SearchLogService.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>

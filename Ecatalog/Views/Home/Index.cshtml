@@ -45,9 +45,6 @@
                                 <button class="clear-filter ms-auto" onclick="clearAllFilters()">
                                     <i class="bi bi-x-circle"></i> Clear Filter
                                 </button>
-                                @*<button class="clear-filter ms-auto" onclick="TestAPIADD()">
-                                        <i class="bi bi-x-circle"></i> Test data
-                                    </button>*@
                             </div>
 
                             <div class="veh-pills" id="vehSummary">
@@ -79,14 +76,51 @@
                     <div class="rsh">
                         <span class="rsh-title">Product Results</span>
                         <span class="rcount" id="rcount">12 items</span>
-                        <select class="sort-select ms-auto" id="sortSelect" onchange="sortProducts(this.value)">
-                            <option value="carModel" selected>เรียงตาม: รุ่นรถ</option>
-                            <option value="part">เรียงตาม: หมวดหมู่</option>
-                            <option value="brand">เรียงตาม: ยี่ห้อสินค้า</option>
-                            <option value="price-asc">ราคา: น้อย → มาก</option>
-                            <option value="price-desc">ราคา: มาก → น้อย</option>
-                            <option value="name">ชื่อ: A-Z</option>
-                        </select>
+
+                        <div class="sort-dropdown">
+                            <button type="button" class="sort-select" id="sortDropdownBtn">
+                                เรียงตาม: รุ่นรถ
+                                <span class="sort-arrow">▼</span>
+                            </button>
+
+                            <div class="sort-menu" id="sortMenu">
+                                <button type="button" onclick="sortProducts('carModel')">
+                                    เรียงตาม: รุ่นรถ
+                                </button>
+
+                                <button type="button" onclick="sortProducts('part')">
+                                    เรียงตาม: หมวดหมู่
+                                </button>
+
+                                <button type="button" onclick="sortProducts('brand')">
+                                    เรียงตาม: ยี่ห้อสินค้า
+                                </button>
+
+                                <button type="button" onclick="sortProducts('price-asc')">
+                                    ราคา: น้อย → มาก
+                                </button>
+
+                                <button type="button" onclick="sortProducts('price-desc')">
+                                    ราคา: มาก → น้อย
+                                </button>
+
+                                <button type="button" onclick="sortProducts('name')">
+                                    ชื่อ: A-Z
+                                </button>
+
+                                <div class="sort-divider"></div>
+
+                                <label class="dropdown-item mb-0" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="inStock" class="mr-2" onchange="applyAllFilters()">
+                                    มีสินค้า
+                                </label>
+
+                                <label class="dropdown-item mb-0" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="outStock" class="mr-2" onchange="applyAllFilters()">
+                                    หมดสต็อก
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="active-filters" id="activeFilters"></div>

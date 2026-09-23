@@ -1,29 +1,4 @@
-﻿/*body {
-    padding-top: 50px;
-    padding-bottom: 20px;
-}
-*/
-/* Set padding to keep content from hitting the edges */
-/*.body-content {
-    padding-left: 15px;
-    padding-right: 15px;
-}
-*/
-/* Override the default bootstrap behavior where horizontal description lists 
-   will truncate terms that are too long to fit in the left column 
-*/
-/*.dl-horizontal dt {
-    white-space: normal;
-}*/
-
-/* Set width on the form input elements since they're 100% wide by default */
-/*input,
-select,
-textarea {
-    max-width: 280px;
-}*/
-
-:root {
+﻿:root {
     --primary: #fd152f;
     --primary-dark: #7a2828;
     --primary-light: #f5e6e6;
@@ -561,9 +536,7 @@ body {
     transform: translateY(-6px) rotate(-45deg);
 }
 
-/* ═══════════════════════════════════════════
-   SIDEBAR.CSS — merged
-═══════════════════════════════════════════ */
+/* SIDEBAR.CSS — merged */
 
 /* ── Hamburger button (sidebar.css version, fixed bottom-right) ── */
 .sb-hamburger {
@@ -1034,7 +1007,6 @@ body {
 .chk-list {
     display: flex;
     flex-direction: column;
-    /*gap: 2px;*/
 }
 
     .chk-list label {
@@ -1123,9 +1095,7 @@ body {
         transform: scale(.98);
     }
 
-/* ═══════════════════════════════════════════
-   Mobile — Hamburger drawer
-═══════════════════════════════════════════ */
+/* Mobile — Hamburger drawer */
 @media (max-width: 768px) {
     .sb-hamburger {
         display: flex;
@@ -1195,9 +1165,7 @@ body {
     }
 }
 
-/* ═══════════════════════════════════════════
-   Dark mode
-═══════════════════════════════════════════ */
+/* Dark mode */
 @media (prefers-color-scheme: dark) {
     .sb {
         background: #16162a;
@@ -1349,6 +1317,69 @@ body {
         border-color: var(--primary);
     }
 
+.sort-dropdown {
+    position: relative;
+    margin-left: auto;
+}
+
+    .sort-dropdown .sort-select {
+        margin-left: 0;
+    }
+
+.sort-arrow {
+    font-size: 9px;
+    margin-left: 6px;
+}
+
+.sort-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 180px;
+    padding: 5px 0;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-sm);
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    z-index: 1000;
+}
+
+    .sort-menu.show {
+        display: block;
+    }
+
+    .sort-menu button,
+    .sort-menu label {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 7px 10px;
+        margin: 0;
+        border: 0;
+        background: transparent;
+        font-family: 'Noto Sans Thai', sans-serif;
+        font-size: 12px;
+        color: var(--text-2);
+        text-align: left;
+        cursor: pointer;
+    }
+
+        .sort-menu button:hover,
+        .sort-menu label:hover {
+            background: var(--surface-2);
+        }
+
+    .sort-menu input[type="checkbox"] {
+        margin-right: 7px;
+    }
+
+.sort-divider {
+    height: 1px;
+    margin: 5px 0;
+    background: var(--border);
+}
+
 .fselect {
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
@@ -1402,8 +1433,6 @@ body {
 .ftags {
     display: flex;
     flex-wrap: wrap;
-/*    gap: 5px;*/
-/*    margin-top: 9px;*/
 }
 
 .ftag {
@@ -3341,9 +3370,7 @@ body {
     }
 }
 
-/* ════════════════════════════════════════
-   ORDER SUMMARY MODAL
-════════════════════════════════════════ */
+/* ORDER SUMMARY MODAL */
 .os-overlay {
     display: none;
     position: fixed;
@@ -4407,9 +4434,7 @@ body {
     display: inline-block;
     animation: spin .6s linear infinite;
 }
-/* ════════════════════════════════
-   THEME SWITCH (ลบ block นี้ทิ้งได้ทั้งหมดถ้าเลิกใช้)
-════════════════════════════════ */
+/* THEME SWITCH (ลบ block นี้ทิ้งได้ทั้งหมดถ้าเลิกใช้) */
 body.theme-blue {
     --primary: #0d6efd;
     --primary-dark: #3f6fe0;
