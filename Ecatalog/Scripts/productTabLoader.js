@@ -147,10 +147,10 @@ function _renderSpec(el, data) {
 }
 
 // ResultProductTabImageList: stkcode, seqImage, imagePath
-function _renderImage(el, data) {
+function _renderImage(pane, data) {
     const rows = _getRows(data);
     if (!rows.length) {
-        el.innerHTML = `
+        pane.innerHTML = `
             <div class="img-grid">
                 <div class="img-ph"><i class="bi bi-image"></i><span>No image available.</span></div>
             </div>`;
@@ -158,23 +158,46 @@ function _renderImage(el, data) {
     }
 
     const sorted = _sortBy(rows, 'seqImage', 'seq');
-    const items = sorted.map(img => {
-        const src = _pick(img, 'imagePath', 'url', 'filename') ?? '';
-        return `
-        <div class="img-ph" style="padding:0;overflow:hidden;position:relative;background:var(--surface-2)">
+    const srcs = sorted.map(img => _pick(img, 'imagePath', 'url', 'filename') ?? '');
+
+    const items = srcs.map((src, idx) => `
+        <div class="img-ph img-clickable" data-idx="${idx}"
+             style="padding:0;overflow:hidden;position:relative;
+             background:var(--surface-2);cursor:zoom-in">
             <img src="${src}" alt=""
-                 style="width:100%;height:100%;object-fit:contain"
+                 style="width:100%;height:100%;object-fit:contain;pointer-events:none"
                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
             <div style="display:none;width:100%;height:100%;align-items:center;
-                        justify-content:center;font-size:28px;color:var(--text-3)">
+                        justify-content:center;font-size:28px;color:var(--text-3);pointer-events:none">
                 <i class="bi bi-image"></i>
             </div>
-        </div>`;
-    }).join('');
+            <div style="position:absolute;bottom:4px;right:4px;
+                        background:rgba(0,0,0,.35);border-radius:4px;
+                        padding:2px 5px;font-size:10px;color:#fff;pointer-events:none">
+                <i class="bi bi-zoom-in"></i>
+            </div>
+        </div>`
+    ).join('');
 
-    el.innerHTML = `<div class="img-grid">${items}</div>`;
+    pane.innerHTML = `<div class="img-grid">${items}</div>`;
+
+    // ✅ ผูก event บน pane โดยใช้ event delegation
+    pane.querySelectorAll('.img-clickable').forEach(div => {
+        div.addEventListener('click', function (e) {
+            e.stopPropagation();        // ✅ กัน bubble ขึ้น modal backdrop
+            e.stopImmediatePropagation(); // ✅ กัน listener อื่นใน element เดียวกัน
+            e.preventDefault();
+
+            const idx = parseInt(this.dataset.idx);
+            if (isNaN(idx) || !srcs[idx]) return;
+
+            // ✅ delay เล็กน้อยเพื่อให้ event chain จบก่อน
+            setTimeout(() => {
+                _imgLightbox(idx, srcs);
+            }, 10);
+        });
+    });
 }
-
 // ResultProductTabOemList: stkcode, seqOem, oem
 function _renderOem(el, data) {
     const rows = _getRows(data);
@@ -267,7 +290,7 @@ function _renderLinkage(el, data) {
 const _RENDERERS = {
     desc: _renderDesc,
     spec: _renderSpec,
-    imgs: _renderImage,
+    imgs: _renderImage,   // ← _renderImage รับ (pane, data) เหมือนเดิม
     oem: _renderOem,
     comp: _renderCompetitor,
     veh: _renderLinkage
@@ -398,4 +421,130 @@ window.switchTabIn = function (btn, tabId, pid) {
 
     const stkcode = window._currentStkcode;
     if (stkcode) loadInlineTab(tabId, stkcode, pid);
+};
+
+
+/* ═══════════ IMAGE LIGHTBOX ═══════════ */
+window._imgLightbox = function (startIdx, srcs) {
+    let idx = startIdx;
+
+    // ลบ lightbox เก่าถ้ามี
+    const old = document.getElementById('_imgLb');
+    if (old) old.remove();
+    if (document._lbKeyHandler) {
+        document.removeEventListener('keydown', document._lbKeyHandler);
+    }
+
+    const lb = document.createElement('div');
+    lb.id = '_imgLb';
+    lb.style.cssText = `
+        position:fixed;inset:0;z-index:2147483647;
+        background:rgba(0,0,0,.92);
+        display:flex;align-items:center;justify-content:center;
+        flex-direction:column;gap:12px;cursor:zoom-out;
+    `;
+
+    // ✅ ไม่ใส่ role=dialog เพื่อเลี่ยง focus trap ของ browser
+    lb.innerHTML = `
+        <button id="_lbClose" style="position:absolute;top:14px;right:18px;
+            background:none;border:none;color:#fff;font-size:24px;cursor:pointer;z-index:1"
+            type="button">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <button id="_lbPrev" type="button" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+            background:rgba(255,255,255,.15);border:none;color:#fff;
+            font-size:22px;border-radius:50%;width:42px;height:42px;cursor:pointer;z-index:1;
+            display:${srcs.length > 1 ? 'flex' : 'none'};align-items:center;justify-content:center">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <img id="_lbImg" src="${srcs[idx]}" alt=""
+            style="max-width:90vw;max-height:80vh;object-fit:contain;
+                   border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6);
+                   transition:opacity .15s;pointer-events:none">
+        <button id="_lbNext" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+            background:rgba(255,255,255,.15);border:none;color:#fff;
+            font-size:22px;border-radius:50%;width:42px;height:42px;cursor:pointer;z-index:1;
+            display:${srcs.length > 1 ? 'flex' : 'none'};align-items:center;justify-content:center">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        <div id="_lbDots" style="display:flex;gap:6px;margin-top:4px"></div>
+    `;
+
+    // ✅ append ตรง body ก่อน
+    document.body.appendChild(lb);
+
+    // ✅ วิธีที่ได้ผล: หา modal ที่ active อยู่แล้ว temporarily remove aria-hidden/inert
+    const toRestore = [];
+    document.querySelectorAll('[aria-hidden="true"],[inert]').forEach(el => {
+        if (lb.contains(el)) return; // ข้ามถ้าอยู่ใน lightbox
+        const entry = { el, ariaHidden: el.getAttribute('aria-hidden'), inert: el.hasAttribute('inert') };
+        el.removeAttribute('aria-hidden');
+        el.removeAttribute('inert');
+        toRestore.push(entry);
+    });
+
+    function _lbClose() {
+        // ✅ คืนค่าเดิมให้ทุก element
+        toRestore.forEach(({ el, ariaHidden, inert }) => {
+            if (ariaHidden !== null) el.setAttribute('aria-hidden', ariaHidden);
+            if (inert) el.setAttribute('inert', '');
+        });
+        lb.remove();
+        document.removeEventListener('keydown', document._lbKeyHandler);
+    }
+
+    function _lbGo(newIdx) {
+        idx = (newIdx + srcs.length) % srcs.length;
+        const imgEl = document.getElementById('_lbImg');
+        if (!imgEl) return;
+        imgEl.style.opacity = '0';
+        setTimeout(() => {
+            imgEl.src = srcs[idx];
+            imgEl.style.opacity = '1';
+            _lbUpdateDots();
+        }, 120);
+    }
+
+    function _lbUpdateDots() {
+        const dots = document.getElementById('_lbDots');
+        if (!dots || srcs.length <= 1) { if (dots) dots.innerHTML = ''; return; }
+        dots.innerHTML = srcs.map((_, i) =>
+            `<span data-i="${i}" style="width:7px;height:7px;border-radius:50%;cursor:pointer;
+             background:${i === idx ? '#fff' : 'rgba(255,255,255,.35)'};
+             transition:background .15s"></span>`
+        ).join('');
+        dots.querySelectorAll('span').forEach(span => {
+            span.addEventListener('click', e => {
+                e.stopPropagation();
+                _lbGo(parseInt(span.dataset.i));
+            });
+        });
+    }
+
+    // ✅ ผูก event บน lightbox
+    lb.addEventListener('click', e => {
+        if (e.target === lb) _lbClose();
+    });
+
+    document.getElementById('_lbClose').addEventListener('click', e => {
+        e.stopPropagation();
+        _lbClose();
+    });
+    document.getElementById('_lbPrev').addEventListener('click', e => {
+        e.stopPropagation();
+        _lbGo(idx - 1);
+    });
+    document.getElementById('_lbNext').addEventListener('click', e => {
+        e.stopPropagation();
+        _lbGo(idx + 1);
+    });
+
+    document._lbKeyHandler = e => {
+        if (e.key === 'Escape') { e.stopPropagation(); _lbClose(); }
+        if (e.key === 'ArrowLeft') _lbGo(idx - 1);
+        if (e.key === 'ArrowRight') _lbGo(idx + 1);
+    };
+    document.addEventListener('keydown', document._lbKeyHandler);
+
+    _lbUpdateDots();
 };

@@ -32,150 +32,160 @@
             <div class="company-group" role="group" aria-label="Company">
                 <button class="company-btn" data-company="AAC" onclick="toggleCompany(this)" aria-pressed="false">AAC</button>
                 <button class="company-btn" data-company="TAC" onclick="toggleCompany(this)" aria-pressed="false">TAC</button>
-                <button class="company-btn" data-company="AGS" onclick="toggleCompany(this)" aria-pressed="false">AGS</button>
                 <button class="company-btn" data-company="OMP" onclick="toggleCompany(this)" aria-pressed="false">OMP</button>
+                <button class="company-btn" data-company="AGS" onclick="toggleCompany(this)" aria-pressed="false">AGS</button>
             </div>
         </div>
 
-<div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
-    <span class="sec-title">Vehicle Filter</span>
-    <i class="bi bi-chevron-down sec-chevron"></i>
-</div>
-<div class="collapse show" id="vfBody">
-    <div class="filter-body mt-2">
-        <div class="mb-2">
-            <div class="flabel">Market Segment</div>
-            <select class="fselect" id="marketsegId" onchange="loadMaker(); loadModelRange();">
-                <option value="">— Select Market —</option>
-            </select>
+        <div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'vfBody'); activateSec(1)">
+            <span class="sec-title">Vehicle Filter</span>
+            <i class="bi bi-chevron-down sec-chevron"></i>
         </div>
-        <div class="mb-2">
-            <div class="flabel">Vehicle Segment</div>
-            <select class="fselect" id="segmentId" onchange="loadMaker(); loadModelRange();">
-                <option value="">— Select Segment —</option>
-            </select>
-        </div>
-        <div class="mb-2">
-            <div class="flabel">Maker</div>
-            <select class="fselect" id="makerId" onchange="loadModelRange();">
-                <option value="">— Select Maker —</option>
-            </select>
-        </div>
-        <div class="mb-2">
-            <div class="flabel">Model Range</div>
-            <select class="fselect" id="rangeId" onchange="loadBody(); loadEngine();" >
-                <option value="">— Select Range —</option>
-            </select>
-        </div>
-        <div class="mb-2">
-            <div class="flabel">Model Body</div>
-            <select class="fselect" id="bodyId" onchange="loadEngine();" disabled>
-                <option value="">— Select Body —</option>
-            </select>
-        </div>
-        <div class="mb-2">
-            <div class="flabel">Engine</div>
-            <select class="fselect" id="engineId" onchange="updateVehSummary()" disabled>
-                <option value="">— Select Engine —</option>
-            </select>
-        </div>
-        <div class="mb-2">
-            <div class="flabel">Year Range</div>
-            <div class="yr-range">
-                <div class="yp-wrap">
-                    <input type="text" id="yearFrom" class="yp-input" placeholder="From" readonly disabled autocomplete="off">
-                    <div class="yp-panel" id="ypPanelFrom"></div>
+        <div class="collapse show" id="vfBody">
+            <div class="filter-body">
+                <div class="mb-2">
+                    <div class="flabel">Market Segment</div>
+                    <select class="fselect" id="marketsegId" 
+                            @*onchange="loadMaker();*@
+                            loadModelRange();">
+                        <option value="">— Select Market —</option>
+                    </select>
                 </div>
-                <span>–</span>
-                <div class="yp-wrap">
-                    <input type="text" id="yearTo" class="yp-input" placeholder="To" readonly disabled autocomplete="off">
-                    <div class="yp-panel" id="ypPanelTo"></div>
+                <div class="mb-2">
+                    <div class="flabel">Vehicle Segment</div>
+                    <select class="fselect" id="segmentId" 
+                            @*onchange="loadMaker();*@
+                            loadModelRange();">
+                        <option value="">— Select Segment —</option>
+                    </select>
                 </div>
+                <div class="mb-2">
+                    <div class="flabel">Maker</div>
+                    <select class="fselect" id="makerId" 
+                            @*onchange="loadModelRange();"*@
+                            >
+                        <option value="">— Select Maker —</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <div class="flabel">Model Range</div>
+                    <select class="fselect" id="rangeId" 
+                            @*onchange="loadBody();*@
+                             loadEngine();">
+                        <option value="">— Select Range —</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <div class="flabel">Model Body</div>
+                    <select class="fselect" id="bodyId" onchange="loadEngine();" disabled>
+                        <option value="">— Select Body —</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <div class="flabel">Engine</div>
+                    <select class="fselect" id="engineId" onchange="updateVehSummary()" disabled>
+                        <option value="">— Select Engine —</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <div class="flabel">Year Range</div>
+                    <div class="yr-range">
+                        <div class="yp-wrap">
+                            <input type="text" id="yearFrom" class="yp-input" placeholder="From" readonly disabled autocomplete="off">
+                            <div class="yp-panel" id="ypPanelFrom"></div>
+                        </div>
+                        <span>–</span>
+                        <div class="yp-wrap">
+                            <input type="text" id="yearTo" class="yp-input" placeholder="To" readonly disabled autocomplete="off">
+                            <div class="yp-panel" id="ypPanelTo"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-1">
+                    <div class="flabel">Drive System</div>
+                    <select class="fselect" id="driveId" onchange="updateVehSummary()" disabled>
+                        <option value="">— Select Drive —</option>
+                        <option value="FWD">FWD</option>
+                        <option value="RWD">RWD</option>
+                        <option value="AWD">4WD / AWD</option>
+                        <option value="NA">NA</option>
+                    </select>
+                </div>
+                <div class="ftags" id="vfTags"></div>
+                
             </div>
         </div>
-        <div class="mb-1">
-            <div class="flabel">Drive System</div>
-            <select class="fselect" id="driveId" onchange="updateVehSummary()" disabled>
-                <option value="">— Select Drive —</option>
-                <option value="FWD">FWD</option>
-                <option value="RWD">RWD</option>
-                <option value="AWD">4WD / AWD</option>
-                <option value="NA">NA</option>
-            </select>
-        </div>
-        <div class="ftags" id="vfTags"></div>
-        <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
-            const hasMaker = $('#makerId').val();
-            const hasMarketAndSegment = $('#marketsegId').val() && $('#segmentId').val();
-            const hasText = $('#txtSearchField').val().trim();
-            if (!hasMaker && !hasMarketAndSegment && hasText) {
-                loadSearchProductField();
-            } else {
-                const ok = await loadSearchProductVio();
-                if (ok !== false && hasText) loadSearchProductField();
-            }
-        })();">
-            <i class="bi bi-lightning-charge-fill"></i> Search Vehicle
-        </button>
-    </div>
-</div>
 
-<div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
-    <span class="sec-title">Part Search</span>
-    <i class="bi bi-chevron-down sec-chevron"></i>
-</div>
-<div class="collapse show" id="spBody">
-    <div class="filter-body">
-        <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
-        <div class="smode-group" id="smodeGroup">
-            <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
-                <i class="bi bi-card-text"></i> Description
-            </label>
-            <label class="smode-btn" data-mode="oe" onclick="toggleMode(this)">
-                <i class="bi bi-upc-scan"></i> OE
-            </label>
-            <label class="smode-btn" data-mode="competitor" onclick="toggleMode(this)">
-                <i class="bi bi-arrows-collapse"></i> Competitor
-            </label>
-        </div>
-        <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-            <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
-            <i class="bi bi-search"></i>
-            <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
-        </div>
-        <button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
+        @*<div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
+            <span class="sec-title">Part Search</span>
+            <i class="bi bi-chevron-down sec-chevron"></i>
+        </div>*@
+        <div class="collapse show" id="spBody">
+            <div class="filter-body">
+                <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
+                <div class="smode-group" id="smodeGroup">
+                    <label class="smode-btn active" data-mode="description" onclick="toggleMode(this)">
+                        <i class="bi bi-card-text"></i> Description
+                    </label>
+                    <label class="smode-btn" data-mode="oe" onclick="toggleMode(this)">
+                        <i class="bi bi-upc-scan"></i> OE
+                    </label>
+                    <label class="smode-btn" data-mode="competitor" onclick="toggleMode(this)">
+                        <i class="bi bi-arrows-collapse"></i> Competitor
+                    </label>
+                </div>
+                <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
+                    <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+                    <i class="bi bi-search"></i>
+                    <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
+                </div>
+
+                <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
+                    const hasMaker = $('#makerId').val();
+                    const hasMarketAndSegment = $('#marketsegId').val() && $('#segmentId').val();
+                    const hasText = $('#txtSearchField').val().trim();
+                    if (!hasMaker && !hasMarketAndSegment && hasText) {
+                        loadSearchProductField();
+                    } else {
+                        const ok = await loadSearchProductVio();
+                        if (ok !== false && hasText) loadSearchProductField();
+                    }})();">
+                    <i class="bi bi-lightning-charge-fill"></i> Search
+                </button>
+
+                @*<button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
             <i class="bi bi-lightning-charge-fill"></i> Search Parts
-        </button>
-    </div>
-</div>
-
-<div class="collapse show" id="sfBody">
-    <div class="filter-body">
-        <div class="flabel">Product Line (หมวดหมู่)</div>
-        <div class="chk-list" id="plList"></div>
-
-        <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
-            <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
-        </button>
-
-        <div class="flabel mt-3">Fitting (ตำแหน่งติดตั้ง)</div>
-        <div class="fit-grid" id="fitGrid">
-            <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
-            <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
-            <div class="fit-chip" onclick="toggleFit(this,'ซ้าย')">ซ้าย</div>
-            <div class="fit-chip" onclick="toggleFit(this,'ขวา')">ขวา</div>
-            <div class="fit-chip" onclick="toggleFit(this,'บน')">บน</div>
-            <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
+        </button>*@
+            </div>
         </div>
 
-        <div class="flabel mt-3">Brand (ยี่ห้อ)</div>
-        <div class="chk-list" id="brList"></div>
+        <div class="collapse show" id="sfBody">
+                <div class="filter-body">
+                    @*<div class="flabel">Product Line (หมวดหมู่)</div>
+                    <div class="chk-list" id="plList"></div>
 
-        <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
-            <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
-        </button>
-    </div>
-</div>
+                    <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
+                        <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
+                    </button>*@
+
+                    <div class="flabel">Fitting (ตำแหน่งติดตั้ง)</div>
+                    <div class="fit-grid" id="fitGrid">
+                        <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'หลัง')">หลัง</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'ซ้าย')">ซ้าย</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'ขวา')">ขวา</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'บน')">บน</div>
+                        <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
+                    </div>
+
+                    @*<div class="flabel mt-3">Brand (ยี่ห้อ)</div>
+                    <div class="chk-list" id="brList"></div>
+
+                    <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
+                        <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
+                    </button>*@
+                </div>
+            </div>
     </div>
 </aside>
 
@@ -224,76 +234,73 @@
         }
     }
 
-    async function loadMaker() {
-        try {
-            const marketSegmentId = $("#marketsegId").val();
-            const vehicleSegmentId = $("#segmentId").val();
-            const params = new URLSearchParams({ marketSegmentId, vehicleSegmentId });
-            const response = await fetch(`@Url.Action("GetMakerCar", "Master")?${params}`, { method: 'GET' });
-            const result = await response.json();
-            const ddl = $("#makerId");
-            ddl.empty();
-            ddl.append('<option value="">— Select Maker —</option>');
-            if (result.IsSuccess && result.Data) {
-                result.Data.forEach((item, index) => {
-                    ddl.append(`
-                        <option value="${item.Id}">
-                            ${item.Name}
-                        </option>
-                    `);
-                    if (index === 4) {
-                        ddl.append('<option disabled>──────────────────────────</option>');
-                    }
-                });
-            }
-        } catch (error) {
-            console.error(error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Load Maker Failed',
-                text: error.message
+async function loadMaker(_skipReset = false) {
+    try {
+        const marketSegmentId = $("#marketsegId").val();
+        const vehicleSegmentId = $("#segmentId").val();
+        const params = new URLSearchParams({ marketSegmentId, vehicleSegmentId });
+        const response = await fetch(`@Url.Action("GetMakerCar", "Master")?${params}`, { method: 'GET' });
+        const result = await response.json();
+        const ddl = $("#makerId");
+        ddl.empty();
+        ddl.append('<option value="">— Select Maker —</option>');
+        if (result.IsSuccess && result.Data) {
+            result.Data.forEach((item, index) => {
+                ddl.append(`<option value="${item.Id}">${item.Name}</option>`);
+                if (index === 4) {
+                    ddl.append('<option disabled>──────────────────────────</option>');
+                }
             });
-        } finally {
-            $("#makerId").val('');   // ← เพิ่มบรรทัดนี้
-            updateVehSummary();
         }
+    } catch (error) {
+        console.error(error);
+    } finally {
+        // ✅ ถ้าเป็น init pass → ไม่ reset makerId
+        if (!_skipReset) {
+            $("#makerId").val('');
+        }
+        updateVehSummary();
     }
-
-    async function loadModelRange() {
-        try {
+}
+async function loadModelRange(_isInit = false) {
+    try {
+        // ✅ ถ้าเป็น init → ไม่ reset body/engine
+        if (!_isInit) {
             $("#bodyId").empty().append('<option value="">— Select Body —</option>');
             $("#engineId").empty().append('<option value="">— Select Engine —</option>');
+        }
 
-            const marketSegmentId = $("#marketsegId").val();
-            const segmentId = $("#segmentId").val();
-            const makerId = $("#makerId").val();
-            const allThreeSelected = marketSegmentId && segmentId && makerId;
+        const marketSegmentId = $("#marketsegId").val();
+        const segmentId = $("#segmentId").val();
+        const makerId = $("#makerId").val();
+        const allThreeSelected = marketSegmentId && segmentId && makerId;
 
+        // ✅ ถ้าเป็น init → ไม่ disable fields
+        if (!_isInit) {
             ['rangeId', 'bodyId', 'engineId', 'driveId'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.disabled = !allThreeSelected;
             });
             setYearRangeDisabled(!allThreeSelected);
-
-            const params = new URLSearchParams({ marketSegmentId, segmentId, makerId });
-            const response = await fetch(`@Url.Action("GetModelRange", "Master")?${params}`, { method: 'GET' });
-            const result = await response.json();
-
-            const ddl = $("#rangeId");
-            ddl.empty().append('<option value="ALL" data-modelrange="ALL" data-market="ALL">— Select Range —</option>');
-            if (result.IsSuccess && result.Data) {
-                result.Data.forEach(item => {
-                    ddl.append(`<option value="${item.Id}" data-modelrange="${item.ModelRangeId || ''}" data-market="${item.MarketSegmentId}" >${item.Model}</option>`);
-                });
-            }
-        } catch (error) {
-            console.error(error);
-            Swal.fire({ icon: 'error', title: 'Load Model Range Failed', text: error.message });
-        } finally {
-            updateVehSummary();
         }
-    }
 
+        const params = new URLSearchParams({ marketSegmentId, segmentId, makerId });
+        const response = await fetch(`@Url.Action("GetModelRange", "Master")?${params}`, { method: 'GET' });
+        const result = await response.json();
+
+        const ddl = $("#rangeId");
+        ddl.empty().append('<option value="ALL">— Select Range —</option>');
+        if (result.IsSuccess && result.Data) {
+            result.Data.forEach(item => {
+                ddl.append(`<option value="${item.Id}" data-modelrange="${item.ModelRangeId || ''}" data-market="${item.MarketSegmentId}">${item.Model}</option>`);
+            });
+        }
+    } catch (error) {
+        console.error(error);
+    } finally {
+        updateVehSummary();
+    }
+}
     async function loadBody() {
         try {
             $("#engineId").empty().append('<option value="">— Select Engine —</option>');
@@ -347,7 +354,7 @@
             ddl.empty().append('<option value="">— Select Engine —</option>');
             if (result.IsSuccess && result.Data) {
                 result.Data.forEach(item => {
-                    if (item.modelRangeId == modelRangeId) {                        
+                    if (item.modelRangeId == modelRangeId) {
                         ddl.append(`<option value="${item.id}">${item.engineType}</option>`);
                     }
                 });
@@ -360,13 +367,74 @@
         }
     }
     //set params obj by select catagory
+    //function getSearchCatagoryObject() {
+    //    _syncSessionFromUI();
+    //    const activeGroupIds = $(".bb-item.active")
+    //        .map(function () { return $(this).data("id"); })
+    //        .get()
+    //        .filter(id => id !== '0' && id !== 0)
+    //        .map(id => String(id));
+
+    //    const axisMap = { 'หน้า': 'FR', 'หลัง': 'RR', 'กลาง': 'MID', 'เครื่องยนต์': 'ENGINE' };
+    //    const sideMap = { 'ซ้าย': 'LH', 'ขวา': 'RH', 'กลาง': 'CENTER' };
+    //    const levelMap = { 'บน': 'UPPER', 'ล่าง': 'LOWER' };
+    //    const dirMap = { 'ใน': 'INNER', 'นอก': 'OUTER' };
+
+    //    const fits = [...fitState];
+    //    const fittingFilter = [...new Set([
+    //        ...fits.map(f => axisMap[f]).filter(Boolean),
+    //        ...fits.map(f => sideMap[f]).filter(Boolean),
+    //        ...fits.map(f => levelMap[f]).filter(Boolean),
+    //        ...fits.map(f => dirMap[f]).filter(Boolean),
+    //    ])];
+
+    //    const checkedLineNames = Object.keys(chkState.pl);
+    //    const checkedBrandNames = Object.keys(chkState.br);
+
+    //    // ✅ ดึง id จาก chkState ที่เก็บไว้ตั้งแต่ pgmConfirm แทนการหาจาก DOM
+    //    const checkedLineIds = checkedLineNames
+    //        .map(name => chkState.pl[name])
+    //        .filter(id => id !== null && id !== undefined && id !== '');
+
+    //    const checkedBrandIds = checkedBrandNames
+    //        .map(name => chkState.br[name])
+    //        .filter(id => id !== null && id !== undefined && id !== '');
+
+    //    console.log('productLineId ที่จะส่ง API:', checkedLineIds);
+    //    console.log('brandId ที่จะส่ง API:', checkedBrandIds);
+    //    console.log('productGroupId:', activeGroupIds);
+    //    console.groupEnd();
+
+    //    const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
+
+    //    return {
+    //        productGroupId: activeGroupIds,
+    //        productLineId: checkedLineIds,
+    //        brandId: checkedBrandIds,
+    //        fittingFilter: fittingFilter,
+    //        marketSegmentId: $("#marketsegId").val() || "",
+    //        segmentId: $("#segmentId").val() || "",
+    //        makerId: $("#makerId").val() || "",
+    //        rangeId: $("#rangeId").val() || "",
+    //        bodyId: $("#bodyId").val() || "",
+    //        engineId: $("#engineId").val() || "",
+    //        yearFrom: $("#yearFrom").val() || "",
+    //        yearTo: $("#yearTo").val() || "",
+    //        driveType: $("#driveId").val() || "",
+    //        SlmCode: $("#salesmanId").val() || window.APP_SESSION?.slmcode || "",
+    //        CusCode: $("#customerId").val() || window.APP_SESSION?.cuscode || "",
+    //        Company: companies
+    //    };
+    //}
+
     function getSearchCatagoryObject() {
         _syncSessionFromUI();
+
         const activeGroupIds = $(".bb-item.active")
             .map(function () { return $(this).data("id"); })
             .get()
             .filter(id => id !== '0' && id !== 0)
-            .map(id => String(id));  // ✅ string ไม่ใช่ parseInt
+            .map(id => String(id));
 
         const axisMap = { 'หน้า': 'FR', 'หลัง': 'RR', 'กลาง': 'MID', 'เครื่องยนต์': 'ENGINE' };
         const sideMap = { 'ซ้าย': 'LH', 'ขวา': 'RH', 'กลาง': 'CENTER' };
@@ -384,32 +452,32 @@
         const checkedLineNames = Object.keys(chkState.pl);
         const checkedBrandNames = Object.keys(chkState.br);
 
-        const checkedLineIds = checkedLineNames.length > 0
-            ? checkedLineNames.map(name => {
-                const el = document.querySelector(`#plList .chk-item[data-name="${CSS.escape(name)}"]`);
-                return el ? String(el.getAttribute('data-id')) : null;  // ✅
-            }).filter(id => id !== null)
-            : [];
+        const checkedLineIds = checkedLineNames
+            .map(name => chkState.pl[name])
+            .filter(id => id !== null && id !== undefined && id !== '');
 
-        const checkedBrandIds = checkedBrandNames.length > 0
-            ? checkedBrandNames.map(name => {
-                const el = document.querySelector(`#brList .chk-item[data-name="${CSS.escape(name)}"]`);
-                return el ? String(el.getAttribute('data-id')) : null;  // ✅
-            }).filter(id => id !== null)
-            : [];
+        const checkedBrandIds = checkedBrandNames
+            .map(name => chkState.br[name])
+            .filter(id => id !== null && id !== undefined && id !== '');
 
-        // ✅ อ่าน vehicle params จาก DOM
         const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
+
+        // ✅ อ่านค่าจาก dropdown ตามปกติ
+        // ถ้า user ยังไม่เลือก (ค่าว่างหรือ ALL) ให้ใช้ default
+        const marketSegmentId = $("#marketsegId").val() || "";
+        const segmentId = $("#segmentId").val() || "";
+        const makerId = $("#makerId").val() || "";
+        const rangeId = ($("#rangeId").val() === "ALL" ? "" : $("#rangeId").val()) || "";
 
         return {
             productGroupId: activeGroupIds,
             productLineId: checkedLineIds,
             brandId: checkedBrandIds,
             fittingFilter: fittingFilter,
-            marketSegmentId: $("#marketsegId").val() || "",
-            segmentId: $("#segmentId").val() || "",
-            makerId: $("#makerId").val() || "",
-            rangeId: $("#rangeId").val() || "",
+            marketSegmentId: marketSegmentId,
+            segmentId: segmentId,
+            makerId: makerId,
+            rangeId: rangeId,
             bodyId: $("#bodyId").val() || "",
             engineId: $("#engineId").val() || "",
             yearFrom: $("#yearFrom").val() || "",
@@ -417,13 +485,15 @@
             driveType: $("#driveId").val() || "",
             SlmCode: $("#salesmanId").val() || window.APP_SESSION?.slmcode || "",
             CusCode: $("#customerId").val() || window.APP_SESSION?.cuscode || "",
-            Company: typeof getActiveCompanies === 'function' ? getActiveCompanies() : []  // ✅
+            Company: companies
         };
     }
     //send params send to controller searchByCategory
     async function searchProductByCategory() {
-    try {
-        const filters = getSearchCatagoryObject();
+        if (!_requireSalesmanAndCustomer()) return;
+
+        try {
+            const filters = getSearchCatagoryObject();
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s
@@ -443,7 +513,9 @@
         if (!response.ok) throw new Error(result.Message || "API Error");
 
         if (result.IsSuccess) {
-            _setBaseProducts(result.Data, 'category', false, true);
+            console.log('result.Data length:', result.Data?.length); // ✅
+            _setBaseProducts(result.Data, 'category', false, true);  // ← set _lastSearchType = 'category'
+            console.log('_lastSearchType after set:', _lastSearchType); // ✅
 
             // Rebuild DOM ของ Sidebar ใหม่ทั้งหมดตาม BASE_PRODUCTS ชุดใหม่
             _rebuildSidebarFromProducts();
@@ -818,11 +890,45 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         initYearPickers();
-        loadMasterMarketDefault(1);  // ← โหลด Market Segment
-        loadMasterMarketDefault(2);  // ← โหลด Vehicle Segment
-        loadModelRange()
-    });
 
+        // ✅ ผูก onchange หลังจาก init เสร็จแล้วเท่านั้น
+        function bindChangeEvents() {
+            document.getElementById('marketsegId')
+                .addEventListener('change', () => { loadMaker(); loadModelRange(); });
+            document.getElementById('segmentId')
+                .addEventListener('change', () => { loadMaker(); loadModelRange(); });
+            document.getElementById('makerId')
+                .addEventListener('change', () => loadModelRange());
+            document.getElementById('rangeId')
+                .addEventListener('change', () => { loadBody(); loadEngine(); });
+        }
+
+        Promise.all([
+            loadMasterMarketDefault(1),
+            loadMasterMarketDefault(2)
+        ]).then(async () => {
+            const marketSeg = document.getElementById('marketsegId');
+            const vehicleSeg = document.getElementById('segmentId');
+
+            if (marketSeg) {
+                const japanOpt = Array.from(marketSeg.options)
+                    .find(o => o.text.trim().toUpperCase().includes('JAPAN'));
+                if (japanOpt) $("#marketsegId").val(japanOpt.value).trigger('change.select2');
+            }
+
+            if (vehicleSeg) {
+                const passOpt = Array.from(vehicleSeg.options)
+                    .find(o => o.text.trim().toUpperCase().includes('PASSENGER'));
+                if (passOpt) $("#segmentId").val(passOpt.value).trigger('change.select2');
+            }
+
+            await loadMaker(true);
+            await loadModelRange(true);
+            updateVehSummary();
+
+            bindChangeEvents(); // ✅ ผูก event หลัง init เสร็จเท่านั้น
+        });
+    });
     window.addEventListener('scroll', () => {
         document.querySelectorAll('.yp-panel.open').forEach(p => p.classList.remove('open'));
     }, true);

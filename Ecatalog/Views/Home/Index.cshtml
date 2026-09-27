@@ -16,6 +16,14 @@
     <link rel="stylesheet" href="~/Content/Site.css">
     <link rel="stylesheet" href="~/Content/select2.min.css">
 </head>
+
+<div id="loadingOverlay" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9999;background:rgba(255,255,255,0.35);backdrop-filter:blur(1px);pointer-events:all;">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">
+        @*<img src="~/Images/car.svg" style="width:80px;height:80px;">*@
+        <div class="loader"></div>
+    </div>
+</div>
+
 <body>
     @Html.Partial("~/Views/Parts/_Header.cshtml")
     <!-- MOBILE OVERLAY -->
@@ -40,18 +48,28 @@
                     <!-- Selected Vehicle -->
                     <div class="col-lg-7 col-md-5 col-12">
                         <div class="hz" id="rz1">
-                            <div class="rsh mb-2">
-                                <span class="rsh-title col-8">Selected Vehicle</span>
-                                <button class="clear-filter ms-auto" onclick="clearAllFilters()">
-                                    <i class="bi bi-x-circle"></i> Clear Filter
-                                </button>
-                            </div>
+                            <div style="display:flex; gap:10px; align-items:stretch;">
 
-                            <div class="veh-pills" id="vehSummary">
-                                <div class="veh-empty">
-                                    <i class="bi bi-car-front" style="font-size:1.1rem"></i>
-                                    <span>Select vehicle attributes in the left panel to filter parts</span>
+                                <div style="flex:1; display:flex; flex-direction:column; gap:0;">
+                                    <div style="display:flex; align-items:center; gap:5px; padding:8px 0; border-bottom:1px solid var(--border);">
+                                        <span class="flabel" style="margin:0; min-width:130px; white-space:nowrap;">
+                                            <i class="bi bi-car-front"></i> Vehicle Filter :
+                                        </span>
+                                        <div id="vehSummary" style="flex:1; display:flex; flex-wrap:wrap; gap:6px; align-items:center;"></div>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:5px; padding:8px 0;">
+                                        <span class="flabel" style="margin:0; min-width:130px; white-space:nowrap;">
+                                            <i class="bi bi-tag"></i> Product Group :
+                                        </span>
+                                        <div class="active-filters" id="activeFilters" style="flex:1; margin:0;"></div>
+                                    </div>
                                 </div>
+
+                                <button class="clear-filter-lg" onclick="clearAllFilters()">
+                                    <i class="bi bi-x-circle" style="font-size:1rem;"></i>
+                                    Clear Filter
+                                </button>
+
                             </div>
                         </div>
                     </div>
@@ -75,7 +93,7 @@
                 <div class="hz" id="rz2">
                     <div class="rsh">
                         <span class="rsh-title">Product Results</span>
-                        <span class="rcount" id="rcount">12 items</span>
+                        <span class="rcount" id="rcount"></span>
 
                         <div class="sort-dropdown">
                             <button type="button" class="sort-select" id="sortDropdownBtn">
@@ -123,8 +141,6 @@
                         </div>
                     </div>
 
-                    <div class="active-filters" id="activeFilters"></div>
-
                     <div id="skelWrap" style="display:none">
                         <div class="product-grid">
                             <div class="skel skel-card"></div>
@@ -148,7 +164,7 @@
     @Html.Partial("~/Views/Parts/_ProductSpec.cshtml")
 
     <!-- GUIDE -->
-    <div class="guide" id="guide">
+    @*<div class="guide" id="guide">
         <button class="guide-x" onclick="gEl('guide').style.display='none'"><i class="bi bi-x"></i></button>
         <h6><i class="bi bi-stars"></i> Guided Search Flow</h6>
         <p>
@@ -158,7 +174,7 @@
             <strong>④</strong> "See detail" → Spec popup<br>
             <strong>Bottom Bar</strong> → Switch product groups
         </p>
-    </div>
+    </div>*@
 
     <!-- ═══════════ CART PANEL ════════════════ -->
     @Html.Partial("~/Views/Parts/_Cart.cshtml")
@@ -214,6 +230,7 @@
         getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',
         getShiptoByCuscode: '@Url.Action("GetShiptoByCuscode", "Master")',
         getCustomerByCuscode: '@Url.Action("GetCustomerByCuscode", "Master")',
+        getBrandsByProductLine: '@Url.Action("GetBrandsByProductLine", "Master")',
     };
 
     const urlsPro = {

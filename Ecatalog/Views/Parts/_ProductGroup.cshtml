@@ -16,3 +16,100 @@
 
     </div>
 </div>
+
+<div id="pgPickerModal" class="pgm-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="pgmTitle" aria-hidden="true">
+    <div class="pgm-bd" onclick="pgmClose()"></div>
+    <div class="pgm-dlg">
+
+        <div class="pgm-hd">
+            <div>
+                <div class="pgm-eyebrow">หมวดหมู่หลัก (PRODUCT GROUP)</div>
+                <h3 class="pgm-title" id="pgmTitle">—</h3>
+            </div>
+            <button type="button" class="pgm-xbtn" onclick="pgmClose()" aria-label="ปิด">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+            </button>
+        </div>
+
+        <ol class="pgm-steps">
+            <li class="pgm-step pgm-done">
+                <b>1</b>
+                <span class="pgm-label-full">หมวดหมู่หลัก</span>
+                <span class="pgm-label-short">หลัก</span>
+            </li>
+            <li class="pgm-step pgm-cur" id="pgmStep2">
+                <b>2</b>
+                <span class="pgm-label-full">หมวดหมู่ย่อย (Product Line)</span>
+                <span class="pgm-label-short">ย่อย</span>
+            </li>
+            <li class="pgm-step" id="pgmStep3">
+                <b>3</b>
+                <span class="pgm-label-full">ยี่ห้อ (Brand)</span>
+                <span class="pgm-label-short">ยี่ห้อ</span>
+            </li>
+        </ol>
+
+        <div class="pgm-body">
+            <div class="pgm-cols">
+
+                <section class="pgm-col">
+                    <div class="pgm-col-hd">
+                        <h4>Product Line <small>(หมวดหมู่ย่อย)</small></h4>
+                        <label class="pgm-chkall">
+                            <input type="checkbox" id="pgmPlAll" onchange="pgmToggleAll('pl',this)">
+                            เลือกทั้งหมด
+                        </label>
+                    </div>
+                    <input type="search" class="pgm-inp" id="pgmPlSearch"
+                           placeholder="ค้นหาหมวดหมู่ย่อย..." autocomplete="off"
+                           oninput="pgmFilterPl(this.value)">
+                    <div class="pgm-list" id="pgmPlList">
+                        <div class="pgm-loading">กำลังโหลด...</div>
+                    </div>
+                </section>
+
+                <section class="pgm-col">
+                    <div class="pgm-col-hd">
+                        <h4>Brand <small>(ยี่ห้อ)</small></h4>
+                        <label class="pgm-chkall">
+                            <input type="checkbox" id="pgmBrAll" disabled
+                                   onchange="pgmToggleAll('br',this)">
+                            เลือกทั้งหมด
+                        </label>
+                    </div>
+                    <div class="pgm-list pgm-bgrid" id="pgmBrList">
+                        <div class="pgm-placeholder">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.5"
+                                 style="display:block;margin:0 auto 8px;opacity:.4">
+                                <path d="M15 6l-6 6 6 6" />
+                            </svg>
+                            เลือกหมวดหมู่ย่อยทางซ้ายก่อน
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+
+        <div class="pgm-ft">
+            <div class="pgm-sum" id="pgmSum">ยังไม่ได้เลือกหมวดหมู่ย่อย</div>
+            <div class="pgm-acts">
+                <button type="button" class="pgm-btn pgm-ghost" onclick="pgmClose()">ยกเลิก</button>
+                <button type="button" class="pgm-btn pgm-pri" id="pgmConfirm"
+                        disabled onclick="pgmConfirm()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="3.2">
+                        <path d="M5 12l5 5 9-10" />
+                    </svg>
+                    ยืนยันการค้นหา
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>

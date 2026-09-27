@@ -12,6 +12,8 @@ let currentSpecProduct = null;
 
 /* SEARCH — เรียก API GetProductBySearchVio ถูก call จาก _Sidebar.cshtml (btnSearchProductVio) และจาก truscripts.js (loadSearchProductVio) */
 async function loadSearchProductVio() {
+    if (!_requireSalesmanAndCustomer()) return false;
+
     const btn = $("#btnSearchProductVio");
 
     const marketSegmentId = $("#marketsegId").val();
@@ -412,33 +414,7 @@ function renderProductGrid(products) {
     });
 }
 
-/* VEHICLE SUMMARY (jQuery version ถ้า sidebar ใช้ jQuery) */
-function updateVehSummary() {
-    const s = document.getElementById('vehSummary');
-    if (!s) return;
-    const fields = [
-        { id: 'marketsegId', icon: 'bi-globe-asia-australia' },
-        { id: 'segmentId', icon: 'bi-car-front' },
-        { id: 'makerId', icon: 'bi-building' },
-        { id: 'rangeId', icon: 'bi-layers' },
-        { id: 'bodyId', icon: 'bi-truck' },
-        { id: 'engineId', icon: 'bi-gear' },
-        { id: 'driveId', icon: 'bi-lightning-charge' }
-    ];
-    const pills = fields.map(f => {
-        const el = document.getElementById(f.id);
-        if (!el || !el.value || el.value === 'ALL') return null;
-        const label = el.options[el.selectedIndex]?.text?.trim() || el.value;
-        return `<div class="veh-pill"><i class="bi ${f.icon}"></i><span>${label}</span></div>`;
-    }).filter(Boolean);
 
-    s.innerHTML = pills.length
-        ? pills.join('')
-        : `<div class="veh-empty">
-               <i class="bi bi-car-front" style="font-size:1.1rem"></i>
-               <span>Select vehicle attributes in the left panel to filter parts</span>
-           </div>`;
-}
 function _normalizeProduct(p) {
     // รองรับทั้ง raw API object และ mapped PRODUCTS object
     return {

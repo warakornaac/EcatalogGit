@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.EnterpriseServices;
 using System.Linq;
@@ -472,6 +473,54 @@ namespace Ecatalog.Controllers
             {
                 return Content(Newtonsoft.Json.JsonConvert.SerializeObject(
                     new { IsSuccess = false, Message = ex.Message }), "application/json");
+            }
+        }
+        [HttpGet]
+        public JsonResult GetBrandsByProductLine(string prodLineIds)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(prodLineIds))
+                    return Json(new { IsSuccess = false, Data = new List<object>() },
+                                JsonRequestBehavior.AllowGet);
+
+                var list = new List<object>();
+                string connStr = ConfigurationManager.AppSettings["ECatalogDB"];
+
+                using (var conn = new SqlConnection(connStr))
+                using (var cmd = new SqlCommand("P_Get_BrandsByProductLine", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@inProdLineIds", prodLineIds);
+                    conn.Open();
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            list.Add(new
+                            {
+                                id = reader["id"].ToString(),
+                                name = reader["name"].ToString(),
+                                flag = reader["flag"] == DBNull.Value ? "" : reader["flag"].ToString(),
+                                seqNo = reader["seqNo"] == DBNull.Value ? 999 : Convert.ToInt32(reader["seqNo"])
+                            });
+                        }
+                    }
+                }
+
+                return Json(new { IsSuccess = true, Data = list },
+                            JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    IsSuccess = false,
+                    Message = ex.Message,
+                    Data = new List<object>()
+                },
+                            JsonRequestBehavior.AllowGet);
             }
         }
     }

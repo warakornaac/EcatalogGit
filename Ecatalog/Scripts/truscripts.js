@@ -109,7 +109,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initBottomBar();
     renderBottomBar();
     renderProducts(PRODUCTS);
-    setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
+    // setTimeout(() => { gEl('guide').style.display = 'block'; }, 900);
 
     // ✅ โหลด cart จาก server เมื่อเปิดหน้า
     _fetchCartFromServer();
@@ -245,7 +245,7 @@ function _setBaseProducts(groups, searchType, keepSort = false, skipRender = fal
 }
 
 function _applyFiltersAndRender() {
-    // console.trace('_applyFiltersAndRender called');
+    // console.log('_lastSearchType:', _lastSearchType); ✅ เพิ่มบรรทัดนี้
     const q = (gEl('partQ')?.value || '').toLowerCase().trim();
     const plKeys = Object.keys(chkState.pl);
     const brKeys = Object.keys(chkState.br);
@@ -255,6 +255,7 @@ function _applyFiltersAndRender() {
     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
     const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
     const filterUniversal = activeGroupStr === '99';
+
     const baseFiltered = BASE_PRODUCTS.filter(p => {
         if (filterUniversal && p.carModel !== 'Universal') return false;
         if (filterByCat && p.carModel !== 'Universal' && p.catId !== activeGroupStr && p.cat !== activeGroupObj.label) return false;
@@ -273,18 +274,23 @@ function _applyFiltersAndRender() {
         ? baseFiltered.filter(p => plKeys.includes(p.line))
         : [...baseFiltered];
 
-    // ✅ ต้อง filter เฉพาะ br เท่านั้น ไม่รวม pl เพื่อให้ pl count สะท้อนจำนวนจริงหลัง untick
     PRODUCTS_FOR_PL_COUNT = plKeys.length
         ? baseFiltered.filter(p => plKeys.includes(p.line))
         : brKeys.length
             ? baseFiltered.filter(p => brKeys.includes(p.brand))
             : [...baseFiltered];
 
-    PRODUCTS = baseFiltered.filter(p => {
-        if (plKeys.length && !plKeys.includes(p.line)) return false;
-        if (brKeys.length && !brKeys.includes(p.brand)) return false;
-        return true;
-    });
+    // ✅ ถ้ามาจาก category search (API กรองมาให้แล้ว) ไม่ต้องกรอง pl/br ซ้ำ
+    if (_lastSearchType === 'category') {
+        // console.log('baseFiltered.length:', baseFiltered.length); ✅ เพิ่มบรรทัดนี้
+        PRODUCTS = [...baseFiltered];
+    } else {
+        PRODUCTS = baseFiltered.filter(p => {
+            if (plKeys.length && !plKeys.includes(p.line)) return false;
+            if (brKeys.length && !brKeys.includes(p.brand)) return false;
+            return true;
+        });
+    }
 
     const inStockChecked = document.getElementById('inStock')?.checked;
     const outStockChecked = document.getElementById('outStock')?.checked;
@@ -293,9 +299,7 @@ function _applyFiltersAndRender() {
         PRODUCTS = PRODUCTS.filter(p => {
             const hasStock = (p.stock ?? 99) > 0;
             const noStock = (p.stock ?? 99) === 0;
-
-            return (inStockChecked && hasStock) ||
-                (outStockChecked && noStock);
+            return (inStockChecked && hasStock) || (outStockChecked && noStock);
         });
     }
 
@@ -303,10 +307,73 @@ function _applyFiltersAndRender() {
     renderProducts(PRODUCTS);
     _updateSidebar();
     renderActiveFilterChips();
-
-    // ✅ ปรับแก้สเตตการมองเห็นของรายการใน Sidebar หลัง Render
     _ensureSidebarVisibility();
+    updateVehSummary();
 }
+
+// function _applyFiltersAndRender() {
+//     console.trace('_applyFiltersAndRender called');
+//     const q = (gEl('partQ')?.value || '').toLowerCase().trim();
+//     const plKeys = Object.keys(chkState.pl);
+//     const brKeys = Object.keys(chkState.br);
+//     const fitK = [...fitState];
+
+//     const activeGroupStr = String(activeGroup);
+//     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
+//     const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
+//     const filterUniversal = activeGroupStr === '99';
+//     const baseFiltered = BASE_PRODUCTS.filter(p => {
+//         if (filterUniversal && p.carModel !== 'Universal') return false;
+//         if (filterByCat && p.carModel !== 'Universal' && p.catId !== activeGroupStr && p.cat !== activeGroupObj.label) return false;
+//         if (q) {
+//             let match = false;
+//             if (activeModes.has('description') && p.name.toLowerCase().includes(q)) match = true;
+//             if (activeModes.has('oe') && p.code.toLowerCase().includes(q)) match = true;
+//             if (activeModes.has('competitor') && p.brand.toLowerCase().includes(q)) match = true;
+//             if (!match) return false;
+//         }
+//         if (fitK.length && (p.fit.length === 0 || !fitK.every(f => p.fit.includes(f)))) return false;
+//         return true;
+//     });
+
+//     PRODUCTS_FOR_BR_COUNT = plKeys.length
+//         ? baseFiltered.filter(p => plKeys.includes(p.line))
+//         : [...baseFiltered];
+
+//     ✅ ต้อง filter เฉพาะ br เท่านั้น ไม่รวม pl เพื่อให้ pl count สะท้อนจำนวนจริงหลัง untick
+//     PRODUCTS_FOR_PL_COUNT = plKeys.length
+//         ? baseFiltered.filter(p => plKeys.includes(p.line))
+//         : brKeys.length
+//             ? baseFiltered.filter(p => brKeys.includes(p.brand))
+//             : [...baseFiltered];
+
+//     PRODUCTS = baseFiltered.filter(p => {
+//         if (plKeys.length && !plKeys.includes(p.line)) return false;
+//         if (brKeys.length && !brKeys.includes(p.brand)) return false;
+//         return true;
+//     });
+
+//     const inStockChecked = document.getElementById('inStock')?.checked;
+//     const outStockChecked = document.getElementById('outStock')?.checked;
+
+//     if (inStockChecked || outStockChecked) {
+//         PRODUCTS = PRODUCTS.filter(p => {
+//             const hasStock = (p.stock ?? 99) > 0;
+//             const noStock = (p.stock ?? 99) === 0;
+
+//             return (inStockChecked && hasStock) ||
+//                 (outStockChecked && noStock);
+//         });
+//     }
+
+//     _updateStockFilterLabel();
+//     renderProducts(PRODUCTS);
+//     _updateSidebar();
+//     renderActiveFilterChips();
+
+//     ✅ ปรับแก้สเตตการมองเห็นของรายการใน Sidebar หลัง Render
+//     _ensureSidebarVisibility();
+// }
 
 function _updateStockFilterLabel() {
     const inStock = document.getElementById('inStock')?.checked;
@@ -558,11 +625,7 @@ function clearAllFilters() {
     const yrTo = gEl('yearTo'); if (yrTo) yrTo.value = '';
     const vfTags = gEl('vfTags'); if (vfTags) vfTags.innerHTML = '';
     const vehSummary = gEl('vehSummary');
-    if (vehSummary) vehSummary.innerHTML = `
-        <div class="veh-empty">
-            <i class="bi bi-car-front" style="font-size:1.1rem"></i>
-            <span>Select vehicle attributes in the left panel to filter parts</span>
-        </div>`;
+    if (vehSummary) vehSummary.innerHTML = '';
 
     chkState = { pl: {}, br: {} };
     document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
@@ -625,6 +688,147 @@ function clearAllFilters() {
     loadModelRange()
 }
 
+// function _rebuildSidebarFromProducts() {
+//     if (!BASE_PRODUCTS) return;
+
+//     ── 1. ประมวลผล Product Line (PL) ──
+//     const lineCount = {};
+//     const lineSeen = new Set();
+//     BASE_PRODUCTS.forEach(p => {
+//         if (p.line) {
+//             const key = p.line.trim() + '|' + p.code;
+//             if (!lineSeen.has(key)) {
+//                 lineSeen.add(key);
+//                 const name = p.line.trim();
+//                 lineCount[name] = (lineCount[name] || 0) + 1;
+//             }
+//         }
+//     });
+
+//     const $plList = $('#plList');
+
+//     สร้าง Element ใหม่ถ้ายังไม่มีใน DOM
+//     Object.keys(lineCount).forEach(name => {
+//         if ($plList.find(`.chk-item[data-name="${name}"]`).length === 0) {
+//             ใหม่
+//             const plMaster = MASTER_PRODUCT_LINES.find(x => x.prodlinename === name);
+//             const plFlag = plMaster?.flag || '';
+//             $plList.append(`
+//                 <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" data-flag="${plFlag}" onclick="toggleChk('pl', '${name.replace(/'/g, "\\'")}')">
+//                     <input type="checkbox" ${isChecked ? 'checked' : ''}>
+//                     <span class="chk-label">${name}</span>
+//                     <span class="chk-count">0</span>
+//                 </div>
+//             `);
+//         }
+//     });
+
+//     อัปเดต Count ให้รายการทั้งหมด
+//     $plList.find('.chk-item').each(function () {
+//         const name = $(this).attr('data-name');
+//         $(this).find('.chk-count').text(lineCount[name] || 0);
+//     });
+
+//     แยกรายการที่ Checked ออกมาไว้ด้านบนสุด แล้วเรียงตัวเหลือตาม Count มากไปน้อย
+//     const $plChecked = $plList.find('.chk-item.checked').detach();
+//     const $plUnchecked = $plList.find('.chk-item').detach();
+
+//     _sortByTopFlag($plUnchecked);
+
+//     $plList.append($plChecked).append($plUnchecked);
+//     แสดง 5 รายการแรกเสมอ (รายการที่ checked บังคับโชว์เสมอ)
+//     let plVisible = 0;
+//     $plList.find('.chk-item').each(function () {
+//         const isChecked = $(this).hasClass('checked');
+//         const count = parseInt($(this).find('.chk-count').text()) || 0;
+//         if (count === 0 && !isChecked) { $(this).hide(); return; }
+//         const show = isChecked || plVisible < 5;
+//         $(this).toggle(show);
+//         if (show && !isChecked) plVisible++;
+//     });
+
+//     const plBtn = gEl('plSeeMore');
+//     if (plBtn) {
+//         const visCount = $plList.find('.chk-item:visible').length;
+//         const totalCount = $plList.find('.chk-item').length;
+//         const aboveZero = $plList.find('.chk-item').filter(function () {
+//             return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+//         }).length;
+//         plBtn.style.display = $plList.find('.chk-item').filter(function () {
+//             return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+//         }).length > 5 ? 'block' : 'none';
+//     }
+
+//     ── 2. ประมวลผล Brand (BR) ──
+//     const brandCount = {};
+//     const brandSeen = new Set();
+//     BASE_PRODUCTS.forEach(p => {
+//         if (p.brand && p.brand !== '—') {
+//             const key = p.brand.trim() + '|' + p.code;
+//             if (!brandSeen.has(key)) {
+//                 brandSeen.add(key);
+//                 const name = p.brand.trim();
+//                 brandCount[name] = (brandCount[name] || 0) + 1;
+//             }
+//         }
+//     });
+
+//     const $brList = $('#brList');
+
+//     สร้าง Element ใหม่ถ้ายังไม่มีใน DOM
+//     Object.keys(brandCount).forEach(name => {
+//         if ($brList.find(`.chk-item[data-name="${name}"]`).length === 0) {
+//             ใหม่
+//             const brMaster = MASTER_BRANDS.find(x => x.name === name);
+//             const brFlag = brMaster?.flag || '';
+//             $brList.append(`
+//                 <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" data-flag="${brFlag}" onclick="toggleChk('br', '${name.replace(/'/g, "\\'")}')">
+//                     <input type="checkbox" ${isChecked ? 'checked' : ''}>
+//                     <span class="chk-label">${name}</span>
+//                     <span class="chk-count">0</span>
+//                 </div>
+//             `);
+//         }
+//     });
+
+//     อัปเดต Count
+//     $brList.find('.chk-item').each(function () {
+//         const name = $(this).attr('data-name');
+//         $(this).find('.chk-count').text(brandCount[name] || 0);
+//     });
+
+//     จัดเรียง
+//     const $brChecked = $brList.find('.chk-item.checked').detach();
+//     const $brUnchecked = $brList.find('.chk-item').detach();
+
+//     _sortByTopFlag($brUnchecked);
+
+
+//     $brList.append($brChecked).append($brUnchecked);
+
+//     แสดง 5 รายการแรก
+//     let brVisible = 0;
+//     $brList.find('.chk-item').each(function () {
+//         const isChecked = $(this).hasClass('checked');
+//         const count = parseInt($(this).find('.chk-count').text()) || 0;
+//         if (count === 0 && !isChecked) { $(this).hide().addClass('br-extra'); return; }
+//         const show = isChecked || brVisible < 5;
+//         $(this).toggle(show).toggleClass('br-extra', !show);
+//         if (show && !isChecked) brVisible++;
+//     });
+
+//     const brBtn = gEl('brSeeMore');
+//     if (brBtn) {
+//         brBtn.classList.remove('expanded');
+//         brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
+//         brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
+//         brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
+//         brBtn.style.display = $brList.find('.chk-item').filter(function () {
+//             return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
+//         }).length > 5 ? 'block' : 'none';
+//     }
+// }
+
 function _rebuildSidebarFromProducts() {
     if (!BASE_PRODUCTS) return;
 
@@ -644,14 +848,13 @@ function _rebuildSidebarFromProducts() {
 
     const $plList = $('#plList');
 
-    // สร้าง Element ใหม่ถ้ายังไม่มีใน DOM
     Object.keys(lineCount).forEach(name => {
         if ($plList.find(`.chk-item[data-name="${name}"]`).length === 0) {
-            // ใหม่
             const plMaster = MASTER_PRODUCT_LINES.find(x => x.prodlinename === name);
             const plFlag = plMaster?.flag || '';
+            const isChecked = !!chkState.pl[name]; // ✅ ประกาศตรงนี้
             $plList.append(`
-                <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" data-flag="${plFlag}" onclick="toggleChk('pl', '${name.replace(/'/g, "\\'")}')">
+                <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" data-flag="${plFlag}" onclick="toggleChk(this,'pl','${name.replace(/'/g, "\\'")}')">
                     <input type="checkbox" ${isChecked ? 'checked' : ''}>
                     <span class="chk-label">${name}</span>
                     <span class="chk-count">0</span>
@@ -660,23 +863,19 @@ function _rebuildSidebarFromProducts() {
         }
     });
 
-    // อัปเดต Count ให้รายการทั้งหมด
     $plList.find('.chk-item').each(function () {
         const name = $(this).attr('data-name');
         $(this).find('.chk-count').text(lineCount[name] || 0);
     });
 
-    // แยกรายการที่ Checked ออกมาไว้ด้านบนสุด แล้วเรียงตัวเหลือตาม Count มากไปน้อย
     const $plChecked = $plList.find('.chk-item.checked').detach();
     const $plUnchecked = $plList.find('.chk-item').detach();
-
     _sortByTopFlag($plUnchecked);
-
     $plList.append($plChecked).append($plUnchecked);
-    // แสดง 5 รายการแรกเสมอ (รายการที่ checked บังคับโชว์เสมอ)
+
     let plVisible = 0;
     $plList.find('.chk-item').each(function () {
-        const isChecked = $(this).hasClass('checked');
+        const isChecked = $(this).hasClass('checked'); // ✅ ประกาศในแต่ละ iteration
         const count = parseInt($(this).find('.chk-count').text()) || 0;
         if (count === 0 && !isChecked) { $(this).hide(); return; }
         const show = isChecked || plVisible < 5;
@@ -686,11 +885,6 @@ function _rebuildSidebarFromProducts() {
 
     const plBtn = gEl('plSeeMore');
     if (plBtn) {
-        const visCount = $plList.find('.chk-item:visible').length;
-        const totalCount = $plList.find('.chk-item').length;
-        const aboveZero = $plList.find('.chk-item').filter(function () {
-            return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
-        }).length;
         plBtn.style.display = $plList.find('.chk-item').filter(function () {
             return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
         }).length > 5 ? 'block' : 'none';
@@ -712,14 +906,13 @@ function _rebuildSidebarFromProducts() {
 
     const $brList = $('#brList');
 
-    // สร้าง Element ใหม่ถ้ายังไม่มีใน DOM
     Object.keys(brandCount).forEach(name => {
         if ($brList.find(`.chk-item[data-name="${name}"]`).length === 0) {
-            // ใหม่
             const brMaster = MASTER_BRANDS.find(x => x.name === name);
             const brFlag = brMaster?.flag || '';
+            const isChecked = !!chkState.br[name]; // ✅ ประกาศตรงนี้
             $brList.append(`
-                <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" data-flag="${brFlag}" onclick="toggleChk('br', '${name.replace(/'/g, "\\'")}')">
+                <div class="chk-item ${isChecked ? 'checked' : ''}" data-name="${name}" data-flag="${brFlag}" onclick="toggleChk(this,'br','${name.replace(/'/g, "\\'")}')">
                     <input type="checkbox" ${isChecked ? 'checked' : ''}>
                     <span class="chk-label">${name}</span>
                     <span class="chk-count">0</span>
@@ -728,25 +921,19 @@ function _rebuildSidebarFromProducts() {
         }
     });
 
-    // อัปเดต Count
     $brList.find('.chk-item').each(function () {
         const name = $(this).attr('data-name');
         $(this).find('.chk-count').text(brandCount[name] || 0);
     });
 
-    // จัดเรียง
     const $brChecked = $brList.find('.chk-item.checked').detach();
     const $brUnchecked = $brList.find('.chk-item').detach();
-
     _sortByTopFlag($brUnchecked);
-
-
     $brList.append($brChecked).append($brUnchecked);
 
-    // แสดง 5 รายการแรก
     let brVisible = 0;
     $brList.find('.chk-item').each(function () {
-        const isChecked = $(this).hasClass('checked');
+        const isChecked = $(this).hasClass('checked'); // ✅ ประกาศในแต่ละ iteration
         const count = parseInt($(this).find('.chk-count').text()) || 0;
         if (count === 0 && !isChecked) { $(this).hide().addClass('br-extra'); return; }
         const show = isChecked || brVisible < 5;
@@ -758,8 +945,6 @@ function _rebuildSidebarFromProducts() {
     if (brBtn) {
         brBtn.classList.remove('expanded');
         brBtn.innerHTML = '<i class="bi bi-chevron-down"></i> ดูเพิ่มเติม';
-        //brBtn.style.display = $brList.find('.chk-item').length > 5 ? 'block' : 'none';
-        //brBtn.style.display = $brList.find('.chk-item:visible').length > 5 ? 'block' : 'none';
         brBtn.style.display = $brList.find('.chk-item').filter(function () {
             return (parseInt($(this).find('.chk-count').text()) || 0) > 0;
         }).length > 5 ? 'block' : 'none';
@@ -851,44 +1036,44 @@ function initBottomBar() {
     });
 }
 
-function selectGroup(id) {
-    const now = Date.now();
-    if (window._lastSelectGroupTime && now - window._lastSelectGroupTime < 5000) {
-        return;
-    }
+// function selectGroup(id) {
+//     const now = Date.now();
+//     if (window._lastSelectGroupTime && now - window._lastSelectGroupTime < 5000) {
+//         return;
+//     }
 
-    showVehiclePrompt(
-        function () {
-            goToVehicleFilter();
-        },
-        function () {
-            if (window._isSearchingCategory) return; // ✅ กัน onNo ถูกเรียก 2 ครั้ง
-            window._isSearchingCategory = true;
+//     showVehiclePrompt(
+//         function () {
+//             goToVehicleFilter();
+//         },
+//         function () {
+//             if (window._isSearchingCategory) return; ✅ กัน onNo ถูกเรียก 2 ครั้ง
+//             window._isSearchingCategory = true;
 
-            const targetIdStr = String(id);
-            activeGroup = targetIdStr;
-            window.selectedGroupId = targetIdStr;
+//             const targetIdStr = String(id);
+//             activeGroup = targetIdStr;
+//             window.selectedGroupId = targetIdStr;
 
-            _resetSidebarFilters();
+//             _resetSidebarFilters();
 
-            document.querySelectorAll('.bb-item').forEach(b => {
-                const bIdStr = String(b.getAttribute('data-id'));
-                b.classList.toggle('active', bIdStr === targetIdStr);
-            });
+//             document.querySelectorAll('.bb-item').forEach(b => {
+//                 const bIdStr = String(b.getAttribute('data-id'));
+//                 b.classList.toggle('active', bIdStr === targetIdStr);
+//             });
 
-            document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none');
+//             document.querySelectorAll('.bb-item').forEach(b => b.style.pointerEvents = 'none');
 
-            const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
-            if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            const activeBB = document.querySelector('.bb-item.active');
-            if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+//             const activeNav = document.querySelector(`.pg-nav-btn[data-gid="${id}"]`);
+//             if (activeNav) activeNav.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+//             const activeBB = document.querySelector('.bb-item.active');
+//             if (activeBB) activeBB.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-            updateBreadcrumb(id, 'Parts Catalog');
-            showSkel();
-            ClickedMatchData();
-        }
-    );
-}
+//             updateBreadcrumb(id, 'Parts Catalog');
+//             showSkel();
+//             ClickedMatchData();
+//         }
+//     );
+// }
 function scrollBottom(dx) {
     gEl('bbScroll').scrollBy({ left: dx, behavior: 'smooth' });
 }
@@ -970,13 +1155,16 @@ function selCard(id) {
 function buildSpecHTML(p) {
     return `
     <div class="spec-hero">
-        ${p.img
-            ? `<img src="${p.img}" alt="${p.name}"
-               onerror="this.parentElement.innerHTML='<div class=\'no-image\'>No images found.</div>'">`
+       ${p.img
+            ? `<div class="no-image" id="img-wrap-${p.id}">
+           <img src="${p.img}" alt="${p.name}"
+                style="width:100%;height:100%;object-fit:contain;border-radius:8px"
+                onerror="this.parentElement.innerHTML='<i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span>'">
+       </div>`
             : `<div class="no-image">
-               <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
-               <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
-           </div>`}
+           <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
+           <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
+       </div>`}
         <div class="spec-hero-meta flex-grow-1">
             <h5>${p.name}</h5>
             <p>${p.code}</p>
@@ -1130,14 +1318,15 @@ function closeSpecModal(e) {
 /* ── Mobile drawer close ── */
 function closeDrawer() {
     const dr = gEl('specDrawer');
+    if (!dr) return; // ✅ guard
     dr.classList.remove('show');
-    gEl('drawerOverlay').classList.remove('show');
+    const drawerOverlay = gEl('drawerOverlay');
+    if (drawerOverlay) drawerOverlay.classList.remove('show');
     document.body.style.overflow = '';
     document.querySelectorAll('.pcard').forEach(c => c.classList.remove('active-card'));
     gEl('rb4')?.classList.remove('active-badge');
     updateBreadcrumb(activeGroup, 'Parts Catalog');
 }
-
 /* ── Tab switching in MODAL ── */
 function switchTabIn(btn, tabId, pid) {
     const container = btn.closest('.spec-modal-body') || btn.closest('.spec-wrap');
@@ -1251,9 +1440,25 @@ function groupByLine(list, forceByLine) {
         (a[0] || '').localeCompare(b[0] || '', 'th')
     );
 }
+// แทนที่ฟังก์ชัน nfScroll เดิม
 function nfScroll(rowId, dir) {
     const el = gEl(rowId);
     if (el) el.scrollBy({ left: dir * 660, behavior: 'smooth' });
+}
+
+function updateNfArrows(strip) {
+    const wrap = strip.closest('.nf-strip-wrap');
+    if (!wrap) return;
+    const btnL = wrap.querySelector('.nf-arr.l');
+    const btnR = wrap.querySelector('.nf-arr.r');
+    const scrollable = strip.scrollWidth > strip.clientWidth + 2;
+    if (!scrollable) {
+        if (btnL) btnL.style.display = 'none';
+        if (btnR) btnR.style.display = 'none';
+        return;
+    }
+    if (btnL) btnL.style.display = strip.scrollLeft > 2 ? '' : 'none';
+    if (btnR) btnR.style.display = strip.scrollLeft < strip.scrollWidth - strip.clientWidth - 2 ? '' : 'none';
 }
 
 /* ═════════════════ RENDER PRODUCTS ═══════════════════ */
@@ -1263,6 +1468,7 @@ function renderProducts(list) {
     const nfRows = gEl('nfRows');
     const hasFilter = Object.keys(chkState.pl).length || fitState.size || Object.keys(chkState.br).length;
     const uniqueCount = new Set(sorted.map(p => p.code)).size;
+    gEl('rcount').style.display = '';
     gEl('rcount').textContent = uniqueCount + ' items';
     const stockLabel = s =>
         s === 0 ? `<span class="pstock out-stock"><i class="bi bi-exclamation-circle-fill"></i> หมดสต็อก</span>` :
@@ -1274,13 +1480,16 @@ function renderProducts(list) {
              onclick="openDrawer(${p.id},event)" style="cursor:pointer">
             <div class="pimg">
                 ${stockLabel(p.stock ?? 99)}
-                ${p.img
-            ? `<img src="${p.img}" alt="${p.name}"
-           onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;>No images found.</div>'">`
+                ${p.img && p.img.trim()
+            ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+           <img src="${p.img}" alt="${p.name}"
+                style="max-height:85px;max-width:100%;object-fit:contain"
+                onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">
+       </div>`
             : `<div class="no-image">
-               <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
-               <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
-           </div>`}
+           <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
+           <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
+       </div>`}
             </div>
             <div class="pbody">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px">
@@ -1321,6 +1530,24 @@ function renderProducts(list) {
     // ✅ เพิ่ม 2 บรรทัดนี้
     const forceByLine = currentSort === 'part';
     const groups = groupByLine(sorted, forceByLine);
+
+    // เรียง products ภายใน group: มีสต็อกก่อน, หมดสต็อกไว้ท้าย
+    groups.forEach(([, products]) => {
+        products.sort((a, b) => {
+            const aHasStock = (a.stock ?? 99) > 0;
+            const bHasStock = (b.stock ?? 99) > 0;
+            if (aHasStock === bHasStock) return 0;
+            return aHasStock ? -1 : 1;
+        });
+    });
+
+    // เรียง groups: กลุ่มที่มีสต็อกก่อน, กลุ่มหมดสต็อกทั้งหมดไว้ท้าย
+    groups.sort(([, aProducts], [, bProducts]) => {
+        const aHasStock = aProducts.some(p => (p.stock ?? 99) > 0);
+        const bHasStock = bProducts.some(p => (p.stock ?? 99) > 0);
+        if (aHasStock === bHasStock) return 0;
+        return aHasStock ? -1 : 1;
+    });
 
     // if (!groups || !groups.length) {
     const noHTML = `
@@ -1365,6 +1592,13 @@ function renderProducts(list) {
                 </div>
             </div>`;
     }).join('');
+    // ผูก scroll listener + check ทันทีหลัง render
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.nf-strip').forEach(strip => {
+            updateNfArrows(strip);
+            strip.addEventListener('scroll', () => updateNfArrows(strip), { passive: true });
+        });
+    });
 }
 
 /* ══════════════ APPLY ALL FILTERS ══════════════════ */
@@ -1374,39 +1608,109 @@ function applyAllFilters() {
 
 /* ══════════════ ACTIVE FILTER CHIPS ══════════════════ */
 /* ══════════════ ACTIVE FILTER CHIPS (รวม group + line + brand) ══════════════════ */
+// function renderActiveFilterChips() {
+//     const chips = [];
+
+//     group chip (ถ้าไม่ใช่ "สินค้าทุกประเภท")
+//     const activeGroupStr = String(activeGroup || '0');
+//     if (activeGroupStr !== '0') {
+//         ✅ แปลง g.id เป็น String ก่อนเทียบ
+//         const groupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
+//         if (groupObj) {
+//             chips.push({ t: 'group', v: groupObj.label || groupObj.name, id: groupObj.id, cls: 'af-group' });
+//         }
+//     }
+
+//     product line chips
+//     Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
+
+//     brand chips
+//     Object.keys(chkState.br).forEach(v => chips.push({ t: 'br', v, cls: 'af-br' }));
+
+//     fitting chips
+//     [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+//     const container = gEl('activeFilters');
+//     if (!container) return;
+
+//     if (!chips.length) {
+//         container.innerHTML = '';
+//         return;
+//     }
+
+//     container.innerHTML = chips.map(c =>
+//         `<span class="af-chip ${c.cls}" onclick="removeActiveChip('${c.t}','${(c.v || '').replace(/'/g, "\\'")}')">${c.v} <i class="bi bi-x-circle"></i></span>`
+//     ).join('');
+// }
+
 function renderActiveFilterChips() {
-    const chips = [];
-
-    // group chip (ถ้าไม่ใช่ "สินค้าทุกประเภท")
-    const activeGroupStr = String(activeGroup || '0');
-    if (activeGroupStr !== '0') {
-        // ✅ แปลง g.id เป็น String ก่อนเทียบ
-        const groupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
-        if (groupObj) {
-            chips.push({ t: 'group', v: groupObj.label || groupObj.name, id: groupObj.id, cls: 'af-group' });
-        }
-    }
-
-    // product line chips
-    Object.keys(chkState.pl).forEach(v => chips.push({ t: 'pl', v, cls: 'af-pl' }));
-
-    // brand chips
-    Object.keys(chkState.br).forEach(v => chips.push({ t: 'br', v, cls: 'af-br' }));
-
-    // fitting chips
-    [...fitState].forEach(v => chips.push({ t: 'fi', v, cls: 'af-fi' }));
-
     const container = gEl('activeFilters');
     if (!container) return;
 
-    if (!chips.length) {
-        container.innerHTML = '';
-        return;
+    const allChips = [];
+
+    const activeGroupStr = String(activeGroup || '0');
+    if (activeGroupStr !== '0') {
+        const groupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
+        if (groupObj) {
+            allChips.push({ t: 'group', v: groupObj.label || groupObj.name, id: groupObj.id, cls: 'af-group' });
+        }
     }
 
-    container.innerHTML = chips.map(c =>
+    Object.keys(chkState.pl).forEach(v => allChips.push({ t: 'pl', v, cls: 'af-pl' }));
+    Object.keys(chkState.br).forEach(v => allChips.push({ t: 'br', v, cls: 'af-br' }));
+    [...fitState].forEach(v => allChips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+    if (!allChips.length) { container.innerHTML = ''; return; }
+
+    const SHOW = 3;
+    const hidden = allChips.length - SHOW;
+    const isExpanded = container.dataset.expanded === '1';
+
+    const chipsToShow = isExpanded ? allChips : allChips.slice(0, SHOW);
+
+    let html = chipsToShow.map(c =>
         `<span class="af-chip ${c.cls}" onclick="removeActiveChip('${c.t}','${(c.v || '').replace(/'/g, "\\'")}')">${c.v} <i class="bi bi-x-circle"></i></span>`
     ).join('');
+
+    if (!isExpanded && hidden > 0) {
+        html += `<span class="af-chip af-more" onclick="
+            document.getElementById('activeFilters').dataset.expanded='1';
+            renderActiveFilterChips()
+        ">+${hidden} เพิ่มเติม</span>`;
+    } else if (isExpanded) {
+        html += `<span class="af-chip af-more" onclick="
+            document.getElementById('activeFilters').dataset.expanded='0';
+            renderActiveFilterChips()
+        ">ย่อ <i class='bi bi-chevron-up'></i></span>`;
+    }
+
+    container.innerHTML = html;
+}
+// function showAllFilterChips() {
+//     const allChips = [];
+
+//     const activeGroupStr = String(activeGroup || '0');
+//     if (activeGroupStr !== '0') {
+//         const groupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
+//         if (groupObj) {
+//             allChips.push({ t: 'group', v: groupObj.label || groupObj.name, id: groupObj.id, cls: 'af-group' });
+//         }
+//     }
+
+//     Object.keys(chkState.pl).forEach(v => allChips.push({ t: 'pl', v, cls: 'af-pl' }));
+//     Object.keys(chkState.br).forEach(v => allChips.push({ t: 'br', v, cls: 'af-br' }));
+//     [...fitState].forEach(v => allChips.push({ t: 'fi', v, cls: 'af-fi' }));
+
+//     const container = gEl('activeFilters');
+//     if (!container) return;
+
+//     container.innerHTML = allChips.map(c =>
+//         `<span class="af-chip ${c.cls}" onclick="removeActiveChip('${c.t}','${(c.v || '').replace(/'/g, "\\'")}')">${c.v} <i class="bi bi-x-circle"></i></span>`
+//     ).join('') + `<span class="af-chip af-more" onclick="renderActiveFilterChips()">ย่อ <i class="bi bi-chevron-up"></i></span>`;
+// }
+function showAllFilterChips() {
+    renderActiveFilterChips();
 }
 /* ── ลบ chip ตัวเดียว แล้ว re-fetch ── */
 function removeActiveChip(t, v) {
@@ -1417,92 +1721,63 @@ function removeActiveChip(t, v) {
 
     if (t === 'pl') {
         delete chkState.pl[v];
-
+        const el = document.querySelector(`#plList .chk-item[data-name="${CSS.escape(v)}"]`);
+        if (el) {
+            el.classList.remove('checked');
+            const chk = el.querySelector('input[type="checkbox"]');
+            if (chk) chk.checked = false;
+        }
+    } else if (t === 'pl-all') {
+        chkState.pl = {};
         document.querySelectorAll('#plList .chk-item').forEach(l => {
-            if (l.getAttribute('data-name') === v) {
-                l.classList.remove('checked');
-
-                const chk = l.querySelector('input[type="checkbox"]');
-                if (chk) chk.checked = false;
-            }
+            l.classList.remove('checked');
+            const chk = l.querySelector('input[type="checkbox"]');
+            if (chk) chk.checked = false;
         });
-
     } else if (t === 'br') {
         delete chkState.br[v];
-
+        const el = document.querySelector(`#brList .chk-item[data-name="${CSS.escape(v)}"]`);
+        if (el) {
+            el.classList.remove('checked');
+            const chk = el.querySelector('input[type="checkbox"]');
+            if (chk) chk.checked = false;
+        }
+    } else if (t === 'br-all') {
+        chkState.br = {};
         document.querySelectorAll('#brList .chk-item').forEach(l => {
-            if (l.getAttribute('data-name') === v) {
-                l.classList.remove('checked');
-
-                const chk = l.querySelector('input[type="checkbox"]');
-                if (chk) chk.checked = false;
-            }
+            l.classList.remove('checked');
+            const chk = l.querySelector('input[type="checkbox"]');
+            if (chk) chk.checked = false;
         });
-
     } else if (t === 'fi') {
         fitState.delete(v);
-
         document.querySelectorAll('.fit-chip').forEach(c => {
-            if (c.textContent.trim() === v) {
-                c.classList.remove('active');
-            }
+            if (c.textContent.trim() === v) c.classList.remove('active');
         });
     }
 
-    // =========================================================
-    // CATEGORY SEARCH:
-    // ถ้าไม่มี Filter เหลือแล้ว → กลับเป็นหน้าไม่มีผลลัพธ์
-    // =========================================================
     const hasSidebarFilter =
         Object.keys(chkState.pl).length > 0 ||
         Object.keys(chkState.br).length > 0 ||
         fitState.size > 0;
 
-    if (
-        _lastSearchType === 'category' &&
-        !hasSidebarFilter &&
-        String(activeGroup) === '0'
-    ) {
-
+    if (_lastSearchType === 'category' && !hasSidebarFilter && String(activeGroup) === '0') {
         PRODUCTS = [];
         PRODUCTS_FOR_COUNT = [];
         PRODUCTS_FOR_PL_COUNT = [];
         PRODUCTS_FOR_BR_COUNT = [];
-
-        $("#plList .chk-item .chk-count, #brList .chk-item .chk-count").text(0);
-        let rPlVis = 0;
-        $("#plList .chk-item").each(function () {
-            $(this).find('.chk-count').text(0);
-            $(this).toggle(rPlVis < 5);
-            rPlVis++;
-        });
-        let rBrVis = 0;
-        $("#brList .chk-item").each(function () {
-            $(this).find('.chk-count').text(0);
-            const show = rBrVis < 5;
-            $(this).toggle(show).toggleClass('br-extra', !show);
-            rBrVis++;
-        });
-
         renderProducts([]);
         renderActiveFilterChips();
-
         return;
     }
 
     showSkel();
-
     setTimeout(() => {
         hideSkel();
         _applyFiltersAndRender();
-
-        gEl('nfRows')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
+        gEl('nfRows')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 200);
 }
-
 function _resetSidebarFilters() {
     if (typeof chkState !== 'undefined') {
         chkState.pl = {};
@@ -1543,20 +1818,44 @@ function updateVehSummary() {
         { id: 'engineId', icon: 'bi-gear' },
         { id: 'driveId', icon: 'bi-lightning-charge' }
     ];
+
     const pills = fields.map(f => {
         const el = document.getElementById(f.id);
         if (!el || !el.value || el.value === 'ALL') return null;
         const label = el.options[el.selectedIndex]?.text?.trim() || el.value;
         if (!label || label.startsWith('—') || label.startsWith('-')) return null;
-        return `<div class="veh-pill"><i class="bi ${f.icon}"></i><span>${label}</span></div>`;
+        return { icon: f.icon, label };
     }).filter(Boolean);
 
-    s.innerHTML = pills.length
-        ? pills.join('')
-        : `<div class="veh-empty">
-               <i class="bi bi-car-front" style="font-size:1.1rem"></i>
-               <span>Select vehicle attributes in the left panel to filter parts</span>
-           </div>`;
+    if (!pills.length) { s.innerHTML = ''; return; }
+
+    window._allVehPills = pills;
+
+    const SHOW = 3;
+    const hidden = pills.length - SHOW;
+
+    let html = pills.slice(0, SHOW).map(p =>
+        `<div class="veh-pill"><i class="bi ${p.icon}"></i><span>${p.label}</span></div>`
+    ).join('');
+
+    if (hidden > 0) {
+        html += `<div class="veh-pill af-more" style="cursor:pointer" onclick="_expandVehPills()">+${hidden} เพิ่มเติม</div>`;
+    }
+
+    s.innerHTML = html;
+}
+
+function _expandVehPills() {
+    const s = gEl('vehSummary');
+    if (!s || !window._allVehPills) return;
+    s.innerHTML = window._allVehPills.map(p =>
+        `<div class="veh-pill"><i class="bi ${p.icon}"></i><span>${p.label}</span></div>`
+    ).join('') +
+        `<div class="veh-pill af-more" style="cursor:pointer" onclick="updateVehSummary()">ย่อ <i class="bi bi-chevron-up" style="font-size:9px"></i></div>`;
+}
+
+function _collapseVehPills() {
+    updateVehSummary();
 }
 
 function renderVfTags() {
@@ -1574,6 +1873,8 @@ function removeVfTag(k) {
 
 /* ═════════════ §2 — SEARCH ════════════════════ */
 function runSearch() {
+    if (!_requireSalesmanAndCustomer()) return;
+
     activateSec(2);
     const keyword = (gEl('partQ')?.value || gEl('headerQ')?.value || '').trim();
 
@@ -1727,14 +2028,25 @@ function showSkel() {
     gEl('skelWrap').style.display = 'block';
     gEl('pGrid').style.display = 'none';
     gEl('nfRows').style.display = 'none';
+    gEl('rcount').style.display = '';
+    gEl('rcount').textContent = 'Loading...';
+    gEl('activeFilters').innerHTML = '';
+    gEl('loadingOverlay').style.display = 'block';
+    const headerH = document.querySelector('.site-header')?.offsetHeight || 56;
+    const overlay = gEl('loadingOverlay');
+    overlay.style.top = headerH + 'px';
+    overlay.style.display = 'block';
 }
+
 function hideSkel() {
     gEl('skelWrap').style.display = 'none';
+    gEl('loadingOverlay').style.display = 'none';
 }
 
 /* ═══════════════ BREADCRUMB ════════════════ */
 function updateBreadcrumb(group, page) {
-    gEl('bc3').textContent = page || 'Parts Catalog';
+    const bc3 = gEl('bc3');
+    if (bc3) bc3.textContent = page || 'Parts Catalog';
 }
 
 /* ════════════════ SECTION ACTIVATION ═════════════════ */
@@ -2484,13 +2796,19 @@ function toggleSeeMore(type) {
 
 function osCheckout() {
     const btn = gEl('osCheckoutBtn');
+
+    btn.disabled = true;
     btn.classList.add('success');
     btn.innerHTML = '<i class="bi bi-check-circle me-2"></i> กำลังดำเนินการ...';
+
     setTimeout(() => {
         btn.classList.remove('success');
         btn.innerHTML = '<i class="bi bi-credit-card-2-front me-2"></i> CHECKOUT';
+        btn.disabled = false;
+
         closeOrderSummary();
-        cart = []; updateCart();
+        cart = [];
+        updateCart();
         toast('✅ สั่งซื้อสำเร็จแล้ว!');
     }, 2000);
 }
@@ -2543,13 +2861,11 @@ function GetBrandS() {
         success: function (result) {
             if (result.IsSuccess) {
                 MASTER_BRANDS = result.Data || [];
+                // console.log('MASTER_BRANDS[0]:', MASTER_BRANDS[0]);
+                // console.log('TRW entry:', MASTER_BRANDS.find(x => x.name === 'TRW'));
+                // console.log('SKR entry:', MASTER_BRANDS.find(x => x.name === 'SKR'));
                 RenderBrands(result.Data || []);
-            } else {
-                console.error("API Error:", result.Message);
             }
-        },
-        error: function (xhr, status, error) {
-            console.error(error);
         }
     });
 }
@@ -2627,20 +2943,19 @@ function GetProductionLine() {
         url: urls.getProductline,
         method: 'GET',
         success: function (res) {
-            // ✅ รองรับทั้ง { IsSuccess, Data } และ { statusCode, result }
             const ok = res.IsSuccess === true || res.statusCode === 200;
             const data = res.Data || res.result || [];
+            // console.log('GetProductionLine raw res:', res);
+            // console.log('data[0]:', data[0]);
+            // console.log('ผ้าเบรก entry:', data.find(x => x.prodlinename === 'ผ้าเบรก'));
             if (ok) {
+                MASTER_PRODUCT_LINES = data;
                 RenderProductionLines(data);
-            } else {
-                console.error("GetProductionLine Error:", res.Message || res.errorMessage);
             }
-        },
-        error: function (xhr, status, error) {
-            console.error("GetProductionLine Ajax Error:", error);
         }
     });
 }
+
 function RenderProductionLines(lines) {
     const $container = $("#plList");
     $container.empty();
@@ -3344,4 +3659,473 @@ function _syncSessionFromUI() {
         $("#salesmanId").val(window.APP_SESSION.slmcode);
     if (!cus && window.APP_SESSION?.cuscode)
         $("#customerId").val(window.APP_SESSION.cuscode);
+}
+
+//--------------------------------------------New Catagory
+/* ══════════════════════════════════════════════════════
+   PRODUCT GROUP PICKER MODAL
+   อ่านข้อมูลจาก MASTER_PRODUCT_LINES และ MASTER_BRANDS
+   กรอง PL ผ่าน API getMatchProductionGroup
+   ══════════════════════════════════════════════════════ */
+(function () {
+    'use strict';
+
+    /* ── state ── */
+    var _gid = null;   // groupId ที่เปิดอยู่
+    var _gname = '';
+    var _plAll = [];     // MASTER_PRODUCT_LINES ทั้งหมด (กรองตาม allowed)
+    var _brAll = [];     // MASTER_BRANDS ทั้งหมด
+    var _plSel = {};     // {name: true}
+    var _brSel = {};     // {name: true}
+    var _lastFocus = null;
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    /* ════ OPEN ════ */
+    function pgmOpen(groupId, groupName, focusEl) {
+        _gid = groupId;
+        _gname = groupName || String(groupId);
+        _lastFocus = focusEl || document.activeElement;
+        _plSel = {};
+        _brSel = {};
+
+        var t = document.getElementById('pgmTitle');
+        if (t) t.textContent = _gname;
+
+        var ov = document.getElementById('pgPickerModal');
+        if (ov) {
+            ov.classList.add('pgm-open');
+            ov.removeAttribute('aria-hidden');  // ✅ ใช้ removeAttribute แทน setAttribute('aria-hidden','false')
+        }
+        document.body.classList.add('pgm-lock');
+
+        setPlLoading();
+        setBrPlaceholder();
+        updateFooter();
+
+        function _doOpen() {
+            $.ajax({
+                url: urls.getMatchProductionGroup,
+                method: 'GET',
+                data: { prodgrpid: groupId },
+                success: function (res) {
+                    var allowedIds = [];
+                    if (res && res.IsSuccess && res.Data && res.Data.length > 0) {
+                        allowedIds = res.Data.map(function (x) {
+                            return String(x.prodlineid);
+                        });
+                    }
+
+                    if (allowedIds.length > 0) {
+                        _plAll = (MASTER_PRODUCT_LINES || []).filter(function (pl) {
+                            var plId = String(pl.prodlineid || pl.id || '');
+                            return allowedIds.includes(plId);
+                        });
+                    } else {
+                        _plAll = [...(MASTER_PRODUCT_LINES || [])];
+                    }
+
+                    _brAll = [...(MASTER_BRANDS || [])];
+
+                    // ✅ render PL ก่อนได้เลย ไม่ต้องรอ brand
+                    renderPlList();
+                    updateFooter();
+
+                    setTimeout(function () {
+                        var s = document.getElementById('pgmPlSearch');
+                        if (s) s.focus();
+                    }, 150);
+                },
+                error: function () {
+                    _plAll = [...(MASTER_PRODUCT_LINES || [])];
+                    _brAll = [...(MASTER_BRANDS || [])];
+                    renderPlList();
+                    updateFooter();
+                }
+            });
+        }
+
+        if (!MASTER_PRODUCT_LINES.length || !MASTER_BRANDS.length) {
+            var waitCount = 0;
+            var waitTimer = setInterval(function () {
+                waitCount++;
+                if (MASTER_PRODUCT_LINES.length && MASTER_BRANDS.length) {
+                    clearInterval(waitTimer);
+                    _doOpen();
+                } else if (waitCount >= 20) {
+                    clearInterval(waitTimer);
+                    _doOpen();
+                }
+            }, 100);
+        } else {
+            _doOpen();
+        }
+        document.querySelector('.bottom-bar').style.zIndex = '0';
+    }
+
+    /* ════ CLOSE ════ */
+    window.pgmClose = function () {
+        // ✅ blur focus ออกจาก element ข้างใน modal ก่อน
+        // เพื่อป้องกัน "Blocked aria-hidden" warning
+        const activeEl = document.activeElement;
+        const modal = document.getElementById('pgPickerModal');
+        if (modal && activeEl && modal.contains(activeEl)) {
+            activeEl.blur();
+        }
+
+        var ov = document.getElementById('pgPickerModal');
+        if (ov) {
+            ov.classList.remove('pgm-open');
+            ov.setAttribute('aria-hidden', 'true');
+        }
+        document.body.classList.remove('pgm-lock');
+        var s = document.getElementById('pgmPlSearch');
+        if (s) { s.value = ''; pgmFilterPl(''); }
+        if (_lastFocus && _lastFocus.focus) _lastFocus.focus();
+        document.querySelector('.bottom-bar').style.zIndex = '';
+    };
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' &&
+            document.getElementById('pgPickerModal')?.classList.contains('pgm-open')) {
+            window.pgmClose();
+        }
+    });
+
+    /* ════ RENDER: Product Line ════ */
+    function renderPlList() {
+        var dst = document.getElementById('pgmPlList');
+        if (!dst) return;
+
+        if (!_plAll.length) {
+            dst.innerHTML = '<div class="pgm-empty">ไม่พบหมวดหมู่ย่อยในกลุ่มนี้</div>';
+            syncPlAll();
+            return;
+        }
+
+        var q = (document.getElementById('pgmPlSearch') || { value: '' }).value.trim().toLowerCase();
+        var html = '';
+
+        _plAll.forEach(function (pl) {
+            var name = pl.prodlinename || '';
+            var cnt = pl.count || 0;
+            if (q && name.toLowerCase().indexOf(q) < 0) return;
+            var on = !!_plSel[name];
+            html += '<label class="pgm-row' + (on ? ' is-on' : '') + '">' +
+                '<input type="checkbox"' + (on ? ' checked' : '') +
+                ' onchange="pgmPlChange(this,\'' + esc(name) + '\')">' +
+                '<span class="pgm-nm">' + esc(name) + '</span>' +
+                // '<span class="pgm-cnt">' + cnt + '</span>' +
+                '</label>';
+        });
+
+        dst.innerHTML = html || '<div class="pgm-empty">ไม่พบผลลัพธ์</div>';
+        syncPlAll();
+    }
+
+    /* ════ RENDER: Brand ════ */
+    function renderBrList() {
+        var dst = document.getElementById('pgmBrList');
+        var allCk = document.getElementById('pgmBrAll');
+        if (!dst) return;
+
+        if (!Object.keys(_plSel).length) {
+            setBrPlaceholder();
+            if (allCk) { allCk.checked = false; allCk.disabled = true; }
+            return;
+        }
+
+        if (allCk) allCk.disabled = false;
+
+        // ✅ กรองเฉพาะ brand ที่มีสินค้าใน PL ที่เลือก
+        var selectedPlNames = Object.keys(_plSel);
+        var filteredBr = _brAll.filter(function (br) {
+            // หา product ที่อยู่ใน PL ที่เลือก และมี brand นี้
+            return BASE_PRODUCTS.some(function (p) {
+                return selectedPlNames.includes(p.line) && p.brand === br.name;
+            });
+        });
+
+        // ถ้า BASE_PRODUCTS ยังว่าง (ยังไม่ได้ search) ให้โชว์ทั้งหมด
+        var brsToShow = filteredBr.length > 0 ? filteredBr : _brAll;
+
+        var isFirstTime = !Object.keys(_brSel).length;
+        if (isFirstTime) {
+            brsToShow.forEach(function (br) { _brSel[br.name] = true; });
+        }
+
+        var html = '';
+        brsToShow.forEach(function (br) {
+            var name = br.name || '';
+            var on = !!_brSel[name];
+            html += '<label class="pgm-row' + (on ? ' is-on' : '') + '">' +
+                '<input type="checkbox"' + (on ? ' checked' : '') +
+                ' onchange="pgmBrChange(this,\'' + esc(name) + '\')">' +
+                '<span class="pgm-nm">' + esc(name) + '</span>' +
+                '</label>';
+        });
+
+        dst.innerHTML = html || '<div class="pgm-empty">ไม่มียี่ห้อ</div>';
+        syncBrAll();
+    }
+
+    function setPlLoading() {
+        var dst = document.getElementById('pgmPlList');
+        if (dst) dst.innerHTML = '<div class="pgm-loading">กำลังโหลดหมวดหมู่ย่อย...</div>';
+    }
+
+    function setBrPlaceholder() {
+        var dst = document.getElementById('pgmBrList');
+        if (dst) dst.innerHTML =
+            '<div class="pgm-placeholder">' +
+            '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 8px;opacity:.4"><path d="M15 6l-6 6 6 6"/></svg>' +
+            'เลือกหมวดหมู่ย่อยทางซ้ายก่อน<br>ยี่ห้อที่มีสินค้าในหมวดนั้นจะแสดงที่นี่</div>';
+    }
+
+    /* ════ CHANGE HANDLERS ════ */
+    window.pgmPlChange = function (chk, name) {
+        chk.closest('.pgm-row').classList.toggle('is-on', chk.checked);
+        if (chk.checked) _plSel[name] = true;
+        else delete _plSel[name];
+        syncPlAll();
+        _brSel = {};
+
+        var selectedPlNames = Object.keys(_plSel);
+        if (!selectedPlNames.length) {
+            setBrPlaceholder();
+            var allCk = document.getElementById('pgmBrAll');
+            if (allCk) { allCk.checked = false; allCk.disabled = true; }
+            updateFooter();
+            return;
+        }
+
+        _loadBrandsForSelectedPl(selectedPlNames);
+        updateFooter();
+    };
+
+    // ✅ ฟังก์ชันใหม่ — วางต่อจาก pgmPlChange
+    function _loadBrandsForSelectedPl(selectedPlNames) {
+        var dst = document.getElementById('pgmBrList');
+        var allCk = document.getElementById('pgmBrAll');
+
+        if (!selectedPlNames.length) {
+            setBrPlaceholder();
+            if (allCk) { allCk.checked = false; allCk.disabled = true; }
+            return;
+        }
+
+        var selectedPlIds = selectedPlNames.map(function (name) {
+            var found = MASTER_PRODUCT_LINES.find(function (pl) {
+                return pl.prodlinename === name;
+            });
+            return found ? String(found.prodlineid) : null;
+        }).filter(Boolean);
+
+        if (!selectedPlIds.length) {
+            if (dst) dst.innerHTML = '<div class="pgm-empty">ไม่พบหมวดหมู่ย่อย</div>';
+            return;
+        }
+
+        if (dst) dst.innerHTML = '<div class="pgm-loading">กำลังโหลดยี่ห้อ...</div>';
+        if (allCk) allCk.disabled = true;
+
+        $.ajax({
+            url: urls.getBrandsByProductLine,
+            method: 'GET',
+            data: { prodLineIds: selectedPlIds.join(',') },
+            success: function (res) {
+                if (res.IsSuccess && res.Data && res.Data.length) {
+                    _brAll = res.Data;
+                } else {
+                    _brAll = MASTER_BRANDS.slice();
+                }
+                _brSel = {};
+                renderBrList();
+                updateFooter();
+                if (allCk) allCk.disabled = false;
+            },
+            error: function () {
+                if (dst) dst.innerHTML = '<div class="pgm-empty">โหลดยี่ห้อไม่สำเร็จ</div>';
+            }
+        });
+    }
+
+    window.pgmBrChange = function (chk, name) {
+        chk.closest('.pgm-row').classList.toggle('is-on', chk.checked);
+        if (chk.checked) _brSel[name] = true;
+        else delete _brSel[name];
+        syncBrAll();
+        updateFooter();
+    };
+
+    /* ════ SELECT ALL ════ */
+    window.pgmToggleAll = function (type, chk) {
+        if (type === 'pl') {
+            _plAll.forEach(function (pl) {
+                if (chk.checked) _plSel[pl.prodlinename] = true;
+                else delete _plSel[pl.prodlinename];
+            });
+            _brSel = {};
+            renderPlList();
+
+            var selectedPlNames = Object.keys(_plSel);
+            if (!selectedPlNames.length) {
+                setBrPlaceholder();
+                var allCk = document.getElementById('pgmBrAll');
+                if (allCk) { allCk.checked = false; allCk.disabled = true; }
+            } else {
+                _loadBrandsForSelectedPl(selectedPlNames); // ← ใช้ฟังก์ชันเดียวกัน
+            }
+        } else {
+            _brAll.forEach(function (br) {
+                if (chk.checked) _brSel[br.name] = true;
+                else delete _brSel[br.name];
+            });
+            var dst = document.getElementById('pgmBrList');
+            if (dst) dst.querySelectorAll('.pgm-row').forEach(function (row) {
+                row.classList.toggle('is-on', chk.checked);
+                var c = row.querySelector('input'); if (c) c.checked = chk.checked;
+            });
+        }
+        updateFooter();
+    };
+
+    function syncPlAll() {
+        var allCk = document.getElementById('pgmPlAll'); if (!allCk) return;
+        var total = _plAll.length;
+        var on = Object.keys(_plSel).length;
+        allCk.checked = total > 0 && on === total;
+        allCk.indeterminate = on > 0 && on < total;
+    }
+
+    function syncBrAll() {
+        var allCk = document.getElementById('pgmBrAll');
+        if (!allCk || allCk.disabled) return;
+        var total = _brAll.length;
+        var on = Object.keys(_brSel).length;
+        allCk.checked = total > 0 && on === total;
+        allCk.indeterminate = on > 0 && on < total;
+    }
+
+    /* ════ SEARCH ════ */
+    window.pgmFilterPl = function (q) {
+        renderPlList();
+    };
+
+    /* ════ FOOTER ════ */
+    function updateFooter() {
+        var plOn = Object.keys(_plSel).length;
+        var brOn = Object.keys(_brSel).length;
+        var brTot = _brAll.length;
+
+        var sum = document.getElementById('pgmSum');
+        if (sum) {
+            sum.innerHTML = plOn
+                ? 'หมวดหมู่ย่อย <b>' + plOn + '</b> · ยี่ห้อ <b>' + brOn + '/' + brTot + '</b>'
+                : 'ยังไม่ได้เลือกหมวดหมู่ย่อย';
+        }
+
+        var btn = document.getElementById('pgmConfirm');
+        if (btn) btn.disabled = !(plOn && brOn);
+
+        var s2 = document.getElementById('pgmStep2');
+        var s3 = document.getElementById('pgmStep3');
+        if (s2) s2.className = 'pgm-step ' + (plOn ? 'pgm-done' : 'pgm-cur');
+        if (s3) s3.className = 'pgm-step ' + (plOn && brOn ? 'pgm-cur' : '');
+    }
+
+    /* ════ CONFIRM ════ */
+    window.pgmConfirm = function () {
+        chkState.pl = {};
+        Object.keys(_plSel).forEach(function (name) {
+            var master = MASTER_PRODUCT_LINES.find(function (x) { return x.prodlinename === name; });
+            chkState.pl[name] = master ? String(master.prodlineid) : null;
+        });
+
+        chkState.br = {};
+        Object.keys(_brSel).forEach(function (name) {
+            var master = MASTER_BRANDS.find(function (x) { return x.name === name; });
+            chkState.br[name] = master ? String(master.id) : null;
+        });
+
+        window.pgmClose();
+
+        activeGroup = String(_gid);
+        window.selectedGroupId = String(_gid);
+
+        document.querySelectorAll('.bb-item').forEach(function (b) {
+            b.classList.toggle('active', String(b.dataset.id) === String(_gid));
+        });
+
+        showSkel();
+
+        searchProductByCategory().finally(function () {
+            hideSkel();
+            renderActiveFilterChips();
+            _updateSidebar();
+            window._isSearchingCategory = false;
+            document.querySelectorAll('.bb-item')
+                .forEach(function (b) { b.style.pointerEvents = ''; });
+            var nr = document.getElementById('nfRows');
+            if (nr) nr.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
+    /* ════ แทนที่ selectGroup() เดิม ════ */
+    window.selectGroup = function (id) {
+        var now = Date.now();
+        if (window._lastSelectGroupTime && now - window._lastSelectGroupTime < 500) return;
+        window._lastSelectGroupTime = now;
+
+        /* "สินค้าทุกประเภท" → clear ไม่ต้องเปิด modal */
+        if (String(id) === '0') {
+            activeGroup = '0';
+            window.selectedGroupId = '0';
+            document.querySelectorAll('.bb-item').forEach(function (b) {
+                b.classList.toggle('active', String(b.dataset.id) === '0');
+            });
+            _resetSidebarFilters();
+            chkState.pl = {};
+            chkState.br = {};
+            _applyFiltersAndRender();
+            renderActiveFilterChips();
+            return;
+        }
+        if (!_requireSalesmanAndCustomer()) return;
+        /* หา group name จาก GROUPS */
+        var grpName = String(id);
+        if (typeof GROUPS !== 'undefined') {
+            var found = GROUPS.find(function (g) { return String(g.id) === String(id); });
+            if (found) grpName = found.label || found.name || grpName;
+        }
+
+        var clickedEl = document.querySelector('.bb-item[data-id="' + id + '"]');
+        pgmOpen(id, grpName, clickedEl);
+    };
+
+})();
+//--------------------------------------------New Catagory
+function _requireSalesmanAndCustomer() {
+    const slm = $("#salesmanId").val() || window.APP_SESSION?.slmcode || '';
+    const cus = $("#customerId").val() || window.APP_SESSION?.cuscode || '';
+
+    if (!slm || !cus) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณาเลือกข้อมูลก่อนค้นหา',
+            html: `
+                <div style="font-size:14px;color:#555;line-height:1.8">
+                    ${!slm ? '<div>📋 กรุณาเลือก <strong>Salesman</strong></div>' : ''}
+                    ${!cus ? '<div>🏪 กรุณาเลือก <strong>Customer</strong></div>' : ''}
+                </div>
+            `,
+            confirmButtonText: 'ตกลง',
+            confirmButtonColor: '#e63946'
+        });
+        return false;
+    }
+    return true;
 }
