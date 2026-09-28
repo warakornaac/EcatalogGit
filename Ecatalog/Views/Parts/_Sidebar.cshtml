@@ -207,28 +207,41 @@
                     <i class="bi bi-search"></i>
                     <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
                 </div>
+                @*<button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
+        if (!_requireSalesmanAndCustomer()) return;
+                const hasMaker = $('#makerId').val();
+                const hasMarketAndSegment = hasMaker;
+                const hasText = $('#txtSearchField').val().trim();
+
+                // ✅ ถ้าไม่มี vehicle dropdown เลย → ไปหา text ทันที
+                if (!hasMaker && !hasMarketAndSegment) {
+                    if (!hasText) {
+                        Swal.fire({ icon: 'warning', title: 'กรุณาใส่ข้อความค้นหา', confirmButtonColor: '#e63946' });
+                        return;
+                    }
+                    loadSearchProductField();
+                    return;
+                }
+
+                // ✅ มี vehicle dropdown → Vio ก่อน แล้วค่อย Field ถ้ามี text
+                const ok = await loadSearchProductVio();
+                if (ok !== false && hasText) loadSearchProductField();
+            })();">
+            <i class="bi bi-lightning-charge-fill"></i> Search
+        </button>*@
                 <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
-                if (!_requireSalesmanAndCustomer()) return;
-                        const hasMaker = $('#makerId').val();
-                        const hasMarketAndSegment = hasMaker;
-                        const hasText = $('#txtSearchField').val().trim();
+                    if (!_requireSalesmanAndCustomer()) return;
 
-                        // ✅ ถ้าไม่มี vehicle dropdown เลย → ไปหา text ทันที
-                        if (!hasMaker && !hasMarketAndSegment) {
-                            if (!hasText) {
-                                Swal.fire({ icon: 'warning', title: 'กรุณาใส่ข้อความค้นหา', confirmButtonColor: '#e63946' });
-                                return;
-                            }
-                            loadSearchProductField();
-                            return;
-                        }
+                    const hasText = $('#txtSearchField').val().trim();
 
-                        // ✅ มี vehicle dropdown → Vio ก่อน แล้วค่อย Field ถ้ามี text
-                        const ok = await loadSearchProductVio();
-                        if (ok !== false && hasText) loadSearchProductField();
-                    })();">
-                    <i class="bi bi-lightning-charge-fill"></i> Search
-                </button>
+                    if (hasText) {
+                        loadSearchProductField();
+                    } else {
+                        await loadSearchProductVio();
+                    }
+                })();">
+                                    <i class="bi bi-lightning-charge-fill"></i> Search
+                                </button>
 
                 @*<button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
             <i class="bi bi-lightning-charge-fill"></i> Search Parts
@@ -1023,7 +1036,11 @@ async function loadModelRange(_isInit = false) {
 
 // ─────────── Autocomplete (Sidebar) ───────────
 (function () {
-    const CFG = { minChars: 2, delay: 300, url: '@Url.Action("GetAutocompleteEcat", "Master")' };
+    const CFG = {
+        minChars: 2,
+        delay: 300,
+        url: null  // ไม่ set ตอน init
+    };
     const S = { timer: null, ctrl: null, items: [], index: -1 };
 
     const $input = () => document.getElementById('txtSearchField');
@@ -1076,6 +1093,10 @@ async function loadModelRange(_isInit = false) {
         if (S.ctrl) S.ctrl.abort();
         S.ctrl = new AbortController();
 
+        const apiUrl = (typeof urls !== 'undefined' && urls.getAutocompleteEcat)
+            ? urls.getAutocompleteEcat
+            : '/Catalog/Master/GetAutocompleteEcat';  // ✅ แก้ fallback path
+
         const dd = $dd();
         dd.innerHTML = '<div class="ecac-empty">กำลังค้นหา…</div>';
         dd.classList.add('open');
@@ -1086,10 +1107,10 @@ async function loadModelRange(_isInit = false) {
             Company: typeof getActiveCompanies === 'function' ? getActiveCompanies() : [],
             searchFields: Array.from(document.querySelectorAll('.smode-btn.active')).map(b => b.dataset.mode)
         };
-        console.log('[ecAc] call API', CFG.url, payload);
+        console.log('[ecAc] call API', apiUrl, payload);  // ✅ เปลี่ยนจาก CFG.url → apiUrl
 
         try {
-            const res = await fetch(CFG.url, {
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(payload),
