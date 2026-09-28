@@ -208,15 +208,25 @@
                     <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
                 </div>
                 <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
-                    const hasMaker = $('#makerId').val();
-                    const hasMarketAndSegment = $('#marketsegId').val() && $('#segmentId').val();
-                    const hasText = $('#txtSearchField').val().trim();
-                    if (!hasMaker && !hasMarketAndSegment && hasText) {
-                        loadSearchProductField();
-                    } else {
+                if (!_requireSalesmanAndCustomer()) return;
+                        const hasMaker = $('#makerId').val();
+                        const hasMarketAndSegment = hasMaker;
+                        const hasText = $('#txtSearchField').val().trim();
+
+                        // ✅ ถ้าไม่มี vehicle dropdown เลย → ไปหา text ทันที
+                        if (!hasMaker && !hasMarketAndSegment) {
+                            if (!hasText) {
+                                Swal.fire({ icon: 'warning', title: 'กรุณาใส่ข้อความค้นหา', confirmButtonColor: '#e63946' });
+                                return;
+                            }
+                            loadSearchProductField();
+                            return;
+                        }
+
+                        // ✅ มี vehicle dropdown → Vio ก่อน แล้วค่อย Field ถ้ามี text
                         const ok = await loadSearchProductVio();
                         if (ok !== false && hasText) loadSearchProductField();
-                    }})();">
+                    })();">
                     <i class="bi bi-lightning-charge-fill"></i> Search
                 </button>
 
@@ -259,48 +269,33 @@
 <script>
 
     //get master
-    async function loadMasterMarketDefault(moduleId) {
-        let selectId = "marketsegId";
-        let selectDefaultText = "Select Market";
-        //set moduleId
-        if (moduleId == 2) {
-            selectId = "segmentId";
-            selectDefaultText = "Select Segment";
-        }
+async function loadMasterMarketDefault(moduleId) {
+    let selectId = moduleId == 2 ? "segmentId" : "marketsegId";
+    let selectDefaultText = moduleId == 2 ? "Select Segment" : "Select Market";
+    let defaultKeyword = moduleId == 2 ? "PASSENGER" : "JAPAN";
 
-        try {
-            const params = new URLSearchParams({
-                moduleId: moduleId
-            });
-            const response = await fetch(
-                `@Url.Action("GetMarketCar", "Master")?${params}`,
-                {
-                    method: 'GET'
-                });
-
-            const result = await response.json();
-            const ddl = $("#" + selectId);
-            ddl.empty();
-            ddl.append('<option value="ALL">— ' + selectDefaultText + ' —</option>');
-            if (result.IsSuccess && result.Data) {
-                result.Data.forEach(item => {
-                    ddl.append(`
-                        <option value="${item.Id}">
-                            ${item.Name}
-                        </option>
-                    `);
-                });
-            }
-        } catch (error) {
-            console.error(error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Load Market Segment Failed',
-                text: ex.message
+    try {
+        const params = new URLSearchParams({ moduleId });
+        const response = await fetch(`@Url.Action("GetMarketCar", "Master")?${params}`, { method: 'GET' });
+        const result = await response.json();
+        const ddl = $("#" + selectId);
+        ddl.empty();
+        ddl.append('<option value="ALL">— ' + selectDefaultText + ' —</option>');
+        if (result.IsSuccess && result.Data) {
+            result.Data.forEach(item => {
+                ddl.append(`<option value="${item.Id}">${item.Name}</option>`);
             });
         }
+
+        // ✅ set default ทันทีหลัง populate เสมอ
+        const defaultOpt = Array.from(ddl[0].options)
+            .find(o => o.text.trim().toUpperCase().includes(defaultKeyword));
+        if (defaultOpt) ddl.val(defaultOpt.value);
+
+    } catch (error) {
+        console.error(error);
     }
-
+}
 async function loadMaker(_skipReset = false) {
     try {
         const marketSegmentId = $("#marketsegId").val();
@@ -984,13 +979,13 @@ async function loadModelRange(_isInit = false) {
             if (marketSeg) {
                 const japanOpt = Array.from(marketSeg.options)
                     .find(o => o.text.trim().toUpperCase().includes('JAPAN'));
-                if (japanOpt) $("#marketsegId").val(japanOpt.value).trigger('change.select2');
+                if (japanOpt) marketSeg.value = japanOpt.value; // ✅ native ธรรมดา
             }
 
             if (vehicleSeg) {
                 const passOpt = Array.from(vehicleSeg.options)
                     .find(o => o.text.trim().toUpperCase().includes('PASSENGER'));
-                if (passOpt) $("#segmentId").val(passOpt.value).trigger('change.select2');
+                if (passOpt) vehicleSeg.value = passOpt.value; // ✅ native ธรรมดา
             }
 
             await loadMaker(true);
