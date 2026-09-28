@@ -3050,7 +3050,9 @@ body {
         width: var(--sidebar-w);
         transition: transform .3s cubic-bezier(.4,0,.2,1);
         padding-top: 110px;
-        padding-bottom: 50px;
+        padding-bottom: calc(var(--bottom-bar-h) + 16px);
+        overflow-y: auto; /* ← เพิ่ม */
+        overflow-x: hidden; /* ← เพิ่ม */
     }
 
         .sidebar.mob-open {
@@ -3308,7 +3310,9 @@ body {
 .cp-footer {
     border-top: 1.5px solid var(--border);
     padding: 14px 18px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); /* ← แก้ */
     flex-shrink: 0;
+    margin-bottom: var(--bottom-bar-h); /* ← เพิ่ม */
 }
 
 .cp-total-row {
@@ -3494,18 +3498,6 @@ body {
         animation: osSlideUp .3s cubic-bezier(.34,1.1,.64,1) both;
     }
 
-    @keyframes osSlideUp {
-        from {
-            opacity: 0;
-            transform: translateY(40px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
     .os-left {
         height: auto;
         border-right: none;
@@ -3516,8 +3508,10 @@ body {
     }
 
     .os-close {
-        top: 10px;
-        right: 10px;
+        position: fixed; /* ← จาก absolute */
+        top: 12px;
+        right: 12px;
+        z-index: 4100; /* ← สูงกว่า .os-overlay (4000) */
     }
 }
 

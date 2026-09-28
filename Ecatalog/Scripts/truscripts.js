@@ -2482,6 +2482,7 @@ function toggleSidebar() {
     btn.classList.toggle('open', open);
     btn.setAttribute('aria-expanded', String(open));
     ov.classList.toggle('visible', open);
+    btn.style.display = open ? 'none' : '';  // ← เพิ่ม
 }
 gEl('mobOverlay').addEventListener('click', toggleSidebar);
 
@@ -3629,6 +3630,12 @@ function toggleCompany(btn) {
     if (selectedSlm) {
         getCustomerbySalesman(selectedSlm, currentCus); // ✅ ส่ง currentCus แทน ''
     }
+
+    var selectedPlNames = Object.keys(_plSel);
+    if (selectedPlNames.length && document.getElementById('pgPickerModal')?.classList.contains('pgm-open')) {
+        _brSel = {};
+        _loadBrandsForSelectedPl(selectedPlNames);
+    }
 }
 // ✅ ฟังก์ชันดึงค่าที่เคยเลือกไว้กลับมาแสดง (เรียกใช้ตอนโหลดหน้าเว็บ)
 function initCompanySelection() {
@@ -3956,7 +3963,16 @@ function _syncSessionFromUI() {
             data: { prodLineIds: selectedPlIds.join(',') },
             success: function (res) {
                 if (res.IsSuccess && res.Data && res.Data.length) {
-                    _brAll = res.Data;
+                    // Filter by active companies
+                    var activeCompanies = Array.from(
+                        document.querySelectorAll('.company-btn[aria-pressed="true"]')
+                    ).map(function (b) { return b.dataset.company; });
+
+                    _brAll = activeCompanies.length
+                        ? res.Data.filter(function (br) {
+                            return activeCompanies.includes(br.company);
+                        })
+                        : res.Data;
                 } else {
                     _brAll = MASTER_BRANDS.slice();
                 }

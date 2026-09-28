@@ -501,7 +501,7 @@ namespace Ecatalog.Controllers
                         while (reader.Read())
                         {
                             list.Add(new
-                            {
+                            {   company = reader["company"].ToString(),
                                 id = reader["id"].ToString(),
                                 name = reader["name"].ToString(),
                                 flag = reader["flag"] == DBNull.Value ? "" : reader["flag"].ToString(),
