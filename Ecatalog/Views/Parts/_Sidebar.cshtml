@@ -202,7 +202,7 @@
         </div>*@
                 <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
                     <input type="text" id="txtSearchField" placeholder="Type part name or code…"
-                           oninput="syncSearchText('sidebar')"
+                           oninput="syncSearch('sidebar')"
                            autocomplete="off" aria-autocomplete="list" aria-expanded="false">
                     <i class="bi bi-search"></i>
                     <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
@@ -1110,7 +1110,9 @@ async function loadModelRange(_isInit = false) {
 
     function onInput() {
         clearTimeout(S.timer);
-        const kw = $input().value.trim();
+        const input = $input();
+        if (!input || document.activeElement !== input) return; // ✅ เช็คว่า focus อยู่ที่ input นี้จริงๆ
+        const kw = input.value.trim();
         console.log('[ecAc] input', kw);
         if (kw.length < CFG.minChars) {
             if (S.ctrl) S.ctrl.abort();
