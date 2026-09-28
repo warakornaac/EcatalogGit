@@ -200,13 +200,18 @@
             <i class="bi bi-search"></i>
             <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
         </div>*@
-                <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-                    <input type="text" id="txtSearchField" placeholder="Type part name or code…"
-                           oninput="syncSearch('sidebar')"
-                           autocomplete="off" aria-autocomplete="list" aria-expanded="false">
-                    <i class="bi bi-search"></i>
-                    <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
-                </div>
+            <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
+                <input type="text" id="txtSearchField" placeholder="Type part name or code…"
+                       oninput="syncSearch('sidebar'); document.getElementById('btnClearSearch').style.display = this.value ? 'flex' : 'none';"
+                       autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+                <button id="btnClearSearch"
+                        style="display:none;position:absolute;right:28px;top:50%;transform:translateY(-50%);background:none;border:none;padding:0;cursor:pointer;color:#aaa;font-size:14px;line-height:1;align-items:center;"
+                        onclick="document.getElementById('txtSearchField').value=''; this.style.display='none'; syncSearch('sidebar'); document.getElementById('txtSearchField').focus();">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
+                <i class="bi bi-search"></i>
+                <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
+            </div>
                 @*<button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
         if (!_requireSalesmanAndCustomer()) return;
                 const hasMaker = $('#makerId').val();

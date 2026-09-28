@@ -3448,7 +3448,7 @@ function getCustomerbySalesman(slmcode, sessionCus) {
                 select.append(
                     $('<option>', {
                         value: cus.cuscode,
-                        text: fullText,
+                        text: fullText,        // ✅ ใช้ fullText แทน cus.cusname
                         'data-full': fullText,
                         'data-name': cus.cusname,
                         'data-company': cus.company
@@ -3541,8 +3541,8 @@ function _shortenSelected(selectId) {
     if (!select) return;
     const opt = select.options[select.selectedIndex];
     if (opt && opt.value) {
-        const name = opt.getAttribute('data-name');
-        if (name) opt.textContent = name;
+        const full = opt.getAttribute('data-full'); // ✅ ใช้ full text (code - name)
+        if (full) opt.textContent = full;
     }
 }
 
@@ -3617,23 +3617,19 @@ function getActiveCompanies() {
 // ฟังก์ชันบันทึกและจัดการการคลิก
 function toggleCompany(btn) {
     const isCurrentlyPressed = btn.getAttribute('aria-pressed') === 'true';
-    // 1. toggle เฉพาะปุ่มที่กด ไม่ reset ปุ่มอื่น
     btn.setAttribute('aria-pressed', isCurrentlyPressed ? 'false' : 'true');
-    // 2. รวบรวมปุ่มที่ active ทั้งหมด
     const selected = getActiveCompanies();
-    // 3. บันทึกลง APP_SESSION เป็น array
     if (!window.APP_SESSION) window.APP_SESSION = {};
-    window.APP_SESSION.companies = selected; // ← เก็บ array ไว้ใช้
-    window.APP_SESSION.company = selected.length > 0 ? selected[0] : 'TAC'; // backward compat
-    // 4. เซฟลง sessionStorage
+    window.APP_SESSION.companies = selected;
+    window.APP_SESSION.company = selected.length > 0 ? selected[0] : 'TAC';
     sessionStorage.setItem('selected_company', getActiveCompanies().join(','));
-    // 5. โหลดข้อมูลลูกค้าใหม่
+
     const selectedSlm = document.getElementById('salesmanId')?.value;
+    const currentCus = document.getElementById('customerId')?.value || ''; // ✅ เก็บค่าปัจจุบัน
     if (selectedSlm) {
-        getCustomerbySalesman(selectedSlm, '');
+        getCustomerbySalesman(selectedSlm, currentCus); // ✅ ส่ง currentCus แทน ''
     }
 }
-
 // ✅ ฟังก์ชันดึงค่าที่เคยเลือกไว้กลับมาแสดง (เรียกใช้ตอนโหลดหน้าเว็บ)
 function initCompanySelection() {
     if (!window.APP_SESSION) window.APP_SESSION = {};
