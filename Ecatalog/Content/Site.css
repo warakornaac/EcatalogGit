@@ -5093,3 +5093,16 @@ body.pgm-lock {
     }
 }
 /*---------------------------------------------------------------------------*/
+/* ✅ ป้องกันลากรูปและ select ใน lightbox */
+#_imgLb {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+    #_imgLb img {
+        pointer-events: none;
+        -webkit-user-drag: none;
+        user-drag: none;
+        -khtml-user-drag: none;
+    }

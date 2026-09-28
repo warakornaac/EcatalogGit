@@ -62,7 +62,8 @@ document.addEventListener('contextmenu', function (e) {
         target.closest('.img-ph') ||
         target.closest('.img-grid') ||
         target.closest('.cart-row') ||
-        target.closest('.os-item')
+        target.closest('.os-item') ||
+        target.closest('#_imgLb')  // ✅ เพิ่มบรรทัดนี้
     ) {
         e.preventDefault();
         return false;
@@ -683,9 +684,29 @@ function clearAllFilters() {
     renderProducts([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     _vehiclePromptShown = false;
-    loadMasterMarketDefault(1);
-    loadMasterMarketDefault(2);
-    loadModelRange()
+    Promise.all([
+        loadMasterMarketDefault(1),
+        loadMasterMarketDefault(2)
+    ]).then(async () => {
+        const marketSeg = document.getElementById('marketsegId');
+        const vehicleSeg = document.getElementById('segmentId');
+
+        if (marketSeg) {
+            const japanOpt = Array.from(marketSeg.options)
+                .find(o => o.text.trim().toUpperCase().includes('JAPAN'));
+            if (japanOpt) marketSeg.value = japanOpt.value;
+        }
+
+        if (vehicleSeg) {
+            const passOpt = Array.from(vehicleSeg.options)
+                .find(o => o.text.trim().toUpperCase().includes('PASSENGER'));
+            if (passOpt) vehicleSeg.value = passOpt.value;
+        }
+
+        await loadMaker(true);
+        await loadModelRange(true);
+        updateVehSummary();
+    });
 }
 
 // function _rebuildSidebarFromProducts() {
@@ -4109,8 +4130,8 @@ function _syncSessionFromUI() {
 })();
 //--------------------------------------------New Catagory
 function _requireSalesmanAndCustomer() {
-    const slm = $("#salesmanId").val() || window.APP_SESSION?.slmcode || '';
-    const cus = $("#customerId").val() || window.APP_SESSION?.cuscode || '';
+    const slm = $("#salesmanId").val() || '';
+    const cus = $("#customerId").val() || '';
 
     if (!slm || !cus) {
         Swal.fire({

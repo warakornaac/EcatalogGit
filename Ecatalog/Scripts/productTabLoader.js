@@ -473,6 +473,18 @@ window._imgLightbox = function (startIdx, srcs) {
     // ✅ append ตรง body ก่อน
     document.body.appendChild(lb);
 
+    // ✅ บล็อกคลิกขวาใน lightbox
+    lb.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // ✅ บล็อก drag รูปออก
+    lb.addEventListener('dragstart', function (e) {
+        e.preventDefault();
+        return false;
+    });
+
     // ✅ วิธีที่ได้ผล: หา modal ที่ active อยู่แล้ว temporarily remove aria-hidden/inert
     const toRestore = [];
     document.querySelectorAll('[aria-hidden="true"],[inert]').forEach(el => {
@@ -543,6 +555,17 @@ window._imgLightbox = function (startIdx, srcs) {
         if (e.key === 'Escape') { e.stopPropagation(); _lbClose(); }
         if (e.key === 'ArrowLeft') _lbGo(idx - 1);
         if (e.key === 'ArrowRight') _lbGo(idx + 1);
+
+        // ✅ บล็อก PrintScreen
+        if (e.key === 'PrintScreen') {
+            e.preventDefault();
+            return false;
+        }
+        // ✅ บล็อก Ctrl+C, Ctrl+S, Ctrl+P
+        if (e.ctrlKey && ['c', 's', 'p', 'a'].includes(e.key.toLowerCase())) {
+            e.preventDefault();
+            return false;
+        }
     };
     document.addEventListener('keydown', document._lbKeyHandler);
 
