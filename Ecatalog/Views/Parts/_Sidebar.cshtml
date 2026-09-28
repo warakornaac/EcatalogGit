@@ -4,6 +4,67 @@
     var sessionSlmCode = Session["slmcode"]?.ToString() ?? "";
     var sessionCusCode = Session["cusCode"]?.ToString() ?? "";
 }
+<style>
+    .sinput-wrap {
+        position: relative;
+    }
+
+    .ecac-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        max-height: 320px;
+        overflow-y: auto;
+        margin-top: 2px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 6px 16px rgba(0,0,0,.15);
+    }
+
+        .ecac-dropdown.open {
+            display: block;
+        }
+
+    .ecac-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f1f1;
+    }
+
+        .ecac-item:hover, .ecac-item.active {
+            background: #f3f0ff;
+        }
+
+    .ecac-code {
+        font-weight: 700;
+        font-size: 12px;
+    }
+
+    .ecac-des {
+        font-size: 11px;
+        color: #555;
+    }
+
+    .ecac-oem {
+        font-size: 10px;
+        color: #888;
+    }
+
+    .ecac-empty {
+        padding: 8px 10px;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .ecac-dropdown mark {
+        background: #ffe58f;
+        padding: 0;
+    }
+</style>
 
 <div id="appConfig"
      data-usertype="@SessionUserType"
@@ -134,12 +195,18 @@
                         <i class="bi bi-arrows-collapse"></i> Competitor
                     </label>
                 </div>
+                @*<div class="sinput-wrap mt-1" id="sidebarSearchWrap">
+            <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebarText(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+            <i class="bi bi-search"></i>
+            <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
+        </div>*@
                 <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-                    <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebar(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+                    <input type="text" id="txtSearchField" placeholder="Type part name or code…"
+                           oninput="syncSearchText('sidebar')"
+                           autocomplete="off" aria-autocomplete="list" aria-expanded="false">
                     <i class="bi bi-search"></i>
-                    <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
+                    <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
                 </div>
-
                 <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
                     const hasMaker = $('#makerId').val();
                     const hasMarketAndSegment = $('#marketsegId').val() && $('#segmentId').val();
@@ -569,6 +636,10 @@ async function loadModelRange(_isInit = false) {
         };
         return request;
     }
+    //get autofill
+    async function getAutofill() {
+
+    }
     //get search by field data by value
     async function loadSearchProductField() {
         const btn = $("#btnSearchProductField");
@@ -951,4 +1022,181 @@ async function loadModelRange(_isInit = false) {
         getCustomerbySalesman: '@Url.Action("GetCustomerbySalesman", "Master")',
         getInfomantionCustomer: '@Url.Action("GetInfomantionCustomer", "Master")',
     };*@
+
+
+
+
+// ─────────── Autocomplete (Sidebar) ───────────
+(function () {
+    const CFG = { minChars: 2, delay: 300, url: '@Url.Action("GetAutocompleteEcat", "Master")' };
+    const S = { timer: null, ctrl: null, items: [], index: -1 };
+
+    const $input = () => document.getElementById('txtSearchField');
+    const $dd = () => document.getElementById('ecAcDropdown');
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function hl(text, kw) {
+        const safe = esc(text);
+        if (!kw) return safe;
+        const re = new RegExp('(' + esc(kw).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+        return safe.replace(re, '<mark>$1</mark>');
+    }
+
+    function close() {
+        const dd = $dd();
+        dd.classList.remove('open');
+        dd.innerHTML = '';
+        $input().setAttribute('aria-expanded', 'false');
+        S.items = []; S.index = -1;
+    }
+
+    function render(list, kw) {
+        const dd = $dd();
+        S.items = list; S.index = -1;
+        if (!list.length) {
+            dd.innerHTML = '<div class="ecac-empty">ไม่พบรายการ</div>';
+            dd.classList.add('open');
+            return;
+        }
+        // dd.innerHTML = list.slice(0, 20).map((it, i) => `
+        //     <div class="ecac-item" role="option" data-i="${i}">
+        //         <div class="ecac-code">${hl(it.stkcode, kw)}</div>
+        //         <div class="ecac-des">${hl(it.stkdes, kw)}</div>
+        //         ${it.oem ? `<div class="ecac-oem">OE: ${hl(it.oem, kw)}</div>` : ''}
+        //     </div>`).join('');
+        // dd.classList.add('open');
+        // $input().setAttribute('aria-expanded', 'true');
+        dd.innerHTML = list.slice(0, 20).map((it, i) => `
+    <div class="ecac-item" role="option" data-i="${i}">
+        <div class="ecac-des">${hl(it.stkdes, kw)}</div>
+    </div>`).join('');
+        dd.classList.add('open');
+        $input().setAttribute('aria-expanded', 'true');
+    }
+
+    async function fetchList(kw) {
+        if (S.ctrl) S.ctrl.abort();
+        S.ctrl = new AbortController();
+
+        const dd = $dd();
+        dd.innerHTML = '<div class="ecac-empty">กำลังค้นหา…</div>';
+        dd.classList.add('open');
+
+        const payload = {
+            insearch: kw,
+            cuscode: (document.getElementById('customerId')?.value) || window.APP_SESSION?.cuscode || '',
+            Company: typeof getActiveCompanies === 'function' ? getActiveCompanies() : [],
+            searchFields: Array.from(document.querySelectorAll('.smode-btn.active')).map(b => b.dataset.mode)
+        };
+        console.log('[ecAc] call API', CFG.url, payload);
+
+        try {
+            const res = await fetch(CFG.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: S.ctrl.signal
+            });
+            const result = await res.json();
+            console.log('[ecAc] result', result);
+
+            if ($input().value.trim() !== kw) return;   // user พิมพ์ต่อแล้ว ทิ้งผลเก่า
+            if (!result.IsSuccess) { close(); return; }
+            render(result.Data || [], kw);
+        } catch (ex) {
+            if (ex.name === 'AbortError') return;
+            console.error('[ecAc] error', ex);
+            close();
+        }
+    }
+
+    function onInput() {
+        clearTimeout(S.timer);
+        const kw = $input().value.trim();
+        console.log('[ecAc] input', kw);
+        if (kw.length < CFG.minChars) {
+            if (S.ctrl) S.ctrl.abort();
+            close();
+            return;
+        }
+        S.timer = setTimeout(() => fetchList(kw), CFG.delay);
+    }
+
+    function select(i) {
+        const it = S.items[i];
+        if (!it) return;
+
+        clearTimeout(S.timer);
+        if (S.ctrl) S.ctrl.abort();
+        const modes = Array.from(document.querySelectorAll('.smode-btn.active'))
+            .map(b => b.dataset.mode);
+        const oeOnly = modes.length === 1 && modes[0] === 'oe';
+
+        const stk = (it.stkcode || '').trim();
+        const oem = (it.oem || '').trim();
+        $input().value = oeOnly ? oem : stk;
+
+        close();
+
+        try {
+            if (typeof syncSearchText === 'function') syncSearchText('sidebar');
+            else if (typeof syncSearch === 'function') syncSearch('sidebar');
+        } catch (e) { console.warn('[ecAc] sync error', e); }
+
+        $input().focus();
+    }
+
+    function onKeyDown(e) {
+        const dd = $dd();
+        const isOpen = dd.classList.contains('open');
+        const nodes = dd.querySelectorAll('.ecac-item');
+
+        if (e.key === 'Enter') {
+            if (isOpen && S.index >= 0) { e.preventDefault(); select(S.index); }
+            else close();
+            return;
+        }
+        if (!isOpen || !nodes.length) return;
+
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            S.index = e.key === 'ArrowDown'
+                ? (S.index + 1) % nodes.length
+                : (S.index - 1 + nodes.length) % nodes.length;
+            nodes.forEach((n, i) => n.classList.toggle('active', i === S.index));
+            nodes[S.index].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Escape') {
+            close();
+        }
+    }
+
+    function init() {
+        const input = $input(), dd = $dd();
+        if (!input || !dd) { console.warn('[ecAc] element not found'); return; }
+
+        input.addEventListener('input', onInput);
+        input.addEventListener('keydown', onKeyDown);
+
+        dd.addEventListener('mousedown', function (e) {
+            const item = e.target.closest('.ecac-item');
+            if (item) { e.preventDefault(); select(parseInt(item.dataset.i, 10)); }
+        });
+        dd.addEventListener('mouseover', function (e) {
+            const item = e.target.closest('.ecac-item');
+            if (!item) return;
+            S.index = parseInt(item.dataset.i, 10);
+            dd.querySelectorAll('.ecac-item').forEach((n, i) => n.classList.toggle('active', i === S.index));
+        });
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#sidebarSearchWrap')) close();
+        });
+        console.log('[ecAc] ready');
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
 </script>

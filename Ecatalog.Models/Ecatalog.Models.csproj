@@ -49,6 +49,7 @@
     <Compile Include="ApiRequestModel.cs" />
     <Compile Include="ApiResponseModel.cs" />
     <Compile Include="AuthenApiResponseModel.cs" />
+    <Compile Include="AutocompleteModel.cs" />
     <Compile Include="DeleteProductToCart.cs" />
     <Compile Include="EditProductToCartModel.cs" />
     <Compile Include="GetCustomerbySalesmanModel.cs" />

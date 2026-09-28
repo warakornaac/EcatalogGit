@@ -1,11 +1,13 @@
 ﻿using Ecatalog.Library;
 using Ecatalog.Models;
+using Ecatalog.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.EnterpriseServices;
 using System.Linq;
 using System.Net.Http;
@@ -521,6 +523,83 @@ namespace Ecatalog.Controllers
                     Data = new List<object>()
                 },
                             JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> GetAutocompleteEcat(AutocompleteRequestModel request)
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[AUTOCOMPLETE] insearch={request.insearch} | CusCode={request.cuscode}");
+
+                var result =
+                    await Utils.CallApiAsyncMemory<
+                        AutocompleteResponeModel>(
+                        "Ecatalog/GetAutocompleteEcat",
+                        "POST",
+                        request,
+                        false,
+                        30);
+
+                stopwatch.Stop();
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"[AUTOCOMPLETE] IsSuccess={result?.IsSuccess} | ErrorMessage={result?.ErrorMessage}");
+
+                if (result == null)
+                {
+                    return Json(new
+                    {
+                        IsSuccess = false,
+                        Message = "API Response is null"
+                    });
+                }
+
+                var resultCount = result.Data?.result?.Count() ?? 0;
+
+                var searchStatus =
+                    !result.IsSuccess
+                        ? "ERROR"
+                        : resultCount == 0
+                            ? "NO_RESULT"
+                            : "SUCCESS";
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"[AUTOCOMPLETE] Status={searchStatus} | Count={resultCount} | Time={result.ExecutionTime} ms");
+
+                return new JsonResult
+                {
+                    Data = new
+                    {
+                        IsSuccess = result.IsSuccess,
+                        IsFromCache = result.IsFromCache,
+                        ExecutionTime = result.ExecutionTime,
+                        StatusCode = result.Data?.statusCode,
+                        ErrorMessage = result.Data?.errorMessage,
+                        Data = result.Data?.result
+                    },
+                    MaxJsonLength = int.MaxValue
+                };
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"[AUTOCOMPLETE] Exception={ex}");
+
+                return Json(new
+                {
+                    IsSuccess = false,
+                    IsFromCache = false,
+                    ExecutionTime = 0,
+                    Message = ex.Message,
+                    Data = new List<ResultAutocomplete>()
+                });
             }
         }
     }
