@@ -1696,7 +1696,7 @@ body {
     transition: box-shadow var(--tr),background var(--tr);
     padding: 8px 20px;
     background: var(--surface);
-    margin-bottom: 13px;
+    margin-bottom: 15px;
 }
 
     .hz.g1 {

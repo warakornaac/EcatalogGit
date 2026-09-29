@@ -1544,6 +1544,7 @@ function renderProducts(list) {
                                border-radius:10px;padding:1px 7px;color:var(--text-3)">${f}</span>`).join('')}
                        </div>` : ''}
                 <div class="pprice">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })} <span>/ unit</span></div>
+                
             </div>
             <div class="pfooter">
                 <input type="number" class="qty" value="1" min="1" max="99"
@@ -1555,6 +1556,10 @@ function renderProducts(list) {
                 </button>
             </div>
         </div>`;
+
+    // <div style="font-size:11px;color:#198754;margin-top:2px;display:flex;align-items:center;gap:4px">
+    //     <i class="bi bi-tag-fill"></i> 12 ชิ้นขึ้นไป ฿${(p.price * 0.9).toLocaleString('th-TH', { minimumFractionDigits: 2 })} / unit
+    // </div>
     // ✅ เพิ่ม 2 บรรทัดนี้
     const forceByLine = currentSort === 'part';
     const groups = groupByLine(sorted, forceByLine);
