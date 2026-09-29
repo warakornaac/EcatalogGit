@@ -227,6 +227,12 @@ function _setBaseProducts(groups, searchType, keepSort = false, skipRender = fal
         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
 
+        // ✅ reset กลุ่มสินค้าที่ค้างจาก category search
+        activeGroup = '0';
+        window.selectedGroupId = '0';
+        document.querySelectorAll('.bb-item').forEach(b => b.classList.remove('active'));
+        document.querySelector('.bb-item[data-id="0"]')?.classList.add('active');
+
         const sel = gEl('sortSelect');
         if (!keepSort && sel) {
             currentSort = sel.value || 'carModel';
@@ -247,15 +253,16 @@ function _setBaseProducts(groups, searchType, keepSort = false, skipRender = fal
 
 function _applyFiltersAndRender() {
     // console.log('_lastSearchType:', _lastSearchType); ✅ เพิ่มบรรทัดนี้
-    const q = (gEl('partQ')?.value || '').toLowerCase().trim();
+    const q = _lastSearchType === 'part' ? '' : (gEl('partQ')?.value || '').toLowerCase().trim();
     const plKeys = Object.keys(chkState.pl);
     const brKeys = Object.keys(chkState.br);
     const fitK = [...fitState];
 
     const activeGroupStr = String(activeGroup);
     const activeGroupObj = GROUPS.find(g => String(g.id) === activeGroupStr);
-    const filterByCat = activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
-    const filterUniversal = activeGroupStr === '99';
+    const skipGroup = _lastSearchType === 'part';
+    const filterByCat = !skipGroup && activeGroupStr !== '0' && activeGroupStr !== '99' && !!activeGroupObj;
+    const filterUniversal = !skipGroup && activeGroupStr === '99';
 
     const baseFiltered = BASE_PRODUCTS.filter(p => {
         if (filterUniversal && p.carModel !== 'Universal') return false;
@@ -282,7 +289,7 @@ function _applyFiltersAndRender() {
             : [...baseFiltered];
 
     // ✅ ถ้ามาจาก category search (API กรองมาให้แล้ว) ไม่ต้องกรอง pl/br ซ้ำ
-    if (_lastSearchType === 'category') {
+    if (_lastSearchType === 'category' || _lastSearchType === 'part') {
         // console.log('baseFiltered.length:', baseFiltered.length); ✅ เพิ่มบรรทัดนี้
         PRODUCTS = [...baseFiltered];
     } else {
@@ -3631,7 +3638,7 @@ function toggleCompany(btn) {
         getCustomerbySalesman(selectedSlm, currentCus); // ✅ ส่ง currentCus แทน ''
     }
 
-    var selectedPlNames = Object.keys(_plSel);
+    var selectedPlNames = Object.keys(window._plSel || {});
     if (selectedPlNames.length && document.getElementById('pgPickerModal')?.classList.contains('pgm-open')) {
         _brSel = {};
         _loadBrandsForSelectedPl(selectedPlNames);
