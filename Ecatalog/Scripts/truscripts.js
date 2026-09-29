@@ -3586,19 +3586,39 @@ function getInfomantionCustomer(cuscode) {
 }
 
 // ================RENDER: Customer Card (ขนาดไม่ยุบ)=================
+
 function renderCustomerCard(cus) {
     const info = document.querySelector('#customerCard .customer-info');
+    const ratingMap = {
+        'I': { label: 'I – ไม่มีการซื้อเกิน 2 ปี', color: 'bg-secondary' },
+        'A': { label: 'A – ชำระตรงดิวส์', color: 'bg-success' },
+        'B': { label: 'B – ชำระไม่เกิน 30 วัน', color: 'bg-primary' },
+        'C': { label: 'C – ชำระเกิน 30 วัน', color: 'bg-warning text-dark' },
+        'N': { label: 'N – ลูกค้าใหม่ไม่เกิน 6 เดือน', color: 'bg-info text-dark' },
+        'Z': { label: 'Z – ตัดเป็นหนี้สูญ', color: 'bg-danger' },
+        'E': { label: 'E – ปรับโครงสร้างหนี้ / ดำเนินคดี', color: 'bg-danger' },
+        'O': { label: 'O – ระงับการขาย (ปัญหาการเงิน)', color: 'bg-danger' },
+        'D': { label: 'D – ระงับการขาย (เช็คคืน)', color: 'bg-danger' },
+    };
+
+    const rating = ratingMap[cus.rating] ?? { label: cus.rating ?? '-', color: 'bg-secondary' };
     if (!info) return;
     info.innerHTML = `
-        <div class="mb-2"><strong>${cus.cusname ?? '-'}</strong></div>
+        <div class="mb-2"><strong>${cus.cusname ?? '-'} : ${cus.cuscode ?? '-'}</strong></div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0px 10px; font-size:10px;">
             <div><span class="text-muted">Salesman: </span><strong>${cus.slmcode ?? '-'}</strong></div>
-            <div><span class="text-muted">Customer Code: </span><strong>${cus.cuscode ?? '-'}</strong></div>
             <div><span class="text-muted">Tel: </span><strong>${cus.phone ?? '-'}</strong></div>
-            <div><span class="text-muted">Payment term: </span><strong>${cus.rating ?? '-'}</strong></div>
+            <div><span class="text-muted">เครดิต(วัน): </span>
+              <span class="badge bg-primary me-1" style="font-size: .65rem">TAC ${cus.tacpaytrm ?? '-'}</span>
+              <span class="badge bg-primary" style="font-size: .65rem">AAC ${cus.aacpaytrm ?? '-'}</span>
+            </div>
+            <div><span class="text-muted">Payment term: </span>
+              <span class="badge bg-success" style="font-size: .65rem">${cus.rating}</span>
+            </div>
         </div>
     `;
 }
+
 
 function clearCustomerCard() {
     const info = document.querySelector('#customerCard .customer-info');
