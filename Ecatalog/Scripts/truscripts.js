@@ -3383,12 +3383,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!window.APP_SESSION) window.APP_SESSION = {};
     if (sessionSlm) window.APP_SESSION.slmcode = sessionSlm;
     if (sessionCus) window.APP_SESSION.cuscode = sessionCus;
-    if (userType === '1' || userType === '5') {
+    if (userType === '0') {
+        $('#salesmanId, #customerId').prop('disabled', true);
+    } else if (userType === '1' || userType === '5') {
         getSalesmanAll(sessionSlm, sessionCus);
     } else if (userType === '2' && sessionSlm) {
         getSalesmanAll(sessionSlm, sessionCus, true);
     } else if (userType === '3') {
-        $('#salesmanId').closest('.sb-sc-field').hide(); // ซ่อน salesman
+        $('#salesmanId').closest('.sb-sc-field').hide();
         getCustomerByCuscode(sessionCus);
     } else if (sessionCus) {
         getInfomantionCustomer(sessionCus);

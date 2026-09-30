@@ -60,22 +60,13 @@ namespace Ecatalog.Controllers
                 if (result.Data.result != null && result.Data.result.Count > 0)
                 {
                     var user = result.Data.result.FirstOrDefault();
+
                     Session["username"] = Username;
                     Session["email"] = user.email;
                     Session["slmcode"] = user.slmcode;
                     Session["cuscode"] = user.cuscode;
                     Session["isActive"] = user.isActive;
-
-                    // ✅ เพิ่มตรงนี้
-                    if (user.authSource == "AD" && user.userType == 0)
-                    {
-                        // AD user ที่ไม่มีใน UserAuthen → ดูจาก slmcode
-                        Session["UserType"] = !string.IsNullOrEmpty(user.slmcode) ? "2" : "1";
-                    }
-                    else
-                    {
-                        Session["UserType"] = user.userType.ToString();
-                    }
+                    Session["UserType"] = user.userType.ToString(); // userType == 0 ถ้าไม่มีใน UserAuthen
 
                     IsSuccess = true;
                 }
