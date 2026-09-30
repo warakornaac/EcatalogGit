@@ -60,6 +60,7 @@ namespace Ecatalog.Controllers
                 if (result.Data.result != null && result.Data.result.Count > 0)
                 {
                     var user = result.Data.result.FirstOrDefault();
+                    System.Diagnostics.Debug.WriteLine($"slmcode=[{user.slmcode}] cuscode=[{user.cuscode}] userType=[{user.userType}]");
 
                     Session["username"] = Username;
                     Session["email"] = user.email;

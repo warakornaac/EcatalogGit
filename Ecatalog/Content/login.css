@@ -470,3 +470,13 @@ body {
         font-size: 1.2rem;
     }
 }
+
+.right-panel {
+    position: relative;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

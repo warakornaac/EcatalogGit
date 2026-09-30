@@ -3406,6 +3406,7 @@ function getSalesmanAll(sessionSlm, sessionCus, lockMode = false) {
     $.ajax({
         url: urls.getSalesmanAll,
         method: 'GET',
+        data: lockMode ? { slmcode: sessionSlm } : {}, 
         success: function (data) {
             if (!data.IsSuccess) return;
             const select = $('#salesmanId');
@@ -3441,6 +3442,7 @@ function getSalesmanAll(sessionSlm, sessionCus, lockMode = false) {
                 allowClear: true,
                 width: '250px'
             });
+
         },
         error: function (xhr, status, error) {
             console.error('getSalesmanAll error:', error);
