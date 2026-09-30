@@ -223,6 +223,7 @@ function _setBaseProducts(groups, searchType, keepSort = false, skipRender = fal
 
     if (searchType === 'vehicle' || searchType === 'part') {
         chkState = { pl: {}, br: {} };
+        if (typeof pgmResetSaved === 'function') pgmResetSaved();   // ✅ เพิ่ม
         fitState = new Set();
         document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
         document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
@@ -636,6 +637,7 @@ function clearAllFilters() {
     if (vehSummary) vehSummary.innerHTML = '';
 
     chkState = { pl: {}, br: {} };
+    if (typeof pgmResetSaved === 'function') pgmResetSaved();   // ✅ เพิ่ม
     document.querySelectorAll('.chk-item.checked').forEach(el => el.classList.remove('checked'));
 
     fitState = new Set();
@@ -1788,7 +1790,7 @@ function removeActiveChip(t, v) {
             if (c.textContent.trim() === v) c.classList.remove('active');
         });
     }
-
+    if (typeof pgmSyncSaved === 'function') pgmSyncSaved();   // ✅ เพิ่ม
     const hasSidebarFilter =
         Object.keys(chkState.pl).length > 0 ||
         Object.keys(chkState.br).length > 0 ||
@@ -3734,6 +3736,7 @@ function _syncSessionFromUI() {
     var _plSel = {};     // {name: true}
     var _brSel = {};     // {name: true}
     var _lastFocus = null;
+    var _savedByGroup = {};
 
     function esc(s) {
         return String(s == null ? '' : s)
@@ -3746,8 +3749,12 @@ function _syncSessionFromUI() {
         _gid = groupId;
         _gname = groupName || String(groupId);
         _lastFocus = focusEl || document.activeElement;
-        _plSel = {};
-        _brSel = {};
+
+        // ✅ restore ค่าที่เคยยืนยันไว้ของกลุ่มนี้ (ถ้าไม่เคย = ว่าง)
+        var saved = _savedByGroup[String(groupId)];
+        _plSel = saved ? Object.assign({}, saved.pl) : {};
+        _brSel = saved ? Object.assign({}, saved.br) : {};
+        var _hasSaved = !!saved && Object.keys(_plSel).length > 0;
 
         var t = document.getElementById('pgmTitle');
         if (t) t.textContent = _gname;
@@ -3791,6 +3798,12 @@ function _syncSessionFromUI() {
                     renderPlList();
                     updateFooter();
 
+                    if (Object.keys(_plSel).length) {
+                        _loadBrandsForSelectedPl(Object.keys(_plSel), true);  // true = keepBrSel
+                    } else {
+                        setBrPlaceholder();
+                    }
+
                     setTimeout(function () {
                         var s = document.getElementById('pgmPlSearch');
                         if (s) s.focus();
@@ -3801,6 +3814,12 @@ function _syncSessionFromUI() {
                     _brAll = [...(MASTER_BRANDS || [])];
                     renderPlList();
                     updateFooter();
+
+                    if (Object.keys(_plSel).length) {
+                        _loadBrandsForSelectedPl(Object.keys(_plSel), true);  // true = keepBrSel
+                    } else {
+                        setBrPlaceholder();
+                    }
                 }
             });
         }
@@ -3904,15 +3923,16 @@ function _syncSessionFromUI() {
 
         // ✅ กรองเฉพาะ brand ที่มีสินค้าใน PL ที่เลือก
         var selectedPlNames = Object.keys(_plSel);
-        var filteredBr = _brAll.filter(function (br) {
-            // หา product ที่อยู่ใน PL ที่เลือก และมี brand นี้
-            return BASE_PRODUCTS.some(function (p) {
-                return selectedPlNames.includes(p.line) && p.brand === br.name;
+        var brsToShow = _brAll;
+        if (_lastSearchType === 'vehicle' || _lastSearchType === 'part') {
+            var selectedPlNames = Object.keys(_plSel);
+            var filteredBr = _brAll.filter(function (br) {
+                return BASE_PRODUCTS.some(function (p) {
+                    return selectedPlNames.includes(p.line) && p.brand === br.name;
+                });
             });
-        });
-
-        // ถ้า BASE_PRODUCTS ยังว่าง (ยังไม่ได้ search) ให้โชว์ทั้งหมด
-        var brsToShow = filteredBr.length > 0 ? filteredBr : _brAll;
+            if (filteredBr.length > 0) brsToShow = filteredBr;
+        }
 
         var isFirstTime = !Object.keys(_brSel).length;
         if (isFirstTime) {
@@ -3968,8 +3988,9 @@ function _syncSessionFromUI() {
         updateFooter();
     };
 
-    // ✅ ฟังก์ชันใหม่ — วางต่อจาก pgmPlChange
-    function _loadBrandsForSelectedPl(selectedPlNames) {
+    var _brReqVer = 0;
+
+    function _loadBrandsForSelectedPl(selectedPlNames, keepBrSel) {
         var dst = document.getElementById('pgmBrList');
         var allCk = document.getElementById('pgmBrAll');
 
@@ -3979,12 +4000,13 @@ function _syncSessionFromUI() {
             return;
         }
 
-        var selectedPlIds = selectedPlNames.map(function (name) {
-            var found = MASTER_PRODUCT_LINES.find(function (pl) {
-                return pl.prodlinename === name;
-            });
-            return found ? String(found.prodlineid) : null;
-        }).filter(Boolean);
+        var selectedPlIds = [];
+        (MASTER_PRODUCT_LINES || []).forEach(function (pl) {
+            if (selectedPlNames.indexOf(pl.prodlinename) >= 0) {
+                var id = String(pl.prodlineid);
+                if (selectedPlIds.indexOf(id) < 0) selectedPlIds.push(id);
+            }
+        });
 
         if (!selectedPlIds.length) {
             if (dst) dst.innerHTML = '<div class="pgm-empty">ไม่พบหมวดหมู่ย่อย</div>';
@@ -3994,31 +4016,44 @@ function _syncSessionFromUI() {
         if (dst) dst.innerHTML = '<div class="pgm-loading">กำลังโหลดยี่ห้อ...</div>';
         if (allCk) allCk.disabled = true;
 
+        var myVer = ++_brReqVer;
+
         $.ajax({
             url: urls.getBrandsByProductLine,
             method: 'GET',
+            cache: false,
             data: { prodLineIds: selectedPlIds.join(',') },
             success: function (res) {
-                if (res.IsSuccess && res.Data && res.Data.length) {
-                    // Filter by active companies
-                    var activeCompanies = Array.from(
-                        document.querySelectorAll('.company-btn[aria-pressed="true"]')
-                    ).map(function (b) { return b.dataset.company; });
+                if (myVer !== _brReqVer) return;
 
-                    _brAll = activeCompanies.length
-                        ? res.Data.filter(function (br) {
-                            return activeCompanies.includes(br.company);
-                        })
-                        : res.Data;
+                var data = (res && res.IsSuccess && Array.isArray(res.Data)) ? res.Data : [];
+                var activeCompanies = Array.from(
+                    document.querySelectorAll('.company-btn[aria-pressed="true"]')
+                ).map(function (b) { return b.dataset.company; });
+
+                var seen = {};
+                _brAll = data.filter(function (br) {
+                    if (seen[br.id]) return false;
+                    seen[br.id] = true;
+                    return true;
+                });
+
+                if (keepBrSel) {
+                    var valid = {};
+                    _brAll.forEach(function (b) {
+                        if (_brSel[b.name]) valid[b.name] = true;
+                    });
+                    _brSel = valid;
                 } else {
-                    _brAll = MASTER_BRANDS.slice();
+                    _brSel = {};
                 }
-                _brSel = {};
+
                 renderBrList();
                 updateFooter();
                 if (allCk) allCk.disabled = false;
             },
             error: function () {
+                if (myVer !== _brReqVer) return;
                 if (dst) dst.innerHTML = '<div class="pgm-empty">โหลดยี่ห้อไม่สำเร็จ</div>';
             }
         });
@@ -4122,6 +4157,13 @@ function _syncSessionFromUI() {
             chkState.br[name] = master ? String(master.id) : null;
         });
 
+        // ✅ ข้อ 5+6: ล้างของกลุ่มเก่า แล้วจำเฉพาะกลุ่มที่เพิ่งยืนยัน
+        _savedByGroup = {};
+        _savedByGroup[String(_gid)] = {
+            pl: Object.assign({}, _plSel),
+            br: Object.assign({}, _brSel)
+        };
+
         window.pgmClose();
 
         activeGroup = String(_gid);
@@ -4144,6 +4186,22 @@ function _syncSessionFromUI() {
             if (nr) nr.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     };
+
+    /* ล้างค่าที่จำไว้ทั้งหมด */
+    window.pgmResetSaved = function () {
+        _savedByGroup = {};
+    };
+
+    /* sync ค่าที่จำไว้ให้ตรงกับ chip ปัจจุบัน (ใช้หลังลบ chip) */
+    window.pgmSyncSaved = function () {
+        var gid = String(activeGroup);
+        if (gid === '0' || !_savedByGroup[gid]) return;
+        _savedByGroup[gid] = {
+            pl: Object.assign({}, chkState.pl),
+            br: Object.assign({}, chkState.br)
+        };
+    };
+
     /* ════ แทนที่ selectGroup() เดิม ════ */
     window.selectGroup = function (id) {
         var now = Date.now();
@@ -4160,6 +4218,7 @@ function _syncSessionFromUI() {
             _resetSidebarFilters();
             chkState.pl = {};
             chkState.br = {};
+            window.pgmResetSaved();          // ✅ เพิ่มบรรทัดนี้
             _applyFiltersAndRender();
             renderActiveFilterChips();
             return;
