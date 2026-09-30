@@ -3864,9 +3864,15 @@ function _syncSessionFromUI() {
         }
 
         var q = (document.getElementById('pgmPlSearch') || { value: '' }).value.trim().toLowerCase();
+
+        // ✅ เรียง A-Z / ก-ฮ ก่อน render
+        var sorted = _plAll.slice().sort((a, b) =>
+            (a.prodlinename || '').localeCompare(b.prodlinename || '', 'th')
+        );
+
         var html = '';
 
-        _plAll.forEach(function (pl) {
+        sorted.forEach(function (pl) {  // ✅ เปลี่ยนตรงนี้
             var name = pl.prodlinename || '';
             var cnt = pl.count || 0;
             if (q && name.toLowerCase().indexOf(q) < 0) return;
@@ -3875,7 +3881,6 @@ function _syncSessionFromUI() {
                 '<input type="checkbox"' + (on ? ' checked' : '') +
                 ' onchange="pgmPlChange(this,\'' + esc(name) + '\')">' +
                 '<span class="pgm-nm">' + esc(name) + '</span>' +
-                // '<span class="pgm-cnt">' + cnt + '</span>' +
                 '</label>';
         });
 

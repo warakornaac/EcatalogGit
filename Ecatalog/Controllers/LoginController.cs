@@ -10,7 +10,7 @@ using System.Web.Mvc;
 using System.Web.Security;
 using Ecatalog.Models;
 using Ecatalog.Library;
-
+using System.DirectoryServices;
 
 namespace Ecatalog.Controllers
 {
@@ -62,11 +62,21 @@ namespace Ecatalog.Controllers
                     var user = result.Data.result.FirstOrDefault();
                     Session["username"] = Username;
                     Session["email"] = user.email;
-                    Session["UserType"] = user.userType;
                     Session["slmcode"] = user.slmcode;
                     Session["cuscode"] = user.cuscode;
-                    Session["userType"] = user.userType;
                     Session["isActive"] = user.isActive;
+
+                    // ✅ เพิ่มตรงนี้
+                    if (user.authSource == "AD" && user.userType == 0)
+                    {
+                        // AD user ที่ไม่มีใน UserAuthen → ดูจาก slmcode
+                        Session["UserType"] = !string.IsNullOrEmpty(user.slmcode) ? "2" : "1";
+                    }
+                    else
+                    {
+                        Session["UserType"] = user.userType.ToString();
+                    }
+
                     IsSuccess = true;
                 }
 
@@ -87,6 +97,28 @@ namespace Ecatalog.Controllers
             Session.Clear();
             Session.Abandon();
             return RedirectToAction("Login", "Login");
+        }
+
+        [HttpGet]
+        public ActionResult TestAD(string u, string p)
+        {
+            string result = "";
+            try
+            {
+                string ldapPath = "LDAP://ADSRV2016-01/dc=Automotive,dc=com";
+                var dirEntry = new System.DirectoryServices.DirectoryEntry(ldapPath, u, p);
+                var searcher = new System.DirectoryServices.DirectorySearcher(dirEntry)
+                {
+                    Filter = "(SAMAccountName=" + u + ")"
+                };
+                var found = searcher.FindOne();
+                result = found != null ? "พบ user ใน AD ✓" : "Bind ได้แต่หา user ไม่เจอ";
+            }
+            catch (Exception ex)
+            {
+                result = "ERROR: " + ex.Message;
+            }
+            return Content(result);
         }
     }
 }
