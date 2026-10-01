@@ -20,90 +20,6 @@ namespace Ecatalog.Controllers
 {
     public class ProductController : Controller
     {
-        // GET: Product
-        //public async Task<ActionResult> GetProductBySearchVio(
-        //    string marketSegmentId, string segmentId, string makerId, string rangeId, string modelRangeId,
-        //    string bodyId, string engineId, string yearFrom, string yearTo,
-        //    string driveType, string imagePath, string slmCode, string cusCode,
-        //    string[] company)   // ✅ เปลี่ยนจาก string เป็น string[]
-        //{
-        //    System.Diagnostics.Debug.WriteLine($"[VIO] slmCode={slmCode} | cusCode={cusCode} | company={string.Join(",", company ?? new string[0])}");
-        //    try
-        //    {
-        //        var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
-        //            "Ecatalog/GetProductBySearchVio",
-        //            "GET",
-        //            new
-        //            {
-        //                marketSegmentId,
-        //                segmentId,
-        //                makerId,
-        //                rangeId,                        
-        //                bodyId,
-        //                engineId,
-        //                yearFrom,
-        //                yearTo,
-        //                driveType,
-        //                imagePath,
-        //                SlmCode = slmCode,   // ✅ ตัวใหญ่ตาม External API
-        //                CusCode = cusCode,   // ✅
-        //                Company = company,    // ✅
-        //                modelRangeId
-        //            },
-        //            false,
-        //            30);
-
-        //        var groupData = result.Data?.result?
-        //         .GroupBy(x => x.productGroup)
-        //         .Select(g => new
-        //         {
-        //             productGroupNameMain = g.Key,
-        //             productList = g.Select(item => new
-        //             {
-        //                 stkcode = item.stkcode,
-        //                 stkcodeDescription = item.stkcodeDescription,
-        //                 brand = item.brand,
-        //                 makerName = item.makerName,
-        //                 modelName = item.modelName,
-        //                 qtyReady = item.qtyReady,
-        //                 price = item.price,
-        //                 productGroup = item.productGroup,
-        //                 productLine = item.productLine,
-        //                 imagePath = item.imagePath,
-        //                 fittingDescription = item.fittingDescription,
-
-        //                 // ← patch ค่าที่ SP ไม่ return
-        //                 company = item.company != null && item.company.Any()
-        //                    ? item.company.First()
-        //                    : (company != null && company.Any() ? company.First() : ""),
-        //                 slmCode = item.slmCode ?? slmCode ?? "",
-        //                 cusCode = item.cusCode ?? cusCode ?? ""
-        //             }).ToList()
-        //         })
-        //         .ToList();
-
-        //        return new LargeJsonResult
-        //        {
-        //            Data = new
-        //            {
-        //                IsSuccess = result.IsSuccess,
-        //                IsFromCache = result.IsFromCache,
-        //                ExecutionTime = result.ExecutionTime,
-        //                Data = groupData
-        //            },
-        //            JsonRequestBehavior = JsonRequestBehavior.AllowGet
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Json(new
-        //        {
-        //            IsSuccess = false,
-        //            Message = ex.Message
-        //        },
-        //        JsonRequestBehavior.AllowGet);
-        //    }
-        //}
 
         public async Task<ActionResult> GetProductBySearchVio(
             string marketSegmentId, string segmentId, string makerId, string rangeId, string modelRangeId,
@@ -112,10 +28,6 @@ namespace Ecatalog.Controllers
             string[] company)
         {
             var stopwatch = Stopwatch.StartNew();
-
-            System.Diagnostics.Debug.WriteLine(
-                $"[VIO] slmCode={slmCode} | cusCode={cusCode} | company={string.Join(",", company ?? new string[0])}");
-
             try
             {
                 var result = await Utils.CallApiAsyncMemory<ProductSearchVioModel>(
@@ -192,35 +104,35 @@ namespace Ecatalog.Controllers
                 // =========================
 
                 var groupData = result.Data?.result?
-                    .GroupBy(x => x.productGroup)
-                    .Select(g => new
+                .GroupBy(x => x.productGroup)
+                .Select(g => new
+                {
+                    productGroupNameMain = g.Key,
+                    productList = g.Select(item => new
                     {
-                        productGroupNameMain = g.Key,
-                        productList = g.Select(item => new
-                        {
-                            stkcode = item.stkcode,
-                            stkcodeDescription = item.stkcodeDescription,
-                            brand = item.brand,
-                            makerName = item.makerName,
-                            modelName = item.modelName,
-                            qtyReady = item.qtyReady,
-                            price = item.price,
-                            productGroup = item.productGroup,
-                            productLine = item.productLine,
-                            imagePath = item.imagePath,
-                            fittingDescription = item.fittingDescription,
+                        stkcode = item.stkcode,
+                        stkcodeDescription = item.stkcodeDescription,
+                        brand = item.brand,
+                        makerName = item.makerName,
+                        modelName = item.modelName,
+                        qtyReady = item.qtyReady,
+                        price = item.price,
+                        productGroup = item.productGroup,
+                        productLine = item.productLine,
+                        imagePath = item.imagePath,
+                        fittingDescription = item.fittingDescription,
 
-                            company = item.company != null && item.company.Any()
-                                ? item.company.First()
-                                : (company != null && company.Any()
-                                    ? company.First()
-                                    : ""),
+                        // API ส่ง company มาเป็น string เดียวตรงๆ ใช้เลย
+                        // ถ้าว่างค่อย fallback ไปที่ request param ตัวแรก
+                        company = !string.IsNullOrEmpty(item.company)
+                            ? item.company
+                            : (company != null && company.Any() ? company.First() : ""),
 
-                            slmCode = item.slmCode ?? slmCode ?? "",
-                            cusCode = item.cusCode ?? cusCode ?? ""
-                        }).ToList()
-                    })
-                    .ToList();
+                        slmCode = item.slmCode ?? slmCode ?? "",
+                        cusCode = item.cusCode ?? cusCode ?? ""
+                    }).ToList()
+                })
+                .ToList();
 
                 return new LargeJsonResult
                 {
@@ -279,78 +191,6 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        //[HttpPost]
-        //public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request)
-        //{
-        //    try
-        //    {
-        //        System.Diagnostics.Debug.WriteLine($"[CAT] SlmCode={request.SlmCode} | CusCode={request.CusCode} | Company={string.Join(",", request.Company ?? new List<string>())} | GroupId={string.Join(",", request.productGroupId ?? new List<string>())}");
-        //        var result = await Utils.CallApiAsyncMemory<ProductSearchCatagoryResponseModel> ( // ✅ เปลี่ยน
-        //            "Ecatalog/GetProductBySearchCatagory",
-        //            "POST",
-        //            request,
-        //            false,
-        //            300);
-        //        System.Diagnostics.Debug.WriteLine($"[CAT] IsSuccess={result.IsSuccess} | ErrorMessage={result.ErrorMessage}");
-        //        if (result == null)
-        //        {
-        //            return Json(new
-        //            {
-        //                IsSuccess = false,
-        //                Message = "API Response is null"
-        //            });
-        //        }
-
-        //        var groupData = result.Data?.result?
-        //        .GroupBy(x => x.productGroup)
-        //        .Select(g => new {
-        //            productGroupNameMain = g.Key,
-        //            productList = g.Select(item => new {
-        //                productGroupId = item.productGroupId,
-        //                productGroup = item.productGroup,
-        //                productLineId = item.productLineId,
-        //                productLine = item.productLine,
-        //                brandId = item.brandId,
-        //                brand = item.brand,
-        //                stkcode = item.stkcode,
-        //                stkcodeDescription = item.stkcodeDescription,
-        //                price = item.price,
-        //                qtyReady = item.qtyReady,
-        //                makerName = item.makerName,
-        //                modelName = item.modelName,
-        //                imagePath = item.imagePath,
-        //                imageUrl = item.imageUrl,
-        //                slmCode = item.slmCode ?? request.SlmCode ?? "",
-        //                cusCode = item.cusCode ?? request.CusCode ?? "",
-        //                company = item.company != null && item.company.Any()
-        //                                        ? item.company.First()
-        //                                        : (request.Company != null && request.Company.Any()
-        //                                            ? request.Company.First() : ""),
-        //                fittingDescription = item.fittingDescription
-        //            }).ToList()
-        //        })
-        //        .ToList();
-
-        //        return CustomJson(new
-        //        {
-        //            IsSuccess = result.IsSuccess,
-        //            IsFromCache = result.IsFromCache,
-        //            ExecutionTime = result.ExecutionTime,
-        //            Data = groupData
-        //        });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return CustomJson(new
-        //        {
-        //            IsSuccess = false,
-        //            IsFromCache = false,
-        //            ExecutionTime = 0,
-        //            Message = ex.Message,
-        //            Data = new List<object>()
-        //        });
-        //    }
-        //}
 
         [HttpPost]
         public async Task<ActionResult> GetProductBySearchCatagory(ProductSearchCatagoryRequestModel request)
@@ -500,45 +340,39 @@ namespace Ecatalog.Controllers
                     ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds
                 });
 
-                var groupData = products
-                 .GroupBy(x => x.productGroup)
-                 .Select(g => new {
-                 productGroupNameMain = g.Key,
-                 productList = g.Select(item =>
-                 {
-                    // ★ 3) lookup ด้วย stkcode + company ของสินค้าตัวนี้
-                    List<ProductMoqPriceItemModel> moqList = null;
-                     if (!string.IsNullOrWhiteSpace(item.company))
-                         moqLookup.TryGetValue(KeyMoqPriceResult.MoqKey(item.stkcode, item.company), out moqList);
+                var groupData = result.Data?.result?
+                .GroupBy(x => x.productGroup)
+                .Select(g => new
+                {
+                    productGroupNameMain = g.Key,
+                    productList = g.Select(item => new
+                    {
+                        productGroupId = item.productGroupId,
+                        productGroup = item.productGroup,
+                        productLineId = item.productLineId,
+                        productLine = item.productLine,
+                        brandId = item.brandId,
+                        brand = item.brand,
+                        stkcode = item.stkcode,
+                        stkcodeDescription = item.stkcodeDescription,
+                        price = item.price,
+                        qtyReady = item.qtyReady,
+                        makerName = item.makerName,
+                        modelName = item.modelName,
+                        imagePath = item.imagePath,
+                        imageUrl = item.imageUrl,
+                        slmCode = item.slmCode ?? request.SlmCode ?? "",
+                        cusCode = item.cusCode ?? request.CusCode ?? "",
 
-                     return new {
-                         productGroupId = item.productGroupId,
-                         productGroup = item.productGroup,
-                         productLineId = item.productLineId,
-                         productLine = item.productLine,
-                         brandId = item.brandId,
-                         brand = item.brand,
-                         stkcode = item.stkcode,
-                         stkcodeDescription = item.stkcodeDescription,
-                         price = item.price,
-                         qtyReady = item.qtyReady,
-                         makerName = item.makerName,
-                         modelName = item.modelName,
-                         imagePath = item.imagePath,
-                         imageUrl = item.imageUrl,
-                         slmCode = item.slmCode ?? request.SlmCode ?? "",
-                         cusCode = item.cusCode ?? request.CusCode ?? "",
-                         company = item.company ?? "",
-                         fittingDescription = item.fittingDescription,
-                         // call fn GetUomPriceLookupAsync
-                         uomPrices = (moqList ?? new List<ProductMoqPriceItemModel>())
-                             .OrderBy(u => u.price)
-                             .Select(u => new { moq = u.moq, price = u.price, company = u.company })
-                             .ToList()
-                     };
-                 }).ToList()
-             })
-             .ToList();
+                        // API ส่ง company เป็น string เดียว
+                        company = !string.IsNullOrEmpty(item.company)
+                            ? item.company
+                            : (request.Company != null && request.Company.Any() ? request.Company.First() : ""),
+
+                        fittingDescription = item.fittingDescription
+                    }).ToList()
+                })
+                .ToList();
 
                 return CustomJson(new
                 {
@@ -610,65 +444,6 @@ namespace Ecatalog.Controllers
                 });
             }
         }
-
-        //[HttpPost]
-        //public async Task<ActionResult> GetProductBySearchField(ProductSearchFieldRequestModel request)
-        //{
-        //    try
-        //    {
-        //        System.Diagnostics.Debug.WriteLine($"[FIELD] searchText={request.searchText} | SlmCode={request.SlmCode} | CusCode={request.CusCode}");
-        //        var result =
-        //            await Utils.CallApiAsyncMemory<
-        //                ProductSearchVioModel>(
-        //                "Ecatalog/GetProductBySearchField",
-        //                "POST",
-        //                request,
-        //                false,
-        //                30);
-        //        System.Diagnostics.Debug.WriteLine($"[FIELD] IsSuccess={result.IsSuccess} | ErrorMessage={result.ErrorMessage}");
-        //        if (result == null)
-        //        {
-        //            return Json(new
-        //            {
-        //                IsSuccess = false,
-        //                Message = "API Response is null"
-        //            });
-        //        }
-
-        //        var groupData =
-        //          result.Data?.result?
-        //          .GroupBy(x => x.productGroup)
-        //          .Select(g => new
-        //          {
-        //              productGroupNameMain = g.Key,
-        //              productList = g.ToList()
-        //          })
-        //          .ToList();
-
-        //        return new JsonResult
-        //        {
-        //            Data = new
-        //            {
-        //                IsSuccess = result.IsSuccess,
-        //                IsFromCache = result.IsFromCache,
-        //                ExecutionTime = result.ExecutionTime,
-        //                Data = groupData
-        //            },
-        //            MaxJsonLength = int.MaxValue
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Json(new
-        //        {
-        //            IsSuccess = false,
-        //            IsFromCache = false,
-        //            ExecutionTime = 0,
-        //            Message = ex.Message,
-        //            Data = new List<object>()
-        //        });
-        //    }
-        //}
 
         [HttpPost]
         public async Task<ActionResult> GetProductBySearchField(ProductSearchFieldRequestModel request)
@@ -765,15 +540,35 @@ namespace Ecatalog.Controllers
                     ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds
                 });
 
-                var groupData =
-                    result.Data?.result?
-                    .GroupBy(x => x.productGroup)
-                    .Select(g => new
+                var groupData = result.Data?.result?
+                .GroupBy(x => x.productGroup)
+                .Select(g => new
+                {
+                    productGroupNameMain = g.Key,
+                    productList = g.Select(item => new
                     {
-                        productGroupNameMain = g.Key,
-                        productList = g.ToList()
-                    })
-                    .ToList();
+                        stkcode = item.stkcode,
+                        stkcodeDescription = item.stkcodeDescription,
+                        brand = item.brand,
+                        makerName = item.makerName,
+                        modelName = item.modelName,
+                        qtyReady = item.qtyReady,
+                        price = item.price,
+                        productGroup = item.productGroup,
+                        productLine = item.productLine,
+                        imagePath = item.imagePath,
+                        fittingDescription = item.fittingDescription,
+
+                        // API ส่ง company เป็น string เดียว
+                        company = !string.IsNullOrEmpty(item.company)
+                            ? item.company
+                            : (request.Company != null && request.Company.Any() ? request.Company.First() : ""),
+
+                        slmCode = item.slmCode ?? request.SlmCode ?? "",
+                        cusCode = item.cusCode ?? request.CusCode ?? ""
+                    }).ToList()
+                })
+                .ToList();
 
                 return new JsonResult
                 {
@@ -835,74 +630,6 @@ namespace Ecatalog.Controllers
             }
         }
 
-        //public async Task<ActionResult> GetProductBySearchGlobal(string Keyword, bool Debug = false)
-        //{
-        //    try
-        //    {
-        //        var result = await Utils.CallApiAsyncMemory<Newtonsoft.Json.Linq.JObject>(
-        //            "Ecatalog/GetProductBySearchGlobal",
-        //            "GET",
-        //            new { Keyword, Debug },
-        //            false,
-        //            30);
-
-        //        if (result == null || !result.IsSuccess || result.Data == null)
-        //        {
-        //            return Json(new
-        //            {
-        //                IsSuccess = false,
-        //                Message = result?.ErrorMessage ?? "API Response is null"
-        //            }, JsonRequestBehavior.AllowGet);
-        //        }
-
-        //        var items = result.Data["result"]?
-        //            .ToObject<List<ResultProductSearchVioModelList>>();
-
-        //        if (items == null || !items.Any())
-        //        {
-        //            return Json(new
-        //            {
-        //                IsSuccess = false,
-        //                Message = result.Data["errorMessage"]?.ToString() ?? "ไม่พบข้อมูล"
-        //            }, JsonRequestBehavior.AllowGet);
-        //        }
-
-        //        var groupData = items
-        //            .GroupBy(x => x.productGroup)
-        //            .Select(g => new {
-        //                productGroupNameMain = g.Key,
-        //                productList = g.ToList()
-        //            })
-        //            .ToList();
-
-        //        return new JsonResult
-        //        {
-        //            Data = new
-        //            {
-        //                IsSuccess = true,
-        //                IsFromCache = result.IsFromCache,
-        //                ExecutionTime = result.ExecutionTime,
-        //                Data = groupData
-        //            },
-        //            JsonRequestBehavior = JsonRequestBehavior.AllowGet,
-        //            MaxJsonLength = int.MaxValue
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return new JsonResult
-        //        {
-        //            Data = new
-        //            {
-        //                IsSuccess = false,
-        //                Message = ex.Message,
-        //                Detail = ex.ToString()
-        //            },
-        //            JsonRequestBehavior = JsonRequestBehavior.AllowGet,
-        //            MaxJsonLength = int.MaxValue
-        //        };
-        //    }
-        //}
         public async Task<ActionResult> GetProductBySearchGlobal(
             string Keyword,
             string SlmCode,

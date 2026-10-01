@@ -27,6 +27,6 @@ namespace Ecatalog.Models
         public string fittingDescription { get; set; }
         public string slmCode { get; set; }
         public string cusCode { get; set; }
-        public List<string> company { get; set; }  // ← เปลี่ยนจาก List<string> เป็น string
+        public string company { get; set; }  // ← เปลี่ยนจาก List<string> เป็น string
     }
 }

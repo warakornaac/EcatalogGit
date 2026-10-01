@@ -10,7 +10,7 @@ using System.Web.Mvc;
 using System.Web.Security;
 using Ecatalog.Models;
 using Ecatalog.Library;
-
+using System.DirectoryServices;
 
 namespace Ecatalog.Controllers
 {
@@ -60,13 +60,15 @@ namespace Ecatalog.Controllers
                 if (result.Data.result != null && result.Data.result.Count > 0)
                 {
                     var user = result.Data.result.FirstOrDefault();
+                    System.Diagnostics.Debug.WriteLine($"slmcode=[{user.slmcode}] cuscode=[{user.cuscode}] userType=[{user.userType}]");
+
                     Session["username"] = Username;
                     Session["email"] = user.email;
-                    Session["UserType"] = user.userType;
                     Session["slmcode"] = user.slmcode;
                     Session["cuscode"] = user.cuscode;
-                    Session["userType"] = user.userType;
                     Session["isActive"] = user.isActive;
+                    Session["UserType"] = user.userType.ToString(); // userType == 0 ถ้าไม่มีใน UserAuthen
+
                     IsSuccess = true;
                 }
 
@@ -87,6 +89,28 @@ namespace Ecatalog.Controllers
             Session.Clear();
             Session.Abandon();
             return RedirectToAction("Login", "Login");
+        }
+
+        [HttpGet]
+        public ActionResult TestAD(string u, string p)
+        {
+            string result = "";
+            try
+            {
+                string ldapPath = "LDAP://ADSRV2016-01/dc=Automotive,dc=com";
+                var dirEntry = new System.DirectoryServices.DirectoryEntry(ldapPath, u, p);
+                var searcher = new System.DirectoryServices.DirectorySearcher(dirEntry)
+                {
+                    Filter = "(SAMAccountName=" + u + ")"
+                };
+                var found = searcher.FindOne();
+                result = found != null ? "พบ user ใน AD ✓" : "Bind ได้แต่หา user ไม่เจอ";
+            }
+            catch (Exception ex)
+            {
+                result = "ERROR: " + ex.Message;
+            }
+            return Content(result);
         }
     }
 }

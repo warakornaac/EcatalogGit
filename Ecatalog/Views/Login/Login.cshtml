@@ -29,6 +29,10 @@
             </div>
         </div>
         <div class="right-panel">
+            <div id="loginOverlay" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.8);z-index:10;align-items:center;justify-content:center;flex-direction:column;gap:12px;border-radius:inherit">
+                <div style="width:40px;height:40px;border:4px solid #eee;border-top-color:#e63946;border-radius:50%;animation:spin .7s linear infinite"></div>
+                <div style="font-size:14px;color:#555;font-weight:500">กำลังเข้าสู่ระบบ...</div>
+            </div>
             <div class="login-card">
                 <div class="card-top">
                     <img src="~/Images/partspro.png" style="width: 250px; height: 60px; margin-bottom: 10px;">
@@ -131,6 +135,7 @@
         // Lock ปุ่มทันที
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .7s linear infinite"></i> กำลังเข้าสู่ระบบ...';
+        document.getElementById('loginOverlay').style.display = 'flex';
 
         let lat = "";
         let lng = "";
@@ -170,10 +175,11 @@
             if (res.IsSuccess) {
                 btn.innerHTML = '<i class="bi bi-check-lg"></i> เข้าสู่ระบบสำเร็จ';
                 window.location.href = '@Url.Action("Index","Home")';
+                document.getElementById('loginOverlay').style.display = 'none';
             } else {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ';
-
+                document.getElementById('loginOverlay').style.display = 'none';
                 Swal.fire({
                     icon: 'warning',
                     title: 'ไม่สำเร็จ',
