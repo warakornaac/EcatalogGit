@@ -32,7 +32,7 @@ namespace Ecatalog.Controllers
                             moduleId = moduleId
                         },
                         true,
-                        10);
+                        60);
 
                 if (result.IsSuccess &&
                     result.Data != null &&
@@ -71,7 +71,7 @@ namespace Ecatalog.Controllers
                             vehicleSegmentId = vehicleSegmentId
                         },
                         true,
-                        10);
+                        60);
 
                 if (result.IsSuccess &&
                     result.Data != null &&
@@ -112,7 +112,7 @@ namespace Ecatalog.Controllers
                         makerId
                     },
                     true,
-                    10);
+                    60);
 
                 return Json(new {
                     IsSuccess = result.IsSuccess,
@@ -143,7 +143,7 @@ namespace Ecatalog.Controllers
                         modelRangeId
                     },
                     true,
-                    10);
+                    60);
 
                 return Json(new {
                     IsSuccess = result.IsSuccess,
@@ -175,7 +175,7 @@ namespace Ecatalog.Controllers
                         modelRangeId
                     },
                     true,
-                    10);
+                    60);
 
                 return Json(new {
                     IsSuccess = result.IsSuccess,
@@ -208,7 +208,7 @@ namespace Ecatalog.Controllers
                         id
                     },
                     true,
-                    10);
+                    60);
 
                 return Json(new
                 {
@@ -400,7 +400,7 @@ namespace Ecatalog.Controllers
                         cuscode
                     },
                     true,
-                    10);
+                    60);
 
                 return Json(new
                 {
@@ -511,8 +511,7 @@ namespace Ecatalog.Controllers
                     }
                 }
 
-                return Json(new { IsSuccess = true, Data = list },
-                            JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = true, Data = list }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -522,7 +521,7 @@ namespace Ecatalog.Controllers
                     Message = ex.Message,
                     Data = new List<object>()
                 },
-                            JsonRequestBehavior.AllowGet);
+                JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -542,7 +541,7 @@ namespace Ecatalog.Controllers
                         "Ecatalog/GetAutocompleteEcat",
                         "POST",
                         request,
-                        false,
+                        true,
                         30);
 
                 stopwatch.Stop();

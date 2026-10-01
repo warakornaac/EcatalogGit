@@ -69,7 +69,6 @@
     <Compile Include="ProductMoqPriceItemModel.cs" />
     <Compile Include="ProductMoqPriceRequestItemModel.cs" />
     <Compile Include="ProductSearchCatagoryRequestModel.cs" />
-    <Compile Include="ProductSearchDataResponseModel.cs" />
     <Compile Include="ProductSearchFieldRequestModel.cs" />
     <Compile Include="ProductSearchVioModel.cs" />
     <Compile Include="ProductTabCompetitorModel.cs" />

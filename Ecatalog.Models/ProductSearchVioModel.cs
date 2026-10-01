@@ -6,12 +6,6 @@ using System.Threading.Tasks;
 
 namespace Ecatalog.Models
 {
-    public class ProductSearchVioModel
-    {
-        public int statusCode { get; set; }
-        public string errorMessage { get; set; }
-        public List<ResultProductSearchVioModelList> result { get; set; }
-    }
     public class ResultProductSearchVioModelList
     {
         public string stkcode { get; set; }
@@ -27,6 +21,12 @@ namespace Ecatalog.Models
         public string fittingDescription { get; set; }
         public string slmCode { get; set; }
         public string cusCode { get; set; }
-        public string company { get; set; }  // ← เปลี่ยนจาก List<string> เป็น string
+        public string company { get; set; } 
+    }
+    public class ProductSearchVioModel
+    {
+        public int statusCode { get; set; }
+        public string errorMessage { get; set; }
+        public List<ResultProductSearchVioModelList> result { get; set; }
     }
 }

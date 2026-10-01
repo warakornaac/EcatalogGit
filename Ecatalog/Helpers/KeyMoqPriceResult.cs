@@ -2,17 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
 using Ecatalog.Library;
 using Ecatalog.Models;
 
 namespace Ecatalog.Helpers
 {
-    public static class KeyMoqPriceResult                       // ★ static class
+    public static class KeyMoqPriceResult                       
     {
         /// <summary>สร้าง key "STKCODE|COMPANY" สำหรับ lookup</summary>
-        public static string MoqKey(string stkcode, string company)   // ★ public static
+        public static string MoqKey(string stkcode, string company)   
         {
             return (stkcode ?? "").Trim().ToUpperInvariant() + "|" + (company ?? "").Trim().ToUpperInvariant();
+        }
+        /// <summary>แปลง moq (string) เป็นตัวเลขสำหรับเรียงลำดับ ถ้าแปลงไม่ได้ให้ไปอยู่ท้ายสุด</summary>
+        private static decimal ParseMoq(string moq) {
+            decimal value;
+            return decimal.TryParse((moq ?? "").Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out value)
+                ? value
+                : decimal.MaxValue;
         }
 
         /// <summary>
@@ -30,11 +38,11 @@ namespace Ecatalog.Helpers
                 var apiRequest = new ProductMoqPriceRequestModel { items = items, CusCode = cusCode };
 
                 var result = await Utils.CallApiAsyncMemory<ProductMoqPriceResponseModel>(
-                    "Ecatalog/GetProductUomPrice",     // ★ ต้องตรงกับ [Route] ฝั่ง API
+                    "Ecatalog/GetProductPriceTiersByStkcode",    
                     "POST",
                     apiRequest,
-                    false,
-                    60
+                    true,
+                    120
                 );
 
                 if (result == null || !result.IsSuccess || result.Data == null || result.Data.result == null) {
@@ -43,8 +51,13 @@ namespace Ecatalog.Helpers
                 }
 
                 lookup = result.Data.result
-                    .GroupBy(x => MoqKey(x.stkcode, x.company))
-                    .ToDictionary(g => g.Key, g => g.ToList());
+                        .GroupBy(x => MoqKey(x.stkcode, x.company))
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.OrderBy(x => ParseMoq(x.moq))     
+                                  .ThenBy(x => x.price)              
+                                  .ToList());
+
             }
             catch (Exception ex) {
                 System.Diagnostics.Debug.WriteLine("[MOQ] Exception: " + ex.Message);
