@@ -1,8 +1,4 @@
-﻿using Ecatalog.Helpers;
-using Ecatalog.Library;
-using Ecatalog.Models;
-using Ecatalog.Services;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -15,6 +11,10 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
+using Ecatalog.Helpers;
+using Ecatalog.Library;
+using Ecatalog.Models;
+using Ecatalog.Services;
 
 namespace Ecatalog.Controllers
 {
@@ -364,11 +364,29 @@ namespace Ecatalog.Controllers
                     "POST",
                     request,
                     false,
-                    300);
+                    120
+                );
+                System.Diagnostics.Debug.WriteLine($"[CAT] IsSuccess={result.IsSuccess} | ErrorMessage={result.ErrorMessage}");
+
+                var products = result.Data?.result?.ToList() ?? new List<ResultProductSearchCatagory>();
+
+                // ★ 1) คู่ stkcode + company จริงของสินค้า (ไม่ซ้ำ)
+                var moqRequestItems = products
+                    .Where(x => !string.IsNullOrWhiteSpace(x.stkcode)
+                             && !string.IsNullOrWhiteSpace(x.company))
+                    .Select(x => new { stkcode = x.stkcode.Trim(), company = x.company.Trim() })
+                    .Distinct()
+                    .Select(x => new ProductMoqPriceRequestItemModel { stkcode = x.stkcode, company = x.company })
+                    .ToList();
+
+                // ★ 2) เรียก API ครั้งเดียว
+                var moqLookup = await KeyMoqPriceResult.GetUomPriceLookupAsync(moqRequestItems, request.CusCode);
+
 
                 stopwatch.Stop();
 
                 System.Diagnostics.Debug.WriteLine($"[CAT] IsSuccess={result.IsSuccess} | ErrorMessage={result.ErrorMessage}");
+
                 if (result == null)
                 {
                     // Log ERROR
@@ -482,35 +500,45 @@ namespace Ecatalog.Controllers
                     ResponseTimeMs = (int)stopwatch.ElapsedMilliseconds
                 });
 
-                var groupData = result.Data?.result?
-                .GroupBy(x => x.productGroup)
-                .Select(g => new {
-                    productGroupNameMain = g.Key,
-                    productList = g.Select(item => new {
-                        productGroupId = item.productGroupId,
-                        productGroup = item.productGroup,
-                        productLineId = item.productLineId,
-                        productLine = item.productLine,
-                        brandId = item.brandId,
-                        brand = item.brand,
-                        stkcode = item.stkcode,
-                        stkcodeDescription = item.stkcodeDescription,
-                        price = item.price,
-                        qtyReady = item.qtyReady,
-                        makerName = item.makerName,
-                        modelName = item.modelName,
-                        imagePath = item.imagePath,
-                        imageUrl = item.imageUrl,
-                        slmCode = item.slmCode ?? request.SlmCode ?? "",
-                        cusCode = item.cusCode ?? request.CusCode ?? "",
-                        company = item.company != null && item.company.Any()
-                                                ? item.company.First()
-                                                : (request.Company != null && request.Company.Any()
-                                                    ? request.Company.First() : ""),
-                        fittingDescription = item.fittingDescription
-                    }).ToList()
-                })
-                .ToList();
+                var groupData = products
+                 .GroupBy(x => x.productGroup)
+                 .Select(g => new {
+                 productGroupNameMain = g.Key,
+                 productList = g.Select(item =>
+                 {
+                    // ★ 3) lookup ด้วย stkcode + company ของสินค้าตัวนี้
+                    List<ProductMoqPriceItemModel> moqList = null;
+                     if (!string.IsNullOrWhiteSpace(item.company))
+                         moqLookup.TryGetValue(KeyMoqPriceResult.MoqKey(item.stkcode, item.company), out moqList);
+
+                     return new {
+                         productGroupId = item.productGroupId,
+                         productGroup = item.productGroup,
+                         productLineId = item.productLineId,
+                         productLine = item.productLine,
+                         brandId = item.brandId,
+                         brand = item.brand,
+                         stkcode = item.stkcode,
+                         stkcodeDescription = item.stkcodeDescription,
+                         price = item.price,
+                         qtyReady = item.qtyReady,
+                         makerName = item.makerName,
+                         modelName = item.modelName,
+                         imagePath = item.imagePath,
+                         imageUrl = item.imageUrl,
+                         slmCode = item.slmCode ?? request.SlmCode ?? "",
+                         cusCode = item.cusCode ?? request.CusCode ?? "",
+                         company = item.company ?? "",
+                         fittingDescription = item.fittingDescription,
+                         // call fn GetUomPriceLookupAsync
+                         uomPrices = (moqList ?? new List<ProductMoqPriceItemModel>())
+                             .OrderBy(u => u.price)
+                             .Select(u => new { moq = u.moq, price = u.price, company = u.company })
+                             .ToList()
+                     };
+                 }).ToList()
+             })
+             .ToList();
 
                 return CustomJson(new
                 {

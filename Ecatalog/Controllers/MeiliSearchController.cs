@@ -25,24 +25,17 @@ namespace Ecatalog.Controllers
         public async Task<ActionResult> ImportSearchDictionary() {
             string path = @"D:\MeiliSearch_Json\SearchDictionary.json";
 
-            await Import(path);
-
-            return Content("Import Success");
-        }
-
-        private async Task Import(string jsonPath) {
-            var list =
-                JsonConvert.DeserializeObject<List<SearchDictionaryModel>>
-                (
-                    System.IO.File.ReadAllText(jsonPath, Encoding.UTF8)
-                );
+            var list = JsonConvert.DeserializeObject<List<SearchDictionaryModel>>(
+                System.IO.File.ReadAllText(path, Encoding.UTF8)
+            );
 
             const int batchSize = 500;
 
             using (var client = new HttpClient()) {
                 client.DefaultRequestHeaders.Add(
                     "Authorization",
-                    "Bearer " + ApiKey);
+                    "Bearer " + ApiKey
+                );
 
                 for (int i = 0; i < list.Count; i += batchSize) {
                     var batch = list
@@ -55,15 +48,19 @@ namespace Ecatalog.Controllers
                     var content = new StringContent(
                         json,
                         Encoding.UTF8,
-                        "application/json");
+                        "application/json"
+                    );
 
                     var response = await client.PostAsync(
                         Host + "/indexes/search_dictionary/documents",
-                        content);
+                        content
+                    );
 
                     response.EnsureSuccessStatusCode();
                 }
             }
+
+            return Content("Import Success");
         }
         public ActionResult ExportSearchDictionary() {
             string connString = Utils.GetConfig("ECatalogDB");
