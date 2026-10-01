@@ -1694,7 +1694,7 @@ body {
 .hz {
     border-radius: var(--r);
     transition: box-shadow var(--tr),background var(--tr);
-    padding: 8px 20px;
+    padding: 5px 20px;
     background: var(--surface);
     margin-bottom: 15px;
 }
