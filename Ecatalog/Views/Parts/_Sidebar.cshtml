@@ -177,10 +177,6 @@
             </div>
         </div>
 
-        @*<div class="sec-hd" aria-expanded="true" onclick="toggleSec(this, 'spBody'); activateSec(2)">
-            <span class="sec-title">Part Search</span>
-            <i class="bi bi-chevron-down sec-chevron"></i>
-        </div>*@
         <div class="collapse show" id="spBody">
             <div class="filter-body">
                 <div class="flabel mb-1">Search Mode <span style="color:var(--purple);font-size:9px;font-weight:700">(multi-select)</span></div>
@@ -195,11 +191,6 @@
                         <i class="bi bi-arrows-collapse"></i> Competitor
                     </label>
                 </div>
-                @*<div class="sinput-wrap mt-1" id="sidebarSearchWrap">
-            <input type="text" id="txtSearchField" placeholder="Type part name or code…" oninput="syncSearch('sidebar');acInputSidebar(this)" onkeydown="acKeyNavSidebarText(event)" autocomplete="off" aria-autocomplete="list" aria-expanded="false">
-            <i class="bi bi-search"></i>
-            <div class="ac-dropdown" id="acDropdownSidebar" role="listbox"></div>
-        </div>*@
             <div class="sinput-wrap mt-1" id="sidebarSearchWrap">
                 <input type="text" id="txtSearchField" placeholder="Type part name or code…"
                        oninput="syncSearch('sidebar'); document.getElementById('btnClearSearch').style.display = this.value ? 'flex' : 'none';"
@@ -212,28 +203,7 @@
                 <i class="bi bi-search"></i>
                 <div class="ecac-dropdown" id="ecAcDropdown" role="listbox"></div>
             </div>
-                @*<button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
-        if (!_requireSalesmanAndCustomer()) return;
-                const hasMaker = $('#makerId').val();
-                const hasMarketAndSegment = hasMaker;
-                const hasText = $('#txtSearchField').val().trim();
-
-                // ✅ ถ้าไม่มี vehicle dropdown เลย → ไปหา text ทันที
-                if (!hasMaker && !hasMarketAndSegment) {
-                    if (!hasText) {
-                        Swal.fire({ icon: 'warning', title: 'กรุณาใส่ข้อความค้นหา', confirmButtonColor: '#e63946' });
-                        return;
-                    }
-                    loadSearchProductField();
-                    return;
-                }
-
-                // ✅ มี vehicle dropdown → Vio ก่อน แล้วค่อย Field ถ้ามี text
-                const ok = await loadSearchProductVio();
-                if (ok !== false && hasText) loadSearchProductField();
-            })();">
-            <i class="bi bi-lightning-charge-fill"></i> Search
-        </button>*@
+                
                 <button class="search-btn" id="btnSearchProductVio" onclick="(async () => {
                     if (!_requireSalesmanAndCustomer()) return;
 
@@ -244,25 +214,16 @@
                     } else {
                         await loadSearchProductVio();
                     }
-                })();">
-                                    <i class="bi bi-lightning-charge-fill"></i> Search
-                                </button>
+                    })();">
+                    <i class="bi bi-lightning-charge-fill"></i> Search
+                </button>
 
-                @*<button class="search-btn" id="btnSearchProductField" onclick="loadSearchProductField()">
-            <i class="bi bi-lightning-charge-fill"></i> Search Parts
-        </button>*@
             </div>
         </div>
 
         <div class="collapse show" id="sfBody">
                 <div class="filter-body">
-                    @*<div class="flabel">Product Line (หมวดหมู่)</div>
-                    <div class="chk-list" id="plList"></div>
-
-                    <button class="see-more-btn" id="plSeeMore" onclick="toggleSeeMore('pl')">
-                        <i class="bi bi-chevron-down" id="plSeeMoreIcon"></i> ดูเพิ่มเติม
-                    </button>*@
-
+                    
                     <div class="flabel">Fitting (ตำแหน่งติดตั้ง)</div>
                     <div class="fit-grid" id="fitGrid">
                         <div class="fit-chip" onclick="toggleFit(this,'หน้า')">หน้า</div>
@@ -273,12 +234,6 @@
                         <div class="fit-chip" onclick="toggleFit(this,'ล่าง')">ล่าง</div>
                     </div>
 
-                    @*<div class="flabel mt-3">Brand (ยี่ห้อ)</div>
-                    <div class="chk-list" id="brList"></div>
-
-                    <button class="see-more-btn" id="brSeeMore" onclick="toggleSeeMore('br')">
-                        <i class="bi bi-chevron-down" id="brSeeMoreIcon"></i> ดูเพิ่มเติม
-                    </button>*@
                 </div>
             </div>
     </div>
@@ -446,66 +401,6 @@ async function loadModelRange(_isInit = false) {
             updateVehSummary();
         }
     }
-    //set params obj by select catagory
-    //function getSearchCatagoryObject() {
-    //    _syncSessionFromUI();
-    //    const activeGroupIds = $(".bb-item.active")
-    //        .map(function () { return $(this).data("id"); })
-    //        .get()
-    //        .filter(id => id !== '0' && id !== 0)
-    //        .map(id => String(id));
-
-    //    const axisMap = { 'หน้า': 'FR', 'หลัง': 'RR', 'กลาง': 'MID', 'เครื่องยนต์': 'ENGINE' };
-    //    const sideMap = { 'ซ้าย': 'LH', 'ขวา': 'RH', 'กลาง': 'CENTER' };
-    //    const levelMap = { 'บน': 'UPPER', 'ล่าง': 'LOWER' };
-    //    const dirMap = { 'ใน': 'INNER', 'นอก': 'OUTER' };
-
-    //    const fits = [...fitState];
-    //    const fittingFilter = [...new Set([
-    //        ...fits.map(f => axisMap[f]).filter(Boolean),
-    //        ...fits.map(f => sideMap[f]).filter(Boolean),
-    //        ...fits.map(f => levelMap[f]).filter(Boolean),
-    //        ...fits.map(f => dirMap[f]).filter(Boolean),
-    //    ])];
-
-    //    const checkedLineNames = Object.keys(chkState.pl);
-    //    const checkedBrandNames = Object.keys(chkState.br);
-
-    //    // ✅ ดึง id จาก chkState ที่เก็บไว้ตั้งแต่ pgmConfirm แทนการหาจาก DOM
-    //    const checkedLineIds = checkedLineNames
-    //        .map(name => chkState.pl[name])
-    //        .filter(id => id !== null && id !== undefined && id !== '');
-
-    //    const checkedBrandIds = checkedBrandNames
-    //        .map(name => chkState.br[name])
-    //        .filter(id => id !== null && id !== undefined && id !== '');
-
-    //    console.log('productLineId ที่จะส่ง API:', checkedLineIds);
-    //    console.log('brandId ที่จะส่ง API:', checkedBrandIds);
-    //    console.log('productGroupId:', activeGroupIds);
-    //    console.groupEnd();
-
-    //    const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
-
-    //    return {
-    //        productGroupId: activeGroupIds,
-    //        productLineId: checkedLineIds,
-    //        brandId: checkedBrandIds,
-    //        fittingFilter: fittingFilter,
-    //        marketSegmentId: $("#marketsegId").val() || "",
-    //        segmentId: $("#segmentId").val() || "",
-    //        makerId: $("#makerId").val() || "",
-    //        rangeId: $("#rangeId").val() || "",
-    //        bodyId: $("#bodyId").val() || "",
-    //        engineId: $("#engineId").val() || "",
-    //        yearFrom: $("#yearFrom").val() || "",
-    //        yearTo: $("#yearTo").val() || "",
-    //        driveType: $("#driveId").val() || "",
-    //        SlmCode: $("#salesmanId").val() || window.APP_SESSION?.slmcode || "",
-    //        CusCode: $("#customerId").val() || window.APP_SESSION?.cuscode || "",
-    //        Company: companies
-    //    };
-    //}
 
     function getSearchCatagoryObject() {
         _syncSessionFromUI();
@@ -593,9 +488,9 @@ async function loadModelRange(_isInit = false) {
         if (!response.ok) throw new Error(result.Message || "API Error");
 
         if (result.IsSuccess) {
-            console.log('result.Data length:', result.Data?.length); // ✅
+            //console.log('result.Data length:', result.Data?.length); // ✅
             _setBaseProducts(result.Data, 'category', false, true);  // ← set _lastSearchType = 'category'
-            console.log('_lastSearchType after set:', _lastSearchType); // ✅
+            //console.log('_lastSearchType after set:', _lastSearchType); // ✅
 
             // Rebuild DOM ของ Sidebar ใหม่ทั้งหมดตาม BASE_PRODUCTS ชุดใหม่
             _rebuildSidebarFromProducts();
@@ -1078,14 +973,7 @@ async function loadModelRange(_isInit = false) {
             dd.classList.add('open');
             return;
         }
-        // dd.innerHTML = list.slice(0, 20).map((it, i) => `
-        //     <div class="ecac-item" role="option" data-i="${i}">
-        //         <div class="ecac-code">${hl(it.stkcode, kw)}</div>
-        //         <div class="ecac-des">${hl(it.stkdes, kw)}</div>
-        //         ${it.oem ? `<div class="ecac-oem">OE: ${hl(it.oem, kw)}</div>` : ''}
-        //     </div>`).join('');
-        // dd.classList.add('open');
-        // $input().setAttribute('aria-expanded', 'true');
+        
         dd.innerHTML = list.slice(0, 20).map((it, i) => `
     <div class="ecac-item" role="option" data-i="${i}">
         <div class="ecac-des">${hl(it.stkdes, kw)}</div>
@@ -1112,7 +1000,7 @@ async function loadModelRange(_isInit = false) {
             Company: typeof getActiveCompanies === 'function' ? getActiveCompanies() : [],
             searchFields: Array.from(document.querySelectorAll('.smode-btn.active')).map(b => b.dataset.mode)
         };
-        console.log('[ecAc] call API', apiUrl, payload);  // ✅ เปลี่ยนจาก CFG.url → apiUrl
+        //console.log('[ecAc] call API', apiUrl, payload);  // ✅ เปลี่ยนจาก CFG.url → apiUrl
 
         try {
             const res = await fetch(apiUrl, {
@@ -1122,7 +1010,7 @@ async function loadModelRange(_isInit = false) {
                 signal: S.ctrl.signal
             });
             const result = await res.json();
-            console.log('[ecAc] result', result);
+            //console.log('[ecAc] result', result);
 
             if ($input().value.trim() !== kw) return;   // user พิมพ์ต่อแล้ว ทิ้งผลเก่า
             if (!result.IsSuccess) { close(); return; }
@@ -1139,7 +1027,7 @@ async function loadModelRange(_isInit = false) {
         const input = $input();
         if (!input || document.activeElement !== input) return; // ✅ เช็คว่า focus อยู่ที่ input นี้จริงๆ
         const kw = input.value.trim();
-        console.log('[ecAc] input', kw);
+        //console.log('[ecAc] input', kw);
         if (kw.length < CFG.minChars) {
             if (S.ctrl) S.ctrl.abort();
             close();
@@ -1216,7 +1104,7 @@ async function loadModelRange(_isInit = false) {
         document.addEventListener('click', function (e) {
             if (!e.target.closest('#sidebarSearchWrap')) close();
         });
-        console.log('[ecAc] ready');
+        //console.log('[ecAc] ready');
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
