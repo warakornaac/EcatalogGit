@@ -23,5 +23,6 @@ namespace Ecatalog.Models
         public string qty { get; set; }
         public string price { get; set; }
         public string backorder { get; set; }
+        public string moq { get; set; }
     }
 }

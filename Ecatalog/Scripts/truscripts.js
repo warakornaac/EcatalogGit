@@ -142,6 +142,7 @@ function mapApiResponseToProducts(groups) {
                 code: item.stkcode || '',
                 name: item.stkcodeDescription || item.stkcode || '—',
                 price: parseFloat(item.price) || 0,
+                priceTiers: item.priceTiers || [],
                 stock: isNaN(qty) ? 99 : qty,
                 cat: item.productGroup || groupLabel,
                 catId: String(item.productGroupId || group.productGroupId || ''),
@@ -938,7 +939,150 @@ function selCard(id) {
     gEl('pc-' + id)?.classList.add('active-card');
 }
 
+/* ── Price tier helpers (ใช้ใน spec modal) ── */
+function _getTiers(p) {
+    const tiers = (p.priceTiers || [])
+        .map(t => ({ moq: parseInt(t.moq, 10) || 1, price: parseFloat(t.price) || 0 }))
+        .filter(t => t.price > 0)          // ตัด moq 1 ที่ราคา 0.00 (ข้อมูลผิด)
+        .sort((a, b) => a.moq - b.moq);
+
+    return tiers.length ? tiers : [{ moq: 1, price: p.price }];
+}
+
+// function _getTiers(p) {
+//     const tiers = (p.priceTiers || [])
+//         .map(t => ({ moq: parseInt(t.moq, 10) || 1, price: parseFloat(t.price) || 0 }))
+//         .sort((a, b) => a.moq - b.moq);
+//     return tiers.length ? tiers : [{ moq: 1, price: p.price }];
+// }
+
+// tier ที่ moq สูงสุดที่ <= จำนวน (ถ้าน้อยกว่า moq แรก ใช้ tier แรก)
+function _tierFor(tiers, q) {
+    let t = tiers[0];
+    tiers.forEach(x => { if (q >= x.moq) t = x; });
+    return t;
+}
+
+function _tierRange(tiers, i) {
+    const start = tiers[i].moq;
+    const next = tiers[i + 1];
+    if (!next) return start + '+';
+    const end = next.moq - 1;
+    return start === end ? String(start) : start + '–' + end;
+}
+
+function _tierOptionText(tiers, i) {
+    const base = tiers[0].price;
+    const pct = Math.round((1 - tiers[i].price / base) * 100);
+    return `ซื้อ ${_tierRange(tiers, i)} ชิ้น → ${fmt(tiers[i].price)} / ชิ้น` + (pct > 0 ? ` (ลด ${pct}%)` : '');
+}
+
+/* อัปเดตราคา / ยอดรวม / dropdown ตามจำนวนที่กรอก (ไม่เขียนทับช่อง qty ขณะพิมพ์) */
+function specTierRefresh(pid) {
+    const p = PRODUCTS.find(x => x.id === pid) || activeProduct;
+    const inp = gEl('modalQty-' + pid);
+    if (!p || !inp) return;
+
+    const tiers = _getTiers(p);
+    const base = tiers[0].price;
+    const q = Math.max(1, parseInt(inp.value, 10) || 1);
+    const t = _tierFor(tiers, q);
+    const saving = (base - t.price) * q;
+
+    const setText = (id, v) => { const el = gEl(id + pid); if (el) el.textContent = v; };
+    setText('modalPrice-', fmt(t.price));
+    setText('modalTotal-', fmt(q * t.price));
+    setText('modalSave-', `(ประหยัด ${fmt(Math.max(0, saving))})`);
+
+    const old = gEl('modalOld-' + pid);
+    if (old) { old.textContent = fmt(base); old.style.display = t.price < base ? '' : 'none'; }
+
+    const disc = gEl('modalDisc-' + pid);
+    if (disc) {
+        const pct = Math.round((1 - t.price / base) * 100);
+        disc.textContent = `ลด ${pct}%`;
+        disc.style.display = pct > 0 ? '' : 'none';
+    }
+
+    const sel = gEl('modalTier-' + pid);
+    if (sel) sel.value = String(t.moq);
+}
+
+/* เลือก tier จาก dropdown → ตั้งจำนวนเป็น moq ของ tier นั้น */
+function specTierPick(pid, moq) {
+    const inp = gEl('modalQty-' + pid);
+    if (inp) inp.value = moq;
+    specTierRefresh(pid);
+}
+
+/* ── Mobile drawer: tier logic ── */
+function drTierRefresh() {
+    const p = activeProduct;
+    const inp = gEl('drQty');
+    if (!p || !inp) return;
+
+    const tiers = _getTiers(p);
+    const base = tiers[0].price;
+    const q = Math.max(1, parseInt(inp.value, 10) || 1);
+    const t = _tierFor(tiers, q);
+    const saving = Math.max(0, (base - t.price) * q);
+    const pct = Math.round((1 - t.price / base) * 100);
+
+    gEl('drPrice').textContent = fmt(t.price);
+    gEl('drTotal').textContent = fmt(q * t.price);
+    gEl('drSave').textContent = `(ประหยัด ${fmt(saving)})`;
+
+    const old = gEl('drOld');
+    old.textContent = fmt(base);
+    old.style.display = t.price < base ? '' : 'none';
+
+    const disc = gEl('drDisc');
+    disc.textContent = `ลด ${pct}%`;
+    disc.style.display = pct > 0 ? '' : 'none';
+
+    const sel = gEl('drTier');
+    if (sel && sel.style.display !== 'none') sel.value = String(t.moq);
+}
+
+function drTierPick(moq) {
+    gEl('drQty').value = moq;
+    drTierRefresh();
+}
+
+function drTierInit(p) {
+    const tiers = _getTiers(p);
+    const sel = gEl('drTier');
+    if (!sel) return;
+
+    if (tiers.length > 1) {
+        sel.innerHTML = tiers.map((t, i) =>
+            `<option value="${t.moq}">${_tierOptionText(tiers, i)}</option>`).join('');
+        sel.style.display = '';
+    } else {
+        sel.innerHTML = '';
+        sel.style.display = 'none';
+    }
+
+    gEl('drQty').value = 1;
+    drTierRefresh();
+}
+
 function buildSpecHTML(p) {
+    const tiers = _getTiers(p);
+    const base = tiers[0].price;
+    const t0 = _tierFor(tiers, 1);
+    const isBO = (p.stock ?? 99) === 0;
+
+    const tierSelect = tiers.length > 1 ? `
+        <select id="modalTier-${p.id}"
+                onclick="event.stopPropagation()"
+                onchange="specTierPick(${p.id}, this.value)"
+                style="height:32px;border:1px solid var(--border);border-radius:8px;padding:0 8px;
+                       font-size:13px;margin-top:10px;width:100%;max-width:330px;background:#fff">
+            ${tiers.map((t, i) => `
+                <option value="${t.moq}" ${t.moq === t0.moq ? 'selected' : ''}>${_tierOptionText(tiers, i)}</option>`).join('')}
+        </select>` : '';
+
     return `
     <div class="spec-hero">
        ${p.img
@@ -955,15 +1099,38 @@ function buildSpecHTML(p) {
             <h5>${p.name}</h5>
             <p>${p.code}</p>
             <p style="font-size:12px;color:var(--text-3);margin-top:3px">${p.brand}</p>
+
+            <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+                <div class="spec-price" id="modalPrice-${p.id}">${fmt(t0.price)}</div>
+                <span id="modalOld-${p.id}"
+                      style="color:var(--text-3);text-decoration:line-through;font-size:13px;
+                             ${t0.price < base ? '' : 'display:none'}">${fmt(base)}</span>
+                <span id="modalDisc-${p.id}"
+                      style="background:#dcfce7;color:#16a34a;font-weight:700;font-size:11px;
+                             border-radius:10px;padding:1px 8px;
+                             ${t0.price < base ? '' : 'display:none'}">
+                    ลด ${Math.round((1 - t0.price / base) * 100)}%
+                </span>
+                <span style="font-size:12px;color:var(--text-3)">/ ชิ้น</span>
+            </div>
+
+            ${tierSelect}
+
             <div class="mt-2 d-flex align-items-center gap-3">
-                <div class="spec-price">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</div>
-                <input type="number" class="qty" value="1" min="1" max="99"
-                       id="modalQty-${p.id}" onclick="event.stopPropagation()">
-                <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
-                        style="max-width:160px" onclick="addCartFromSpecModal(${p.id}, event)">
-                    <i class="bi ${(p.stock ?? 99) === 0 ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
-                    ${(p.stock ?? 99) === 0 ? 'จอง (BO)' : 'เพิ่ม'}
+                <input type="number" class="qty" value="1" min="1"
+                       id="modalQty-${p.id}"
+                       oninput="specTierRefresh(${p.id})"
+                       onclick="event.stopPropagation()">
+                <button class="acart ${isBO ? 'bo-btn' : ''}"
+                        style="flex:Auto;max-width:150px" onclick="addCartFromSpecModal(${p.id}, event)">
+                    <i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
+                    ${isBO ? 'จอง (BO)' : 'เพิ่ม'}
                 </button>
+            </div>
+
+            <div class="spec-total" style="font-size:12px;margin-top:6px">
+                รวม <b id="modalTotal-${p.id}">${fmt(t0.price)}</b>
+                <span id="modalSave-${p.id}" style="color:#16a34a;font-weight:600">(ประหยัด ${fmt(0)})</span>
             </div>
         </div>
     </div>
@@ -986,18 +1153,45 @@ function buildSpecHTML(p) {
 }
 
 /* ── Add to cart จาก spec modal ที่เปิดผ่าน openDrawer (card click) ── */
+// async function addCartFromSpecModal(productId, clickEvent) {
+//     if (clickEvent) clickEvent.stopPropagation();
+
+//     const p = PRODUCTS.find(x => x.id === productId);
+//     if (!p) return;
+
+//     const qty = parseInt(gEl('modalQty-' + productId)?.value) || 1;
+//     const btn = clickEvent?.currentTarget instanceof HTMLElement
+//         ? clickEvent.currentTarget
+//         : document.querySelector('#specModalContent .acart');
+
+//     await _callAddToCartAPI(p, qty, btn);
+// }
+
 async function addCartFromSpecModal(productId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
 
     const p = PRODUCTS.find(x => x.id === productId);
     if (!p) return;
 
-    const qty = parseInt(gEl('modalQty-' + productId)?.value) || 1;
+    const tiers = _getTiers(p);                       // ✅
+    const minQty = tiers[0].moq || 1;                 // ✅
+    const qtyInp = gEl('modalQty-' + productId);
+
+    let qty = parseInt(qtyInp?.value) || 1;
+    if (qty < minQty) {                               // ✅
+        qty = minQty;
+        if (qtyInp) qtyInp.value = minQty;
+        specTierRefresh(productId);
+        toast(`⚠️ สินค้านี้สั่งขั้นต่ำ ${minQty} ชิ้น`, 'warn');
+    }
+
     const btn = clickEvent?.currentTarget instanceof HTMLElement
         ? clickEvent.currentTarget
         : document.querySelector('#specModalContent .acart');
 
-    await _callAddToCartAPI(p, qty, btn);
+    // ใช้ราคาตาม tier ที่ตรงกับจำนวน
+    const tier = _tierFor(tiers, qty);
+    await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
 const s = window.getComputedStyle(drawer);
@@ -1028,7 +1222,6 @@ async function openDrawer(productId, clickEvent) {
         set('drCode2', p.code);
         set('drBrand', p.brand);
         set('drName', p.name);
-        set('drPrice', '฿' + p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 }));
         set('drDescFull', p.name);
         set('drCat', p.cat);
         set('drBrandCard', p.brand);
@@ -1067,9 +1260,9 @@ async function openDrawer(productId, clickEvent) {
         if (drAddBtn) {
             const isBO = (p.stock ?? 99) === 0;
             drAddBtn.className = 'dr-add-btn' + (isBO ? ' bo-btn' : '');
-            drAddBtn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+            drAddBtn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
         }
-
+        drTierInit(p);
         gEl('specDrawer').querySelectorAll('.drtab').forEach((b, i) => b.classList.toggle('active', i === 0));
         gEl('specDrawer').querySelectorAll('.drpane').forEach((pane, i) => pane.classList.toggle('active', i === 0));
 
@@ -1147,13 +1340,23 @@ function switchDrTab(btn, tabId) {
 async function addCartFromDrawer(e) {
     if (e) e.stopPropagation();
 
-    const p = currentSpecProduct;
+    const p = activeProduct;
     if (!p) return;
 
-    const qty = parseInt($("#drQty").val()) || 1;
+    const tiers = _getTiers(p);                       // ✅
+    const minQty = tiers[0].moq || 1;                 // ✅
+
+    let qty = Math.max(1, parseInt($("#drQty").val(), 10) || 1);
+    if (qty < minQty) {                               // ✅
+        qty = minQty;
+        $("#drQty").val(minQty);
+        drTierRefresh();
+        toast(`⚠️ สินค้านี้สั่งขั้นต่ำ ${minQty} ชิ้น`, 'warn');
+    }
     const btn = document.getElementById('drAddBtn');
 
-    await _callAddToCartAPI(p, qty, btn);
+    const tier = _tierFor(tiers, qty);
+    await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
 /* ── Escape key ── */
@@ -1248,12 +1451,41 @@ function updateNfArrows(strip) {
 }
 
 /* ═════════════════ RENDER PRODUCTS ═══════════════════ */
+/* คำนวณราคาหลัก + แท็กราคาขั้นบันได จาก priceTiers */
+function getTierDisplay(p) {
+    const fmt2 = v => Number(v).toLocaleString('th-TH', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+
+    // เรียง tier ตาม moq น้อย → มาก และตัดตัวที่ราคาไม่ถูกต้องออก
+    const tiers = (p.priceTiers || [])
+        .map(t => ({ moq: parseInt(t.moq, 10) || 0, price: parseFloat(t.price) || 0 }))
+        .filter(t => t.price > 0)
+        .sort((a, b) => a.moq - b.moq);
+
+    // ราคาหลัก: tier แรก ถ้าไม่มี tier ใช้ price เดิม
+    const mainPrice = tiers.length ? tiers[0].price : p.price;
+
+    let tagHtml = '';
+    if (tiers.length === 2) {
+        // มี 2 tier → แสดง tier ที่ 2
+        tagHtml = `${tiers[1].moq} ชิ้นขึ้นไป ฿${fmt2(tiers[1].price)} / unit`;
+    } else if (tiers.length > 2) {
+        // มากกว่า 2 tier → แสดงราคาคุ้มสุด (ราคาต่ำสุดในทุก tier)
+        const best = Math.min(...tiers.map(t => t.price));
+        tagHtml = `ราคาคุ้มสุด ฿${fmt2(best)} / unit`;
+    }
+
+    return { mainPrice, tagHtml, fmt2 };
+}
+
 function renderProducts(list) {
     const sorted = applySorting(list);
     const pGrid = gEl('pGrid');
     const nfRows = gEl('nfRows');
     const hasFilter = Object.keys(chkState.pl).length || fitState.size || Object.keys(chkState.br).length;
     const uniqueCount = new Set(sorted.map(p => p.code)).size;
+    
     gEl('rcount').style.display = '';
     gEl('rcount').textContent = uniqueCount + ' items';
     const stockLabel = s =>
@@ -1261,18 +1493,20 @@ function renderProducts(list) {
             s <= 5 ? `<span class="pstock low-stock"><i class="bi bi-exclamation-circle-fill"></i> เหลือ ${s.toLocaleString()}</span>` :
                 `<span class="pstock in-stock"><i class="bi bi-check-circle-fill"></i> ${s.toLocaleString()} ชิ้น</span>`;
 
-    const pcardHTML = p => `
+    const pcardHTML = p => {
+        const { mainPrice, tagHtml, fmt2 } = getTierDisplay(p);
+        return`
         <div class="pcard ${hasFilter ? 'highlight-filter' : ''}" id="pc-${p.id}"
              onclick="openDrawer(${p.id},event)" style="cursor:pointer">
             <div class="pimg">
                 ${stockLabel(p.stock ?? 99)}
                 ${p.img && p.img.trim()
-            ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+                ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
            <img src="${p.img}" alt="${p.name}"
                 style="max-height:85px;max-width:100%;object-fit:contain"
                 onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">
        </div>`
-            : `<div class="no-image">
+                : `<div class="no-image">
            <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
            <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
        </div>`}
@@ -1288,36 +1522,39 @@ function renderProducts(list) {
                 ${p.carModel ? `
                 <div style="display:flex;align-items:center;gap:5px;margin-top:4px;margin-bottom:2px">
                     ${p.carModel === 'Universal'
-                ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
+                    ? `<span style="font-size:10px;font-weight:700;background:linear-gradient(135deg,#fef9c3,#fde68a);
                                        color:#92400e;border:1px solid #f59e0b;border-radius:20px;padding:1px 9px;
                                        display:inline-flex;align-items:center;gap:3px">
                                        <i class="bi bi-stars" style="font-size:9px"></i> Universal</span>`
-                : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
+                    : `<i class="bi bi-car-front-fill" style="font-size:10px;color:var(--text-3)"></i>
                            <span style="font-size:11px;color:var(--text-2);font-weight:500">${p.carModel}</span>`
-            }
+                }
                 </div>` : ''}
                 ${p.fit && p.fit.length
-            ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+                ? `<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px">
                            ${p.fit.map(f => `<span style="font-size:10px;border:1px solid var(--border);
                                border-radius:10px;padding:1px 7px;color:var(--text-3)">${f}</span>`).join('')}
                        </div>` : ''}
-                <div class="pprice">฿${p.price.toLocaleString('th-TH', { minimumFractionDigits: 2 })} <span>/ unit</span></div>
-                
+                <div class="pprice" id="cardPrice-${p.id}">฿${fmt2(mainPrice)} <span>/ unit</span></div>
+                ${tagHtml ? `
+                <div style="font-size:11px;color:#198754;margin-top:2px;display:flex;align-items:center;gap:4px">
+                    <i class="bi bi-tag-fill"></i> ${tagHtml}
+                </div>` : ''}
             </div>
             <div class="pfooter">
-                <input type="number" class="qty" value="1" min="1" max="99"
-                       id="qty-${p.id}" onclick="event.stopPropagation()">
-                <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
-                        id="cb-${p.id}" onclick="addCart(${p.id},event)">
+            <input type="number" class="qty" value="1" min="1"
+                   id="qty-${p.id}"
+                   oninput="cardQtyChange(${p.id})"
+                   onclick="event.stopPropagation()">
+            <button class="acart ${(p.stock ?? 99) === 0 ? 'bo-btn' : ''}"
+                    id="cb-${p.id}" onclick="addCart(${p.id},event)">
                     <i class="bi ${(p.stock ?? 99) === 0 ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
                     ${(p.stock ?? 99) === 0 ? 'จอง (BO)' : 'เพิ่ม'}
                 </button>
             </div>
         </div>`;
-
-    // <div style="font-size:11px;color:#198754;margin-top:2px;display:flex;align-items:center;gap:4px">
-    //     <i class="bi bi-tag-fill"></i> 12 ชิ้นขึ้นไป ฿${(p.price * 0.9).toLocaleString('th-TH', { minimumFractionDigits: 2 })} / unit
-    // </div>
+    }
+    
     // ✅ เพิ่ม 2 บรรทัดนี้
     const forceByLine = currentSort === 'part';
     const groups = groupByLine(sorted, forceByLine);
@@ -1749,13 +1986,48 @@ function toggleFit(chip, val) {
 /* ════════════════ CART ══════════════════ */
 /* จาก Product Card — ใช้ PRODUCTS[] + id integer */
 // ✅ แก้แล้ว
+// async function addCart(productId, clickEvent) {
+//     if (clickEvent) clickEvent.stopPropagation();
+//     const p = PRODUCTS.find(x => x.id === productId);
+//     if (!p) return;
+//     const qty = parseInt(gEl('qty-' + productId)?.value) || 1;
+//     const btn = gEl('cb-' + productId);
+//     await _callAddToCartAPI(p, qty, btn);
+// }
+
 async function addCart(productId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
     const p = PRODUCTS.find(x => x.id === productId);
     if (!p) return;
-    const qty = parseInt(gEl('qty-' + productId)?.value) || 1;
+
+    const tiers = _getTiers(p);                       // ✅
+    const minQty = tiers[0].moq || 1;                 // ✅ ขั้นต่ำ = moq แรก
+    const qtyInp = gEl('qty-' + productId);
+
+    let qty = Math.max(1, parseInt(qtyInp?.value, 10) || 1);
+    if (qty < minQty) {                               // ✅
+        qty = minQty;
+        if (qtyInp) qtyInp.value = minQty;
+        cardQtyChange(productId);
+        toast(`⚠️ สินค้านี้สั่งขั้นต่ำ ${minQty} ชิ้น`, 'warn');
+    }
     const btn = gEl('cb-' + productId);
-    await _callAddToCartAPI(p, qty, btn);
+
+    // ราคาตาม tier ที่ตรงกับจำนวน
+    const tier = _tierFor(tiers, qty);
+    await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
+}
+
+/* อัปเดตราคาหลักบนการ์ดตามจำนวนที่กรอก (ยึดตาม moq) */
+function cardQtyChange(pid) {
+    const p = PRODUCTS.find(x => x.id === pid);
+    const inp = gEl('qty-' + pid);
+    const priceEl = gEl('cardPrice-' + pid);
+    if (!p || !inp || !priceEl) return;
+
+    const q = Math.max(1, parseInt(inp.value, 10) || 1);
+    const t = _tierFor(_getTiers(p), q);
+    priceEl.innerHTML = `${fmt(t.price)} <span>/ unit</span>`;
 }
 /* ══════════════════ SKELETON ══════════════════ */
 function showSkel() {
@@ -2288,9 +2560,8 @@ function renderOrderSummary() {
             </div>
             <div class="os-stepper">
                 <button class="os-step-btn" onclick="osChangeQty('${c.id}',-1)">−</button>
-                <input class="os-step-input" type="number" value="${c.qty}" min="1"
-                       onchange="osSetQty('${c.id}',this.value)"
-                       oninput="osSetQty('${c.id}',this.value)">
+                <input class="os-step-input" type="number" value="${c.qty}" min="${c.moq || 1}"
+                       onchange="osSetQty('${c.id}',this.value)">
                 <button class="os-step-btn" onclick="osChangeQty('${c.id}',1)">+</button>
             </div>
             <button class="os-del-btn" onclick="osRemoveItem('${c.id}')">
@@ -2338,39 +2609,71 @@ function osToggleSelectAll(chk) {
 /* changeQty — อัปเดตใน local แล้ว re-add ผ่าน API
    หมายเหตุ: ถ้า backend มี UpdateQty endpoint ให้เปลี่ยนตรงนี้ */
 
-
 async function changeQty(ordId, delta) {
     _isChangingQty = true;
     const item = cart.find(c => c.id === ordId);
     if (!item) { _isChangingQty = false; return; }
 
-    const newQty = Math.max(1, item.qty + delta);
-    if (newQty === item.qty) { _isChangingQty = false; return; }
+    // ✅ ขั้นต่ำตาม moq ของสินค้า (เดิมใช้ 1)
+    const minQty = Math.max(1, item.moq || 1);
+    const newQty = Math.max(minQty, item.qty + delta);
 
-    // optimistic update UI ก่อน เพื่อความลื่นไหล
+    if (newQty === item.qty) {
+        // ✅ แจ้งเตือนและคืนค่าใน input เมื่อติดขั้นต่ำ
+        if (item.qty + delta < minQty) toast(`⚠️ สั่งขั้นต่ำ ${minQty} ชิ้น`, 'warn');
+        _updateQtyUI(ordId, item.qty, item.price);
+        _isChangingQty = false;
+        return;
+    }
+
+    // หา tier ตามจำนวนใหม่
+    // ✅ ถ้าไม่มี tiers ให้คง price/moq เดิม (เดิม fallback เป็น moq 1 แล้วส่งทับ moq จริง)
+    const hasTiers = item.priceTiers && item.priceTiers.length;
+    const tiers = _getTiers({ priceTiers: item.priceTiers, price: item.price });
+    const tier = hasTiers ? _tierFor(tiers, newQty) : { moq: item.moq, price: item.price };
+    const newPrice = tier.price;
+    const newMoq = tier.moq;
+
+    // เก็บค่าเดิมไว้ rollback
     const prevQty = item.qty;
+    const prevPrice = item.price;
+    const prevMoq = item.moq;
+
+    // optimistic update UI
     item.qty = newQty;
+    item.price = newPrice;
+    item.moq = newMoq;
     _updateQtyUI(ordId, newQty, item.price);
 
+    const rollback = () => {
+        item.qty = prevQty;
+        item.price = prevPrice;
+        item.moq = prevMoq;
+        _updateQtyUI(ordId, prevQty, prevPrice);
+    };
+    console.log('changeQty ordId =', JSON.stringify(ordId), '| item =', item);
     try {
         const res = await fetch(urlsPro.editProductToCart, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 ordid: ordId,
-                cuscod: window.APP_SESSION?.cuscode || '',   // ✅ เพิ่มบรรทัดนี้
+                cuscod: window.APP_SESSION?.cuscode || '',
                 qty: newQty.toString(),
-                price: item.price.toString()
+                price: newPrice.toString(),
+                moq: String(newMoq)
             })
         });
 
         const json = await res.json().catch(() => null);
 
-        if (!json || !json.IsSuccess) {
-            // rollback UI ถ้า API ล้มเหลว
-            item.qty = prevQty;
-            _updateQtyUI(ordId, prevQty, item.price);
-            toast(`❌ แก้ไขจำนวนไม่สำเร็จ: ${json?.Message || ''}`, 'warn');
+        // ✅ ตรวจว่า server อัปเดตจริง: qty ที่ตอบกลับต้องตรงกับที่ขอ
+        const row = Array.isArray(json?.Data) ? json.Data[0] : json?.Data;
+        const serverQty = parseInt(row?.qty, 10);
+
+        if (!json || !json.IsSuccess || (!isNaN(serverQty) && serverQty !== newQty)) {
+            rollback();
+            toast(`❌ แก้ไขจำนวนไม่สำเร็จ: ${json?.Message || 'ไม่ผ่านเงื่อนไข MOQ'}`, 'warn');
             return;
         }
 
@@ -2378,18 +2681,16 @@ async function changeQty(ordId, delta) {
 
     } catch (err) {
         console.error('changeQty error:', err);
-        item.qty = prevQty;
-        _updateQtyUI(ordId, prevQty, item.price);
+        rollback();
         toast('❌ เกิดข้อผิดพลาด', 'warn');
         return;
     } finally {
         _isChangingQty = false;
     }
 
-    // sync ค่าจริงจาก DB กลับมาอีกที เพื่อความชัวร์ (bust cache)
+    // sync ค่าจริงจาก DB กลับมาอีกที (bust cache)
     await _fetchCartFromServer(true);
 }
-
 /* ── อัปเดตเฉพาะตัวเลข qty และ price ใน UI ── */
 function _updateQtyUI(ordId, newQty, price) {
     // cpBody
@@ -2419,12 +2720,15 @@ async function osSetQty(ordId, val) {
     if (!item) return;
     const n = parseInt(val);
     if (isNaN(n) || n < 1) return;
-    const delta = n - item.qty;
-    if (delta === 0) return;
 
     // ✅ debounce 600ms ป้องกันยิง API ทุก keystroke
     clearTimeout(_osSetQtyTimer);
     _osSetQtyTimer = setTimeout(async () => {
+        // ✅ คำนวณ delta ตอนยิงจริง (ใช้ qty ล่าสุด) ไม่ใช่ตอนพิมพ์
+        const cur = cart.find(c => c.id === ordId);
+        if (!cur) return;
+        const delta = n - cur.qty;
+        if (delta === 0) return;
         await changeQty(ordId, delta);
     }, 600);
 }
@@ -2887,10 +3191,19 @@ document.addEventListener('keydown', e => {
    cart[] ถูก populate จาก server เท่านั้น
    Primary key = ordId (string จาก API)*/
 
+/* ✅ อ่าน tiers ที่เก็บไว้ตอน Add (คงอยู่แม้ refresh หน้า) */
+function _readTiers(stkcod) {
+    try {
+        const store = JSON.parse(localStorage.getItem('tierStore') || '{}');
+        if (store[stkcod] && store[stkcod].length) return store[stkcod];
+    } catch (e) { /* ignore */ }
+    return (window._tierStore || {})[stkcod] || [];
+}
+
 /* ── Map API response row → cart item ── */
 function _mapCartItem(item) {
     return {
-        id: item.ordId || '',          // PK ใช้ ordId ตลอด
+        id: String(item.ordId ?? item.ordid ?? item.OrdId ?? item.id ?? ''),        // PK ใช้ ordId ตลอด
         code: item.stkcod || '—',
         name: item.stkdes || '—',
         price: parseFloat(item.price) || 0,
@@ -2899,11 +3212,35 @@ function _mapCartItem(item) {
         brand: item.stkgrp || '—',
         isBO: item.backOrder === '1',
         uom: item.uom || '',
+        moq: parseInt(item.minord ?? item.moq) || 1,      // ✅ เพิ่มรองรับ field moq
+        priceTiers: _readTiers(item.stkcod),              // ✅ เปลี่ยนจาก _tierStore อย่างเดียว
         amt: parseFloat(item.amt) || 0
     };
 }
 
 /* ── Fetch cart จาก server แล้ว render ทุก view ── */
+// async function _fetchCartFromServer(forceRefresh = false) {
+//     try {
+//         const cuscode = window.APP_SESSION?.cuscode || '';
+
+//         const url = forceRefresh
+//             ? `${urlsPro.getProductToCartUrl}?cuscode=${encodeURIComponent(cuscode)}&t=${Date.now()}`
+//             : `${urlsPro.getProductToCartUrl}?cuscode=${encodeURIComponent(cuscode)}`;
+//         const res = await fetch(url, { method: 'GET' });
+//         console.log('RAW cart row =', JSON.stringify(json.Data?.[0]));
+//         const json = await res.json();
+//         cart = json.Data.map(_mapCartItem);
+//         if (json.IsSuccess && Array.isArray(json.Data) && json.Data.length > 0) {
+//             cart = json.Data.map(_mapCartItem);
+//         } else {
+//             cart = [];
+//         }
+//     } catch (err) {
+//         console.warn('_fetchCartFromServer failed:', err);
+//     }
+
+//     updateCart();
+// }
 async function _fetchCartFromServer(forceRefresh = false) {
     try {
         const cuscode = window.APP_SESSION?.cuscode || '';
@@ -2913,7 +3250,9 @@ async function _fetchCartFromServer(forceRefresh = false) {
             : `${urlsPro.getProductToCartUrl}?cuscode=${encodeURIComponent(cuscode)}`;
         const res = await fetch(url, { method: 'GET' });
         const json = await res.json();
-        cart = json.Data.map(_mapCartItem);
+
+        console.log('RAW cart row =', JSON.stringify(json.Data?.[0]));   // ← หลัง json ถูกประกาศแล้ว
+
         if (json.IsSuccess && Array.isArray(json.Data) && json.Data.length > 0) {
             cart = json.Data.map(_mapCartItem);
         } else {
@@ -3623,8 +3962,15 @@ function _syncSessionFromUI() {
         // ✅ กรองเฉพาะ brand ที่มีสินค้าใน PL ที่เลือก
         var selectedPlNames = Object.keys(_plSel);
         var brsToShow = _brAll;
-        if (_lastSearchType === 'vehicle' || _lastSearchType === 'part') {
-            var selectedPlNames = Object.keys(_plSel);
+        var _txt = (document.getElementById('txtSearchField')?.value || '').trim();
+        var _maker = document.getElementById('makerId')?.value || '';
+        var _range = document.getElementById('rangeId')?.value || '';
+
+        var _ctxActive =
+            (_lastSearchType === 'part' && _txt.length > 0) ||
+            (_lastSearchType === 'vehicle' && (_maker || (_range && _range !== 'ALL')));
+
+        if (_ctxActive) {
             var filteredBr = _brAll.filter(function (br) {
                 return BASE_PRODUCTS.some(function (p) {
                     return selectedPlNames.includes(p.line) && p.brand === br.name;

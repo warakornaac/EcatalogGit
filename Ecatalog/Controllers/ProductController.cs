@@ -1119,7 +1119,7 @@ namespace Ecatalog.Controllers
             }
         }
         [HttpPost]
-        public async Task<ActionResult> AddProductToCart(string Cuscode, string Stkcode, string Price, string Qty, string BackOrder="0", string Company = "TAC" )
+        public async Task<ActionResult> AddProductToCart(string Cuscode, string Stkcode, string Price, string Qty, string BackOrder="0", string Company = "TAC", string moq ="1" )
         {
             Boolean IsSuccess = false;
             string ResponseString = "";
@@ -1129,17 +1129,15 @@ namespace Ecatalog.Controllers
             {
                 var result = await Utils.CallApiAsyncMemory<
                         AddToCartResponse>(
-                            $"Ecatalog/AddProductToCart?cuscode={Cuscode}&stkcod={Stkcode}&company={Company}&price={Price}&qty={Qty}&backorder={BackOrder}&username={username}",
+                            $"Ecatalog/AddProductToCart?cuscode={Cuscode}&stkcod={Stkcode}&company={Company}&price={Price}&qty={Qty}&backorder={BackOrder}&username={username}&moq={moq}",
                             "POST",
                             null,  // ไม่ต้อง body
                         false,
                         10);
 
-                if(result.StatusCode != 200)
+                if (result.StatusCode != 200 || result.Data?.errorMessage != "Success")
                 {
-
-                    ResponseString = result.Data.errorMessage.ToString();
-                    //StatusResponse = "N";
+                    ResponseString = result.Data?.errorMessage ?? "เกิดข้อผิดพลาดจาก API";
                 }
                 else
                 {
@@ -1246,7 +1244,7 @@ namespace Ecatalog.Controllers
                 return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> EditProductToCart(int ordid, string cuscod, int qty, decimal price, string username)
+        public async Task<ActionResult> EditProductToCart(int ordid, string cuscod, int qty, decimal price, string username, string moq = "1")
         {
             bool IsSuccess = false;
             string ResponseString = "";
@@ -1259,7 +1257,9 @@ namespace Ecatalog.Controllers
             try
             {
                 var result = await Utils.CallApiAsyncMemory<EditProductToCartModel>(
-                            $"Ecatalog/EditProductToCart?ordid={ordid}&cuscode={cuscod}&qty={qty}&price={price}&username={username}",
+                            // ✅ ส่ง moq ไปด้วย (ต้องให้ API ปลายทางรับ param moq)
+                            $"Ecatalog/EditProductToCart?ordid={ordid}&cuscode={cuscod}&qty={qty}&price={price}&username={username}&moq={moq}",
+                            //$"Ecatalog/EditProductToCart?ordid={ordid}&cuscode={cuscod}&qty={qty}&price={price}&username={username}",
                             "POST",
                             null,
                             false,

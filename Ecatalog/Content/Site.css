@@ -2004,7 +2004,7 @@ body {
 }
 
 .qty {
-    width: 46px;
+    width: 60px;
     border: 1.5px solid var(--border);
     border-radius: var(--r-sm);
     padding: .3rem .4rem;
@@ -2019,7 +2019,7 @@ body {
     }
 
 .acart {
-    flex: 1;
+    flex: auto;
     background: var(--primary);
     color: #fff;
     border: none;
@@ -2033,6 +2033,7 @@ body {
     justify-content: center;
     gap: 4px;
     transition: background var(--tr),transform var(--tr);
+    max-width: 150px;
 }
 
     .acart:hover {
@@ -2134,8 +2135,8 @@ body {
     }
 
     .nf-strip .pcard {
-        min-width: 195px;
-        max-width: 195px;
+        min-width: 180px;
+        max-width: 180px;
         flex-shrink: 0;
         transition: transform .22s cubic-bezier(.4,0,.2,1),box-shadow .22s,border-color .22s;
     }
@@ -2562,7 +2563,7 @@ body {
 }
 
 .dr-qty {
-    width: 54px;
+    width: 80px;
     border: 1.5px solid var(--border);
     border-radius: var(--r-sm);
     padding: .35rem .4rem;

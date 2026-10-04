@@ -250,7 +250,7 @@ function buildSpecBodyHtml(p) {
                     <button class="dr-add-btn${isBO ? ' bo-btn' : ''}" 
                             onclick="addCartFromModal(event)">
                         <i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i>
-                        ${isBO ? 'จอง (BO)' : 'Add to Cart'}
+                        ${isBO ? 'จอง (BO)' : 'เพิ่ม'}
                     </button>
                 </div>
             </div>
@@ -351,7 +351,7 @@ function openSpecDrawer(p) {
     const addBtn = $("#drAddBtn");
     addBtn.toggleClass("bo-btn", isBO);
     addBtn.html(`<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
-                 ${isBO ? 'จอง (BO)' : 'Add to Cart'}`);
+                 ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`);
 
     // Reset tab แรก
     $(".drtab").removeClass("active").first().addClass("active");
@@ -441,6 +441,7 @@ async function _callAddToCartAPI(p, qty, btnEl) {
     const isBO = p.isBO ?? ((parseInt(p.stock ?? p.qtyReady ?? 99)) === 0);
     const stkcode = p.code || p.stkcode || '';
     const price = parseFloat(p.price) || 0;
+    const moq = parseInt(p.moq, 10) || 1;
 
     /* ── loading state ── */
     if (btnEl) {
@@ -458,7 +459,8 @@ async function _callAddToCartAPI(p, qty, btnEl) {
                 Company: company,
                 Price: price.toString(),
                 Qty: qty.toString(),
-                BackOrder: isBO ? '1' : '0'
+                BackOrder: isBO ? '1' : '0',
+                moq: moq.toString(),
             })
         });
 
@@ -483,6 +485,16 @@ async function _callAddToCartAPI(p, qty, btnEl) {
             _resetAddBtn(btnEl, isBO, false);
             return false;
         }
+
+        window._tierStore = window._tierStore || {};
+        window._tierStore[stkcode] = p.priceTiers || [];
+
+        // ✅ เก็บลง localStorage ด้วย เพื่อให้ tiers ไม่หายหลัง refresh
+        try {
+            const store = JSON.parse(localStorage.getItem('tierStore') || '{}');
+            store[stkcode] = p.priceTiers || [];
+            localStorage.setItem('tierStore', JSON.stringify(store));
+        } catch (e) { /* ignore */ }
 
         /* ── Single Source of Truth: fetch cart จาก server ── */
         await _fetchCartFromServer();   // อยู่ใน truscripts.js
@@ -510,10 +522,10 @@ function _resetAddBtn(btnEl, isBO, success) {
         setTimeout(() => {
             btnEl.classList.remove('added');
             btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
-                               ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+                               ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
         }, 1500);
     } else {
         btnEl.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> 
-                           ${isBO ? 'จอง (BO)' : 'Add to Cart'}`;
+                           ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
     }
 }

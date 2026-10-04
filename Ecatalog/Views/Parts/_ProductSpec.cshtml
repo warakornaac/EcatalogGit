@@ -32,12 +32,26 @@
             <div class="dm-brand" id="drBrand">—</div>
             <h3 id="drName">—</h3>
             <div class="dm-code" id="drCode2">—</div>
-            <div class="dr-price" id="drPrice">$0.00</div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="dr-price" id="drPrice">฿0.00</div>
+                <span id="drOld" style="color:var(--text-3);text-decoration:line-through;font-size:12px;display:none"></span>
+                <span id="drDisc" style="background:#dcfce7;color:#16a34a;font-weight:700;font-size:11px;border-radius:10px;padding:1px 8px;display:none"></span>
+            </div>
+
+            <select id="drTier" onchange="drTierPick(this.value)"
+                    style="display:none;height:32px;border:1px solid var(--border);border-radius:8px;
+               padding:0 8px;font-size:12px;margin-top:6px;width:100%;background:#fff;outline:none"></select>
+
             <div class="dr-add-row">
-                <input type="number" class="dr-qty" id="drQty" value="1" min="1" max="99">
+                <input type="number" class="dr-qty" id="drQty" value="1" min="1" oninput="drTierRefresh()">
                 <button class="dr-add-btn" id="drAddBtn" onclick="addCartFromDrawer(event)">
                     <i class="bi bi-cart-plus"></i> Add to Cart
                 </button>
+            </div>
+
+            <div style="font-size:12px;margin-top:6px">
+                รวม <b id="drTotal">฿0.00</b>
+                <span id="drSave" style="color:#16a34a;font-weight:600"></span>
             </div>
         </div>
     </div>

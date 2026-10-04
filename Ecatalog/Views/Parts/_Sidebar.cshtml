@@ -197,7 +197,7 @@
                        autocomplete="off" aria-autocomplete="list" aria-expanded="false">
                 <button id="btnClearSearch"
                         style="display:none;position:absolute;right:28px;top:50%;transform:translateY(-50%);background:none;border:none;padding:0;cursor:pointer;color:#aaa;font-size:14px;line-height:1;align-items:center;"
-                        onclick="document.getElementById('txtSearchField').value=''; this.style.display='none'; syncSearch('sidebar'); document.getElementById('txtSearchField').focus();">
+                        onclick="clearSearchField()">
                     <i class="bi bi-x-circle-fill"></i>
                 </button>
                 <i class="bi bi-search"></i>
@@ -1106,6 +1106,34 @@ async function loadModelRange(_isInit = false) {
         });
         //console.log('[ecAc] ready');
     }
+
+    window.clearSearchField = function () {
+        const inp = document.getElementById('txtSearchField');
+        inp.value = '';
+        document.getElementById('btnClearSearch').style.display = 'none';
+        const hq = document.getElementById('headerQ'); if (hq) hq.value = '';
+        const pq = document.getElementById('partQ'); if (pq) pq.value = '';
+
+        if (_lastSearchType === 'part') {
+            _lastSearchType = '';
+            BASE_PRODUCTS = [];
+            PRODUCTS = [];
+            PRODUCTS_FOR_COUNT = [];
+            PRODUCTS_FOR_PL_COUNT = [];
+            PRODUCTS_FOR_BR_COUNT = [];
+            chkState = { pl: {}, br: {} };
+            fitState = new Set();
+            document.querySelectorAll('.fit-chip.active').forEach(el => el.classList.remove('active'));
+            if (typeof pgmResetSaved === 'function') pgmResetSaved();
+            _sidebarForcedReset = true;
+            renderProducts([]);
+            _updateSidebar();
+            renderActiveFilterChips();
+        } else {
+            syncSearch('sidebar');
+        }
+        inp.focus();
+    };
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
