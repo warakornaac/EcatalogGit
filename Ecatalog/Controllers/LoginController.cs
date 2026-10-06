@@ -68,9 +68,13 @@ namespace Ecatalog.Controllers
                     Session["cuscode"] = user.cuscode;
                     Session["isActive"] = user.isActive;
                     Session["UserType"] = user.userType.ToString(); // userType == 0 ถ้าไม่มีใน UserAuthen
+                    //await InsertLoginLog(Username: Username, flag: "internal", loginStatus: "SUCCESS");
 
                     IsSuccess = true;
                 }
+
+                InsertLoginLog(Username: Username, flag: "internal", loginStatus: IsSuccess ? "SUCCESS" : "FAIL", failReason: IsSuccess ? null : "Invalid Username or Password" );
+           
 
                 return Json(new
                 {
@@ -82,6 +86,7 @@ namespace Ecatalog.Controllers
             }
             catch (Exception ex)
             {
+                InsertLoginLog(Username: Username, flag: "internal", loginStatus: "FAIL" ,failReason:ex.Message);
                 return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
@@ -111,6 +116,45 @@ namespace Ecatalog.Controllers
                 result = "ERROR: " + ex.Message;
             }
             return Content(result);
+        }
+        [NonAction]
+        public async Task InsertLoginLog
+            (
+            string Username,
+            string flag,
+            string loginStatus,
+            string failReason = null
+            )
+        {
+            //string username = Session["username"].ToString();
+            string UserType = Session["UserType"]?.ToString() ?? "0";
+            string userAgent = Request.UserAgent;
+            var userHostAddress = Request.UserHostAddress;
+            if (!string.IsNullOrEmpty(userAgent) && userAgent.Length > 500)
+                userAgent = userAgent.Substring(0, 500);
+            try
+            {
+                if (!string.IsNullOrEmpty(userAgent) && userAgent.Length > 500)
+                    userAgent = userAgent.Substring(0, 500);
+                var result = await Utils.CallApiAsyncMemory<InsertLogAuthenLogin>(
+                    $"Ecatalog/InsertLoginLog?usrId={Username}&usrTyp={UserType}&flag={flag}&userHostAddress={userHostAddress}&loginStatus={loginStatus}&failReason={failReason}&userAgent=E-Catalog",
+                    "POST",
+                    null,
+                    false,
+                    10);
+
+                if (result.StatusCode != 200)
+                {
+                    //ResponseString = result.Data?.errorMessage ?? "เกิดข้อผิดพลาดจาก API";
+                    Console.WriteLine(result.Data?.errorMessage ?? "เกิดข้อผิดพลาดจาก API");
+                }
+                else
+                {
+                    Console.WriteLine("Log Inserted");
+
+                }
+            }
+            catch(Exception ex) { Console.WriteLine("Error:" + ex.Message); }
         }
     }
 }
