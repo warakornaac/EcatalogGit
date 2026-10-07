@@ -266,6 +266,7 @@ function _applyFiltersAndRender() {
     const filterUniversal = !skipGroup && activeGroupStr === '99';
 
     const baseFiltered = BASE_PRODUCTS.filter(p => {
+        if (!filterUniversal && gEl('makerId')?.value && !p.carModel) return false;
         if (filterUniversal && p.carModel !== 'Universal') return false;
         if (filterByCat && p.carModel !== 'Universal' && p.catId !== activeGroupStr && p.cat !== activeGroupObj.label) return false;
         if (q) {

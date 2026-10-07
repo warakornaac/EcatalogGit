@@ -180,11 +180,21 @@
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ';
                 document.getElementById('loginOverlay').style.display = 'none';
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'ไม่สำเร็จ',
-                    text: res.Message
-                });
+
+                if (res.IsNoPermission) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ไม่มีสิทธิ์เข้าใช้งาน',
+                        text: 'กรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์การเข้าถึง',
+                        confirmButtonText: 'ตกลง'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'ไม่สำเร็จ',
+                        text: res.Message
+                    });
+                }
             }
 
         } catch (e) {

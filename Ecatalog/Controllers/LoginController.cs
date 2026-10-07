@@ -57,31 +57,48 @@ namespace Ecatalog.Controllers
                         RawResult = Newtonsoft.Json.JsonConvert.SerializeObject(result)
                     }, JsonRequestBehavior.AllowGet);
 
+                bool isNoPermission = false;
+                string failReason = "Invalid Username or Password";
+
                 if (result.Data.result != null && result.Data.result.Count > 0)
                 {
                     var user = result.Data.result.FirstOrDefault();
                     System.Diagnostics.Debug.WriteLine($"slmcode=[{user.slmcode}] cuscode=[{user.cuscode}] userType=[{user.userType}]");
 
-                    Session["username"] = Username;
-                    Session["email"] = user.email;
-                    Session["slmcode"] = user.slmcode;
-                    Session["cuscode"] = user.cuscode;
-                    Session["isActive"] = user.isActive;
-                    Session["UserType"] = user.userType.ToString(); // userType == 0 ถ้าไม่มีใน UserAuthen
-                    //await InsertLoginLog(Username: Username, flag: "internal", loginStatus: "SUCCESS");
+                    // UserType = 0 → ไม่มีสิทธิ์เข้าใช้งาน (ไม่ set Session)
+                    if (user.userType.ToString() == "0")
+                    {
+                        isNoPermission = true;
+                        failReason = "No permission (UserType = 0)";
+                        Session.Clear();
+                    }
+                    else
+                    {
+                        Session["username"] = Username;
+                        Session["email"] = user.email;
+                        Session["slmcode"] = user.slmcode;
+                        Session["cuscode"] = user.cuscode;
+                        Session["isActive"] = user.isActive;
+                        Session["UserType"] = user.userType.ToString();
 
-                    IsSuccess = true;
+                        IsSuccess = true;
+                    }
                 }
 
-                InsertLoginLog(Username: Username, flag: "internal", loginStatus: IsSuccess ? "SUCCESS" : "FAIL", failReason: IsSuccess ? null : "Invalid Username or Password" );
-           
+                InsertLoginLog(Username: Username, flag: "internal",
+                    loginStatus: IsSuccess ? "SUCCESS" : "FAIL",
+                    failReason: IsSuccess ? null : failReason);
 
                 return Json(new
                 {
                     IsSuccess = IsSuccess,
+                    IsNoPermission = isNoPermission,
                     IsFromCache = result.IsFromCache,
-                    Data = result.Data?.result,
-                    Message = result.Data.errorMessage
+                    // ไม่ส่งข้อมูล user กลับไปถ้าถูกบล็อก
+                    Data = IsSuccess ? result.Data?.result : null,
+                    Message = isNoPermission
+                        ? "ไม่มีสิทธิ์เข้าใช้งาน\nกรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์การเข้าถึง"
+                        : result.Data.errorMessage
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
