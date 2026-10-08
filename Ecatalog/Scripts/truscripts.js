@@ -994,6 +994,8 @@ function specTierRefresh(pid) {
     setText('modalPrice-', fmt(t.price));
     setText('modalTotal-', fmt(q * t.price));
     setText('modalSave-', `(ประหยัด ${fmt(Math.max(0, saving))})`);
+    const saveEl = gEl('modalSave-' + pid);
+    if (saveEl) saveEl.style.display = (tiers.length > 1 && saving > 0) ? '' : 'none';
 
     const old = gEl('modalOld-' + pid);
     if (old) { old.textContent = fmt(base); old.style.display = t.price < base ? '' : 'none'; }
@@ -1031,7 +1033,9 @@ function drTierRefresh() {
 
     gEl('drPrice').textContent = fmt(t.price);
     gEl('drTotal').textContent = fmt(q * t.price);
-    gEl('drSave').textContent = `(ประหยัด ${fmt(saving)})`;
+    const drSaveEl = gEl('drSave');
+    drSaveEl.textContent = `(ประหยัด ${fmt(saving)})`;
+    drSaveEl.style.display = (tiers.length > 1 && saving > 0) ? '' : 'none';
 
     const old = gEl('drOld');
     old.textContent = fmt(base);
@@ -1131,7 +1135,8 @@ function buildSpecHTML(p) {
 
             <div class="spec-total" style="font-size:12px;margin-top:6px">
                 รวม <b id="modalTotal-${p.id}">${fmt(t0.price)}</b>
-                <span id="modalSave-${p.id}" style="color:#16a34a;font-weight:600">(ประหยัด ${fmt(0)})</span>
+                <span id="modalSave-${p.id}"
+                      style="color:#16a34a;font-weight:600;${tiers.length > 1 ? '' : 'display:none'}">(ประหยัด ${fmt(0)})</span>
             </div>
         </div>
     </div>

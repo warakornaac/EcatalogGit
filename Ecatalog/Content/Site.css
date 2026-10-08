@@ -2406,7 +2406,8 @@ body {
     top: 0;
     right: -600px;
     width: min(560px, 100vw);
-    height: 100vh;
+    height: 100vh; /* fallback เบราว์เซอร์เก่า */
+    height: 100dvh; /* ความสูงจริงตามแถบเบราว์เซอร์ */
     background: var(--surface);
     box-shadow: var(--sh-lg);
     z-index: 2100;
@@ -2658,8 +2659,9 @@ body {
 
 .dr-content {
     flex: 1;
+    min-height: 0; /* สำคัญ: ให้ flex child scroll ได้ */
     overflow-y: auto;
-    padding: 16px 18px;
+    padding: 16px 18px calc(24px + env(safe-area-inset-bottom, 0px)) 16px;
 }
 
 .drpane {
@@ -3044,16 +3046,19 @@ body {
         position: fixed;
         top: 0;
         left: 0;
-        height: 100vh;
+        height: 100vh; /* fallback */
+        height: 100dvh; /* ความสูงจริงตามแถบเบราว์เซอร์ */
         z-index: 1039;
         transform: translateX(-110%);
         box-shadow: var(--sh-lg);
         width: var(--sidebar-w);
         transition: transform .3s cubic-bezier(.4,0,.2,1);
         padding-top: 110px;
-        padding-bottom: calc(var(--bottom-bar-h) + 16px);
-        overflow-y: auto; /* ← เพิ่ม */
-        overflow-x: hidden; /* ← เพิ่ม */
+        padding-bottom: calc(var(--bottom-bar-h) + 16px + env(safe-area-inset-bottom, 0px));
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
     }
 
         .sidebar.mob-open {
@@ -4493,6 +4498,47 @@ body.theme-blue {
     --primary-glow: rgba(101,146,252,.18);
 }
 
+/* ───────── THEME BLUE → Product Group Picker Modal ───────── */
+body.theme-blue {
+    --red: #0d6efd;
+    --red-dk: #0a58ca;
+    --red-soft: #e8f0ff;
+    --red-line: #b6d0ff;
+}
+
+    /* ค่าที่เคยฝังสีแดงไว้ตรง ๆ */
+    body.theme-blue .pgm-inp:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+    }
+
+    /* Header ของ modal */
+    body.theme-blue .pgm-hd {
+        background: var(--primary);
+    }
+
+    /* Step ปัจจุบัน + ปุ่มยืนยัน */
+    body.theme-blue .pgm-cur,
+    body.theme-blue .pgm-cur b,
+    body.theme-blue .pgm-pri {
+        --red: var(--primary);
+    }
+
+        body.theme-blue .pgm-pri:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+    /* Checkbox + แถวที่ถูกเลือก */
+    body.theme-blue .pgm-row input[type=checkbox],
+    body.theme-blue .pgm-chkall input {
+        accent-color: var(--primary);
+    }
+
+    body.theme-blue .pgm-row.is-on {
+        background: var(--primary-light);
+        border-color: #b6d0ff;
+    }
+
 .theme-switch-btn {
     width: 34px;
     height: 34px;
@@ -4607,7 +4653,7 @@ body.theme-blue {
     box-sizing: border-box;
     display: grid;
     background: rgba(255, 255, 255, 0.35);
-    filter: blur(4px) contrast(10);
+    filter: blur(4px) contrast(3);
     mix-blend-mode: darken;
 }
 
@@ -4617,7 +4663,7 @@ body.theme-blue {
         grid-area: 1/1;
         width: 40px;
         height: 40px;
-        background: #FD152F;
+        background: var(--primary);
         animation: l7 2s infinite;
     }
 
@@ -5101,3 +5147,62 @@ body.pgm-lock {
         user-drag: none;
         -khtml-user-drag: none;
     }
+.sinput-wrap {
+    position: relative;
+}
+
+.ecac-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-top: 2px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.15);
+}
+
+    .ecac-dropdown.open {
+        display: block;
+    }
+
+.ecac-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+    .ecac-item:hover, .ecac-item.active {
+        background: #f3f0ff;
+    }
+
+.ecac-code {
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.ecac-des {
+    font-size: 11px;
+    color: #555;
+}
+
+.ecac-oem {
+    font-size: 10px;
+    color: #888;
+}
+
+.ecac-empty {
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #888;
+}
+
+.ecac-dropdown mark {
+    background: #ffe58f;
+    padding: 0;
+}

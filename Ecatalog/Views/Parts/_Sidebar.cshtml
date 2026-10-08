@@ -4,67 +4,6 @@
     var sessionSlmCode = Session["slmcode"]?.ToString() ?? "";
     var sessionCusCode = Session["cusCode"]?.ToString() ?? "";
 }
-<style>
-    .sinput-wrap {
-        position: relative;
-    }
-
-    .ecac-dropdown {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: 2000;
-        max-height: 320px;
-        overflow-y: auto;
-        margin-top: 2px;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        box-shadow: 0 6px 16px rgba(0,0,0,.15);
-    }
-
-        .ecac-dropdown.open {
-            display: block;
-        }
-
-    .ecac-item {
-        padding: 6px 10px;
-        cursor: pointer;
-        border-bottom: 1px solid #f1f1f1;
-    }
-
-        .ecac-item:hover, .ecac-item.active {
-            background: #f3f0ff;
-        }
-
-    .ecac-code {
-        font-weight: 700;
-        font-size: 12px;
-    }
-
-    .ecac-des {
-        font-size: 11px;
-        color: #555;
-    }
-
-    .ecac-oem {
-        font-size: 10px;
-        color: #888;
-    }
-
-    .ecac-empty {
-        padding: 8px 10px;
-        font-size: 12px;
-        color: #888;
-    }
-
-    .ecac-dropdown mark {
-        background: #ffe58f;
-        padding: 0;
-    }
-</style>
 
 <div id="appConfig"
      data-usertype="@SessionUserType"
@@ -283,7 +222,7 @@ async function loadMaker(_skipReset = false) {
             result.Data.forEach((item, index) => {
                 ddl.append(`<option value="${item.Id}">${item.Name}</option>`);
                 if (index === 4) {
-                    ddl.append('<option disabled>──────────────────────────</option>');
+                    ddl.append('<option disabled>─────────────────────</option>');
                 }
             });
         }
