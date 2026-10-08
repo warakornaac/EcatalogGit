@@ -31,7 +31,7 @@ namespace Ecatalog.Controllers
         [HttpPost]
         public async Task<ActionResult> AuthenUser(string Username, string Password, string Latitude = "", string Longitude = "")
         {
-            Boolean IsSuccess = false;
+            bool IsSuccess = false;
             string userAgent = Request.UserAgent ?? "";
             try
             {
@@ -50,27 +50,22 @@ namespace Ecatalog.Controllers
                     return Json(new { IsSuccess = false, Message = "API returned null" }, JsonRequestBehavior.AllowGet);
 
                 if (result.Data == null)
-                    return Json(new
-                    {
-                        IsSuccess = false,
-                        Message = "TEST123 API Data is null",
-                        RawResult = Newtonsoft.Json.JsonConvert.SerializeObject(result)
-                    }, JsonRequestBehavior.AllowGet);
+                    return Json(new { IsSuccess = false, Message = "API Data is null" }, JsonRequestBehavior.AllowGet);
 
-                bool isNoPermission = false;
+                string message = null;
                 string failReason = "Invalid Username or Password";
 
-                if (result.Data.result != null && result.Data.result.Count > 0)
-                {
-                    var user = result.Data.result.FirstOrDefault();
-                    System.Diagnostics.Debug.WriteLine($"slmcode=[{user.slmcode}] cuscode=[{user.cuscode}] userType=[{user.userType}]");
+                var user = result.Data.result?.FirstOrDefault();
 
-                    // UserType = 0 → ไม่มีสิทธิ์เข้าใช้งาน (ไม่ set Session)
-                    if (user.userType.ToString() == "0")
+                if (user != null)
+                {
+                    // ไม่มีใน UserAuthen = userType == 0
+                    if (user.userType == 0)
                     {
-                        isNoPermission = true;
-                        failReason = "No permission (UserType = 0)";
+                        // บล็อก: ไม่ set Session
                         Session.Clear();
+                        failReason = "No permission (not in UserAuthen)";
+                        message = "ไม่มีสิทธิ์เข้าใช้งาน\nกรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์การเข้าถึง";
                     }
                     else
                     {
@@ -85,25 +80,29 @@ namespace Ecatalog.Controllers
                     }
                 }
 
+                if (!IsSuccess && message == null)
+                {
+                    message = string.IsNullOrWhiteSpace(result.Data.errorMessage)
+                        ? "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+                        : result.Data.errorMessage;
+                }
+
                 InsertLoginLog(Username: Username, flag: "internal",
                     loginStatus: IsSuccess ? "SUCCESS" : "FAIL",
-                    failReason: IsSuccess ? null : failReason);
+                    failReason: IsSuccess ? null : Uri.EscapeDataString(failReason));
 
                 return Json(new
                 {
                     IsSuccess = IsSuccess,
-                    IsNoPermission = isNoPermission,
                     IsFromCache = result.IsFromCache,
-                    // ไม่ส่งข้อมูล user กลับไปถ้าถูกบล็อก
-                    Data = IsSuccess ? result.Data?.result : null,
-                    Message = isNoPermission
-                        ? "ไม่มีสิทธิ์เข้าใช้งาน\nกรุณาติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์การเข้าถึง"
-                        : result.Data.errorMessage
+                    Data = IsSuccess ? result.Data.result : null, // ไม่ส่งข้อมูล user กลับถ้าถูกบล็อก
+                    Message = message
                 }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                InsertLoginLog(Username: Username, flag: "internal", loginStatus: "FAIL" ,failReason:ex.Message);
+                InsertLoginLog(Username: Username, flag: "internal", loginStatus: "FAIL",
+                    failReason: Uri.EscapeDataString(ex.Message));
                 return Json(new { IsSuccess = false, Message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
