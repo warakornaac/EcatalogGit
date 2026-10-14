@@ -179,6 +179,7 @@
     </Compile>
     <Compile Include="Helpers\KeyMoqPriceResult.cs" />
     <Compile Include="Helpers\LargeJsonResult.cs" />
+    <Compile Include="Helpers\SessionAuthorizeAttribute.cs" />
     <Compile Include="Models\RbacViewModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Security\PermissionAuthorizeAttribute.cs" />

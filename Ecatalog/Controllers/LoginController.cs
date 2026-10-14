@@ -14,6 +14,7 @@ using System.DirectoryServices;
 
 namespace Ecatalog.Controllers
 {
+    [AllowAnonymous]
     public class LoginController : Controller
     {
         // GET: Login
@@ -26,6 +27,13 @@ namespace Ecatalog.Controllers
             }
 
             return View();
+        }
+        [AllowAnonymous]
+        public ActionResult KillSession()
+        {
+            Session.Clear();
+            Session.Abandon();
+            return Content("session killed");
         }
 
         [HttpPost]

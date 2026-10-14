@@ -460,6 +460,28 @@ async function loadModelRange(_isInit = false) {
     }
 }
     //get value text, checkbox
+    // async function getSearchFieldObject() {
+    //     _syncSessionFromUI();
+    //     const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
+    //     const request = {
+    //         searchText: $("#txtSearchField").val().trim(),
+    //         searchFields: $(".smode-btn.active").map(function () {
+    //             return $(this).data("mode");
+    //         }).get(),
+    //         marketSegmentId: $("#marketsegId").val() || "",
+    //         segmentId: $("#segmentId").val() || "",
+    //         makerId: $("#makerId").val() || "",
+    //         rangeId: $("#rangeId").val() || "",
+    //         bodyId: $("#bodyId").val() || "",
+    //         engineId: $("#engineId").val() || "",
+    //         yearFrom: $("#yearFrom").val() || "",
+    //         yearTo: $("#yearTo").val() || "",
+    //         driveType: $("#driveId").val() || "",
+    //         SlmCode: $("#salesmanId").val() || "",
+    //         CusCode: $("#customerId").val() || "",
+    //         Company: companies
+    //     };
+    //     return request;
     async function getSearchFieldObject() {
         _syncSessionFromUI();
         const companies = typeof getActiveCompanies === 'function' ? getActiveCompanies() : [];
@@ -468,21 +490,22 @@ async function loadModelRange(_isInit = false) {
             searchFields: $(".smode-btn.active").map(function () {
                 return $(this).data("mode");
             }).get(),
-            marketSegmentId: $("#marketsegId").val() || "",
-            segmentId: $("#segmentId").val() || "",
-            makerId: $("#makerId").val() || "",
-            rangeId: $("#rangeId").val() || "",
-            bodyId: $("#bodyId").val() || "",
-            engineId: $("#engineId").val() || "",
-            yearFrom: $("#yearFrom").val() || "",
-            yearTo: $("#yearTo").val() || "",
-            driveType: $("#driveId").val() || "",
+            marketSegmentId: "",
+            segmentId: "",
+            makerId: "",
+            rangeId: "",
+            bodyId: "",
+            engineId: "",
+            yearFrom: "",
+            yearTo: "",
+            driveType: "",
             SlmCode: $("#salesmanId").val() || "",
             CusCode: $("#customerId").val() || "",
             Company: companies
         };
         return request;
     }
+    // }
     //get autofill
     async function getAutofill() {
 

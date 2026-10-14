@@ -53,6 +53,7 @@ namespace Ecatalog.Models
         public string stkcode { get; set; }
         public string stkcodeDescription { get; set; }
         public decimal price { get; set; }
+        public string dealerPrice { get; set; }
         public string qtyReady { get; set; }
         public string makerName { get; set; }
         public string modelName { get; set; }

@@ -452,7 +452,7 @@ window._imgLightbox = function (startIdx, srcs) {
             <i class="bi bi-x-lg"></i>
         </button>
         <button id="_lbPrev" type="button" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
-            background:rgba(255,255,255,.15);border:none;color:#fff;
+            background:rgba(188 188 188 / 50%);border:none;color:#fff;
             font-size:22px;border-radius:50%;width:42px;height:42px;cursor:pointer;z-index:1;
             display:${srcs.length > 1 ? 'flex' : 'none'};align-items:center;justify-content:center">
             <i class="bi bi-chevron-left"></i>
@@ -462,7 +462,7 @@ window._imgLightbox = function (startIdx, srcs) {
                    border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6);
                    transition:opacity .15s;pointer-events:none">
         <button id="_lbNext" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
-            background:rgba(255,255,255,.15);border:none;color:#fff;
+            background:rgba(188 188 188 / 50%);border:none;color:#fff;
             font-size:22px;border-radius:50%;width:42px;height:42px;cursor:pointer;z-index:1;
             display:${srcs.length > 1 ? 'flex' : 'none'};align-items:center;justify-content:center">
             <i class="bi bi-chevron-right"></i>

@@ -75,7 +75,7 @@
                     </div>
 
                     <!-- Customer Detail -->
-                    <div class="col-lg-5 col-md-7 col-12" >
+                    <div class="col-lg-5 col-md-7 col-12">
                         <div class="hz" id="customerCard">
                             <div class="customer-info">
                                 <div class="mb-2"><strong>-</strong></div>
@@ -92,12 +92,13 @@
 
                 <div class="hz" id="rz2" style="margin-bottom:80px">
                     <div class="rsh">
-                        <span class="rsh-title">Product Results</span>
+                        <span class="rsh-title"><span class="rsh-prefix">Product </span>Results</span>
                         <span class="rcount" id="rcount"></span>
+                        <span class="flabel" id="companyHint" style="font-size:10px"></span>
 
                         <div class="sort-dropdown">
                             <button type="button" class="sort-select" id="sortDropdownBtn">
-                                เรียงตาม: รุ่นรถ
+                                <span class="sort-prefix">เรียงตาม: </span>รุ่นรถ
                                 <span class="sort-arrow">▼</span>
                             </button>
 
@@ -165,16 +166,16 @@
 
     <!-- GUIDE -->
     @*<div class="guide" id="guide">
-        <button class="guide-x" onclick="gEl('guide').style.display='none'"><i class="bi bi-x"></i></button>
-        <h6><i class="bi bi-stars"></i> Guided Search Flow</h6>
-        <p>
-            <strong>①</strong> Vehicle Filter<br>
-            <strong>②</strong> Search Parts (multi-mode)<br>
-            <strong>③</strong> Sidebar Filters → results update instantly<br>
-            <strong>④</strong> "See detail" → Spec popup<br>
-            <strong>Bottom Bar</strong> → Switch product groups
-        </p>
-    </div>*@
+            <button class="guide-x" onclick="gEl('guide').style.display='none'"><i class="bi bi-x"></i></button>
+            <h6><i class="bi bi-stars"></i> Guided Search Flow</h6>
+            <p>
+                <strong>①</strong> Vehicle Filter<br>
+                <strong>②</strong> Search Parts (multi-mode)<br>
+                <strong>③</strong> Sidebar Filters → results update instantly<br>
+                <strong>④</strong> "See detail" → Spec popup<br>
+                <strong>Bottom Bar</strong> → Switch product groups
+            </p>
+        </div>*@
 
     <!-- ═══════════ CART PANEL ════════════════ -->
     @Html.Partial("~/Views/Parts/_Cart.cshtml")
@@ -189,10 +190,96 @@
     <script src="~/Scripts/jquery-3.4.1.min.js"></script>
     <script src="~/Scripts/bootstrap.bundle.min.js"></script>
     <script src="@Url.Content("~/Scripts/sweetalert2.all.min.js")"></script>
+
+    <script>
+(function () {
+    let sessionAlertShown = false;
+    const loginUrl = '@Url.Action("Login", "Login")';
+
+    function showSessionExpired() {
+        if (sessionAlertShown) return;      // กันเด้งซ้ำจากหลาย request
+        sessionAlertShown = true;
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session หมดอายุ',
+            text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+            confirmButtonText: 'เข้าสู่ระบบ',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then(function () {
+            window.location.href = loginUrl;
+        });
+    }
+
+    // ซ่อน loading overlay ที่อาจค้างอยู่
+    function hideOverlay() {
+        const o = document.getElementById('loadingOverlay');
+        if (o) o.style.display = 'none';
+    }
+
+    // ── jQuery AJAX ──
+    $(document).ajaxError(function (event, xhr) {
+        if (xhr.status === 401 || (xhr.responseJSON && xhr.responseJSON.IsSessionExpired)) {
+            hideOverlay();
+            showSessionExpired();
+        }
+    });
+
+    // ── fetch ──
+    const _fetch = window.fetch;
+    window.fetch = function (input, init) {
+        init = init || {};
+        init.headers = new Headers(init.headers || {});
+        init.headers.set('X-Requested-With', 'XMLHttpRequest'); // ให้ server รู้ว่าเป็น AJAX
+
+        return _fetch(input, init).then(function (res) {
+            if (res.status === 401) {
+                hideOverlay();
+                showSessionExpired();
+            }
+            return res;
+        });
+    };
+})();
+    </script>
+
+    <script>
+(function () {
+    const TIMEOUT_MIN = 240;                 // ต้องเท่ากับ sessionState timeout ใน web.config
+    const loginUrl = '@Url.Action("Login", "Login")';
+    let timer;
+
+    function expire() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session หมดอายุ',
+            text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+            confirmButtonText: 'เข้าสู่ระบบ',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then(function () { window.location.href = loginUrl; });
+    }
+
+    function reset() {
+        clearTimeout(timer);
+        timer = setTimeout(expire, TIMEOUT_MIN * 60 * 1000);
+    }
+
+    // ทุกครั้งที่มี request ไป server session จะถูกต่ออายุ → รีเซ็ตตัวนับ
+    $(document).ajaxComplete(reset);
+    const f = window.fetch;
+    window.fetch = function () { return f.apply(this, arguments).finally(reset); };
+
+    reset();
+})();
+    </script>
+
     <script src="@Url.Content("~/Scripts/truscripts.js")"></script>
     <script src="@Url.Content("~/Scripts/productSearch.js")"></script>
     <script src="@Url.Content("~/Scripts/productTabLoader.js")"></script>
     <script src="@Url.Content("~/Scripts/select2.min.js")"></script>
+
     <script>
     window.APP_SESSION = {
         cuscode : '@Session["cuscode"]',
@@ -200,6 +287,7 @@
         username: '@Session["username"]'
     };
     </script>
+
     <script>
         $(document).ready(async function () {
             // โหลด dropdown

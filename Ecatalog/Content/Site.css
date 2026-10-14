@@ -1894,12 +1894,12 @@ body {
 
 .pimg {
     padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 115px;
+    display: block;
+    width: 100%;
+    height: 115px; /* ไม่เกินเดิม */
     position: relative;
-
+    overflow: hidden; /* กันรูปล้นนอกการ์ด */
+    background: #fff;
     -webkit-user-drag: none;
     user-select: none;
     -webkit-user-select: none;
@@ -1907,9 +1907,21 @@ body {
 }
 
     .pimg img {
-        max-height: 85px;
-        max-width: 100%;
-        object-fit: contain;
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-width: 100%; /* กันล้นด้านข้าง */
+        max-height: 100%;
+        object-fit: contain; /* รูปครบทั้งใบ ไม่โดนครอป */
+        mix-blend-mode: multiply;
+    }
+    .pimg .no-image {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        min-height: 0;
+        border-radius: 0;
     }
 
 .pstock {
@@ -1925,6 +1937,8 @@ body {
     border-radius: 20px;
     backdrop-filter: blur(4px);
     border: 1px solid;
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0,0,0,.12);
 }
 
     .pstock.in-stock {
@@ -1944,13 +1958,12 @@ body {
         color: #be123c;
         border-color: #fda4af;
     }
-
 .pbody {
     padding: 10px;
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .pname {
@@ -1968,7 +1981,7 @@ body {
 
 .pprice {
     font-family: 'Noto Sans Thai', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--primary);
 }
@@ -3141,7 +3154,7 @@ body {
     top: 0;
     right: -440px;
     width: min(400px,100vw);
-    height: 100vh;
+    height: 100dvh;
     background: var(--surface);
     box-shadow: var(--sh-lg);
     z-index: 3100;
@@ -3222,13 +3235,14 @@ body {
     .cart-row img {
         width: 70px;
         height: 70px;
+        min-width: 70px;
         object-fit: contain;
         border-radius: var(--r-sm);
         border: 1px solid var(--border);
-        background: var(--surface-2);
+        background: #fff;
+        mix-blend-mode: multiply;
         padding: 4px;
         flex-shrink: 0;
-
         -webkit-user-drag: none;
         user-select: none;
         -webkit-user-select: none;
@@ -4179,8 +4193,9 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 200px;
+    max-width: 300px;
     height: 100%;
+    max-height: 300px;
     min-height: 100px;
     background: var(--surface-2);
     border-radius: var(--r);
@@ -4193,9 +4208,60 @@ body {
     justify-content: center;
     width: 70px;
     height: 70px;
-    min-height: 100px;
+    min-width: 70px;
+    min-height: 0;
+    flex-shrink: 0;
     background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+}
+
+.spec-img-wrap {
+    width: 220px;
+    height: 220px;
+    flex-shrink: 0;
     border-radius: var(--r);
+    overflow: hidden;
+    background: #fff;
+}
+
+    .spec-img-wrap img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        mix-blend-mode: multiply;
+    }
+/* no-image ใน hero ให้ขนาดเท่ากล่องรูปจริง */
+.spec-hero > .no-image {
+    width: 220px;
+    height: 220px;
+    max-width: none;
+    max-height: none;
+    min-height: 0;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: var(--r);
+}
+
+/* กรณีรูปโหลดไม่สำเร็จ (onerror แทนที่เนื้อหาใน .spec-img-wrap) */
+.spec-img-wrap > .no-image {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    min-height: 0;
+    background: transparent;
+    border-radius: 0;
+}
+@media (max-width: 575px) {
+    .spec-img-wrap,
+    .spec-hero > .no-image {
+        width: 100%;
+        max-width: 220px;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
 }
 
 /* ── NAV / AVATAR / DROPDOWN ── */
@@ -5206,3 +5272,18 @@ body.pgm-lock {
     background: #ffe58f;
     padding: 0;
 }
+@media (max-width: 575px) {
+    .rsh-prefix,
+    .sort-prefix {
+        display: none;
+    }
+}
+
+.dealer-price {
+    color: #97131f;
+}
+/* โหมดแดง */
+body.theme-blue .dealer-price {
+    color: #c62231;
+}
+/* โหมดน้ำเงิน */

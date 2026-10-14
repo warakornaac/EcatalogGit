@@ -44,6 +44,13 @@ const g = id => document.getElementById(id);
 const isMobile = () => window.innerWidth <= 991;
 const fmt = v => '฿' + v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/* ราคาป้าย (dealerPrice) — ถ้าไม่มี/เป็น 0 ให้ซ่อน */
+function dealerPriceHtml(p) {
+    const v = parseFloat(p.dealerPrice) || 0;
+    if (v <= 0) return '';
+    return `<span class="dealer-price">ราคาป้าย ${fmt(v)}</span>`;
+}
+
 const totalAddress = document.querySelectorAll('#osAddrList .os-addr-item').length;
 document.getElementById('totalAddr').innerText = totalAddress + ' ที่อยู่';
 
@@ -142,6 +149,7 @@ function mapApiResponseToProducts(groups) {
                 code: item.stkcode || '',
                 name: item.stkcodeDescription || item.stkcode || '—',
                 price: parseFloat(item.price) || 0,
+                dealerPrice: parseFloat(item.dealerPrice) || 0,
                 priceTiers: item.priceTiers || [],
                 stock: isNaN(qty) ? 99 : qty,
                 cat: item.productGroup || groupLabel,
@@ -266,7 +274,8 @@ function _applyFiltersAndRender() {
     const filterUniversal = !skipGroup && activeGroupStr === '99';
 
     const baseFiltered = BASE_PRODUCTS.filter(p => {
-        if (!filterUniversal && gEl('makerId')?.value && !p.carModel) return false;
+        //if (!filterUniversal && gEl('makerId')?.value && !p.carModel) return false;
+        if (!filterUniversal && _lastSearchType !== 'part' && gEl('makerId')?.value && !p.carModel) return false;
         if (filterUniversal && p.carModel !== 'Universal') return false;
         if (filterByCat && p.carModel !== 'Universal' && p.catId !== activeGroupStr && p.cat !== activeGroupObj.label) return false;
         if (q) {
@@ -336,7 +345,8 @@ function _updateStockFilterLabel() {
         'name': 'ชื่อ: A-Z'
     };
 
-    let label = 'เรียงตาม: ' + (sortLabels[currentSort] || 'รุ่นรถ');
+    const prefix = window.innerWidth <= 575 ? '' : 'เรียงตาม: ';
+    let label = '<span class="sort-prefix">เรียงตาม: </span>' + (sortLabels[currentSort] || 'รุ่นรถ');
 
     if (inStock && outStock) label += '/สต็อกสุทธิ';
     else if (inStock) label += '/มีสินค้า';
@@ -344,6 +354,7 @@ function _updateStockFilterLabel() {
 
     btn.innerHTML = label + ' <span class="sort-arrow">▼</span>';
 }
+window.addEventListener('resize', _updateStockFilterLabel);
 
 // 🔧 ฟังก์ชันช่วยจัดการการโชว์/ซ่อน รายการ Sidebar ไม่ให้หุบหาย
 function _ensureSidebarVisibility() {
@@ -1083,29 +1094,28 @@ function buildSpecHTML(p) {
                 onclick="event.stopPropagation()"
                 onchange="specTierPick(${p.id}, this.value)"
                 style="height:32px;border:1px solid var(--border);border-radius:8px;padding:0 8px;
-                       font-size:13px;margin-top:10px;width:100%;max-width:330px;background:#fff">
+                       font-size:12px;width:100%;max-width:330px;background:#fff">
             ${tiers.map((t, i) => `
                 <option value="${t.moq}" ${t.moq === t0.moq ? 'selected' : ''}>${_tierOptionText(tiers, i)}</option>`).join('')}
         </select>` : '';
 
     return `
     <div class="spec-hero">
-       ${p.img
-            ? `<div class="no-image" id="img-wrap-${p.id}">
-           <img src="${p.img}" alt="${p.name}"
-                style="width:100%;height:100%;object-fit:contain;border-radius:8px"
-                onerror="this.parentElement.innerHTML='<i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span>'">
-       </div>`
-            : `<div class="no-image">
-           <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
-           <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
-       </div>`}
+        ${p.img
+                ? `<div class="spec-img-wrap" id="img-wrap-${p.id}">
+            <img src="${p.img}" alt="${p.name}"
+                onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">
+        </div>`
+                : `<div class="no-image">
+            <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
+            <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
+        </div>`}
         <div class="spec-hero-meta flex-grow-1">
             <h5>${p.name}</h5>
             <p>${p.code}</p>
             <p style="font-size:12px;color:var(--text-3);margin-top:3px">${p.brand}</p>
 
-            <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
                 <div class="spec-price" id="modalPrice-${p.id}">${fmt(t0.price)}</div>
                 <span id="modalOld-${p.id}"
                       style="color:var(--text-3);text-decoration:line-through;font-size:13px;
@@ -1138,6 +1148,11 @@ function buildSpecHTML(p) {
                 <span id="modalSave-${p.id}"
                       style="color:#16a34a;font-weight:600;${tiers.length > 1 ? '' : 'display:none'}">(ประหยัด ${fmt(0)})</span>
             </div>
+
+            ${(parseFloat(p.dealerPrice) || 0) > 0 ? `
+            <div id="modalDealer-${p.id}" style="font-size:11px;color:#645d5d;margin-top:5px;display:flex;align-items:center;gap:4px">
+                ${dealerPriceHtml(p)}
+            </div>` : ''}
         </div>
     </div>
     <div class="stabs-nav">
@@ -1159,19 +1174,6 @@ function buildSpecHTML(p) {
 }
 
 /* ── Add to cart จาก spec modal ที่เปิดผ่าน openDrawer (card click) ── */
-// async function addCartFromSpecModal(productId, clickEvent) {
-//     if (clickEvent) clickEvent.stopPropagation();
-
-//     const p = PRODUCTS.find(x => x.id === productId);
-//     if (!p) return;
-
-//     const qty = parseInt(gEl('modalQty-' + productId)?.value) || 1;
-//     const btn = clickEvent?.currentTarget instanceof HTMLElement
-//         ? clickEvent.currentTarget
-//         : document.querySelector('#specModalContent .acart');
-
-//     await _callAddToCartAPI(p, qty, btn);
-// }
 
 async function addCartFromSpecModal(productId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
@@ -1197,6 +1199,7 @@ async function addCartFromSpecModal(productId, clickEvent) {
 
     // ใช้ราคาตาม tier ที่ตรงกับจำนวน
     const tier = _tierFor(tiers, qty);
+    _saveImg(p.code, p.img);
     await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
@@ -1220,7 +1223,7 @@ async function openDrawer(productId, clickEvent) {
     updateBreadcrumb(activeGroup, p.name);
     window._currentStkcode = p.code;
 
-    const drawerReady = !!gEl('specDrawer') && !!gEl('drTitle');
+    const drawerReady = !!gEl('specDrawer') && !!gEl('drName');
     if (isMobile() && drawerReady) {
         const set = (id, val) => { const el = gEl(id); if (el) el.textContent = val; };
         set('drTitle', p.name);
@@ -1269,6 +1272,14 @@ async function openDrawer(productId, clickEvent) {
             drAddBtn.innerHTML = `<i class="bi ${isBO ? 'bi-hourglass-split' : 'bi-cart-plus'}"></i> ${isBO ? 'จอง (BO)' : 'เพิ่ม'}`;
         }
         drTierInit(p);
+
+        const drListPrice = gEl('drListPrice');
+        if (drListPrice) {
+            const v = parseFloat(p.dealerPrice) || 0;
+            gEl('drListPriceTxt').textContent = `ราคาป้าย ${fmt(v)}`;
+            drListPrice.style.display = v > 0 ? 'flex' : 'none';
+        }
+
         gEl('specDrawer').querySelectorAll('.drtab').forEach((b, i) => b.classList.toggle('active', i === 0));
         gEl('specDrawer').querySelectorAll('.drpane').forEach((pane, i) => pane.classList.toggle('active', i === 0));
 
@@ -1362,6 +1373,7 @@ async function addCartFromDrawer(e) {
     const btn = document.getElementById('drAddBtn');
 
     const tier = _tierFor(tiers, qty);
+    _saveImg(p.code, p.img);
     await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
@@ -1507,11 +1519,8 @@ function renderProducts(list) {
             <div class="pimg">
                 ${stockLabel(p.stock ?? 99)}
                 ${p.img && p.img.trim()
-                ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-           <img src="${p.img}" alt="${p.name}"
-                style="max-height:85px;max-width:100%;object-fit:contain"
-                onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">
-       </div>`
+                ? `<img src="${p.img}" alt="${p.name}"
+            onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">`
                 : `<div class="no-image">
            <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
            <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
@@ -1542,9 +1551,11 @@ function renderProducts(list) {
                                border-radius:10px;padding:1px 7px;color:var(--text-3)">${f}</span>`).join('')}
                        </div>` : ''}
                 <div class="pprice" id="cardPrice-${p.id}">฿${fmt2(mainPrice)} <span>/ unit</span></div>
-                ${tagHtml ? `
-                <div style="font-size:11px;color:#198754;margin-top:2px;display:flex;align-items:center;gap:4px">
-                    <i class="bi bi-tag-fill"></i> ${tagHtml}
+                
+                
+                ${(parseFloat(p.dealerPrice) || 0) > 0 ? `
+                <div id="dealerPrice-${p.id}" style="font-size:10px;color:#8f8f8f;display:flex;align-items:center;gap:4px">
+                    ${dealerPriceHtml(p)}
                 </div>` : ''}
             </div>
             <div class="pfooter">
@@ -1560,6 +1571,13 @@ function renderProducts(list) {
             </div>
         </div>`;
     }
+    //ถ้าอยากเปิด MoQ ค่อยเอาไปเพิ่ม
+    // ${
+    //     tagHtml ? `
+    //             <div style="font-size:11px;color:#198754;display:flex;align-items:center;gap:4px">
+    //                 <i class="bi bi-tag-fill"></i> ${tagHtml}
+    //             </div>` : ''
+    // }
     
     // ✅ เพิ่ม 2 บรรทัดนี้
     const forceByLine = currentSort === 'part';
@@ -1991,15 +2009,6 @@ function toggleFit(chip, val) {
 }
 /* ════════════════ CART ══════════════════ */
 /* จาก Product Card — ใช้ PRODUCTS[] + id integer */
-// ✅ แก้แล้ว
-// async function addCart(productId, clickEvent) {
-//     if (clickEvent) clickEvent.stopPropagation();
-//     const p = PRODUCTS.find(x => x.id === productId);
-//     if (!p) return;
-//     const qty = parseInt(gEl('qty-' + productId)?.value) || 1;
-//     const btn = gEl('cb-' + productId);
-//     await _callAddToCartAPI(p, qty, btn);
-// }
 
 async function addCart(productId, clickEvent) {
     if (clickEvent) clickEvent.stopPropagation();
@@ -2021,6 +2030,7 @@ async function addCart(productId, clickEvent) {
 
     // ราคาตาม tier ที่ตรงกับจำนวน
     const tier = _tierFor(tiers, qty);
+    _saveImg(p.code, p.img);
     await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
@@ -2053,6 +2063,7 @@ function showSkel() {
 function hideSkel() {
     gEl('skelWrap').style.display = 'none';
     gEl('loadingOverlay').style.display = 'none';
+    if (isMobile()) closeSidebarMobile(); // มือถือ: ปิด sidebar เมื่อโหลดเสร็จ
 }
 
 /* ═══════════════ BREADCRUMB ════════════════ */
@@ -2432,6 +2443,19 @@ function acCloseSidebar() {
     partQ.setAttribute('aria-expanded', 'false');
     acSbFocusIdx = -1;
     acUpdateFocusSidebar();
+}
+
+function closeSidebarMobile() {
+    const sb = document.getElementById('sidebar');
+    const btn = document.getElementById('mobHamburger');
+    const ov = document.getElementById('mobOverlay');
+    if (!sb || !sb.classList.contains('mob-open')) return;   // ปิดอยู่แล้ว ไม่ต้องทำอะไร
+
+    sb.classList.remove('mob-open');
+    btn?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+    ov?.classList.remove('visible');
+    if (btn) btn.style.display = '';   // คืนปุ่มแฮมเบอร์เกอร์กลับมา
 }
 
 function acKeyNavSidebar(event) {
@@ -3206,6 +3230,23 @@ function _readTiers(stkcod) {
     return (window._tierStore || {})[stkcod] || [];
 }
 
+/* เก็บรูปสินค้าไว้ตอน Add (คงอยู่แม้ refresh หน้า) */
+function _saveImg(stkcod, img) {
+    if (!stkcod || !img) return;
+    try {
+        const store = JSON.parse(localStorage.getItem('imgStore') || '{}');
+        store[stkcod] = img;
+        localStorage.setItem('imgStore', JSON.stringify(store));
+    } catch (e) { /* ignore */ }
+}
+
+function _readImg(stkcod) {
+    try {
+        const store = JSON.parse(localStorage.getItem('imgStore') || '{}');
+        return store[stkcod] || '';
+    } catch (e) { return ''; }
+}
+
 /* ── Map API response row → cart item ── */
 function _mapCartItem(item) {
     return {
@@ -3214,7 +3255,7 @@ function _mapCartItem(item) {
         name: item.stkdes || '—',
         price: parseFloat(item.price) || 0,
         qty: parseInt(item.qty) || 1,
-        img: item.imagePath || '',
+        img: item.imagePath || _readImg(item.stkcod) || '',
         brand: item.stkgrp || '—',
         isBO: item.backOrder === '1',
         uom: item.uom || '',
@@ -3702,7 +3743,7 @@ function toggleCompany(btn) {
     window.APP_SESSION.companies = selected;
     window.APP_SESSION.company = selected.length > 0 ? selected[0] : 'TAC';
     sessionStorage.setItem('selected_company', getActiveCompanies().join(','));
-
+    updateCompanyHint();
     const selectedSlm = document.getElementById('salesmanId')?.value;
     const currentCus = document.getElementById('customerId')?.value || ''; // ✅ เก็บค่าปัจจุบัน
     if (selectedSlm) {
@@ -4308,4 +4349,12 @@ function _requireSalesmanAndCustomer() {
         return false;
     }
     return true;
+}
+function updateCompanyHint() {
+    const el = document.getElementById('companyHint');
+    if (!el) return;
+    const companies = getActiveCompanies();
+    el.textContent = companies.length
+        ? ' สินค้าที่แสดงอยู่ภายใต้ ' + companies.join(', ')
+        : ' สินค้าที่แสดงอยู่ภายใต้ ทุกบริษัท';
 }

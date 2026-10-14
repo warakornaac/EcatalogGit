@@ -14,10 +14,10 @@
 <div class="spec-drawer" id="specDrawer">
     <div class="dr-header">
         <button class="dr-close" onclick="closeDrawer()"><i class="bi bi-x-lg"></i></button>
-        <div>
+        @*<div>
             <div class="dr-title" id="drTitle">Product Specification</div>
             <div class="dr-code-lbl" id="drCode">—</div>
-        </div>
+        </div>*@
     </div>
 
     <div class="dr-hero">
@@ -52,6 +52,10 @@
             <div style="font-size:12px;margin-top:6px">
                 รวม <b id="drTotal">฿0.00</b>
                 <span id="drSave" style="color:#16a34a;font-weight:600"></span>
+            </div>
+
+            <div id="drListPrice" style="font-size:11px;color:#645d5d;margin-top:5px;display:none;align-items:center;gap:4px">
+                <span id="drListPriceTxt"></span>
             </div>
         </div>
     </div>

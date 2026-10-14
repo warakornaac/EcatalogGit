@@ -1,5 +1,7 @@
-﻿using System.Web;
+﻿using Ecatalog.Library;
+using System.Web;
 using System.Web.Mvc;
+using Ecatalog.Helpers;
 
 namespace Ecatalog
 {
@@ -8,6 +10,7 @@ namespace Ecatalog
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
             filters.Add(new HandleErrorAttribute());
+            filters.Add(new SessionAuthorizeAttribute());
         }
     }
 }
