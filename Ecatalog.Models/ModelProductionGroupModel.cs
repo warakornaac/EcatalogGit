@@ -17,5 +17,6 @@ namespace Ecatalog.Models
     {
         public string prodgrpid { get; set; }
         public string prodgrpname { get; set; }
+        public string company { get; set; }
     }
 }

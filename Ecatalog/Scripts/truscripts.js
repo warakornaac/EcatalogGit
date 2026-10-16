@@ -150,6 +150,7 @@ function mapApiResponseToProducts(groups) {
                 name: item.stkcodeDescription || item.stkcode || '—',
                 price: parseFloat(item.price) || 0,
                 dealerPrice: parseFloat(item.dealerPrice) || 0,
+                company: (item.company || '').trim(),
                 priceTiers: item.priceTiers || [],
                 stock: isNaN(qty) ? 99 : qty,
                 cat: item.productGroup || groupLabel,
@@ -1273,6 +1274,12 @@ async function openDrawer(productId, clickEvent) {
         }
         drTierInit(p);
 
+        const drCompany = gEl('drCompany');
+        if (drCompany) {
+            drCompany.textContent = p.company || '';
+            drCompany.style.display = p.company ? '' : 'none';
+        }
+
         const drListPrice = gEl('drListPrice');
         if (drListPrice) {
             const v = parseFloat(p.dealerPrice) || 0;
@@ -1292,6 +1299,13 @@ async function openDrawer(productId, clickEvent) {
             console.warn('drawer elements missing — check _SpecDrawer partial is included');
         }
         gEl('specModalContent').innerHTML = buildSpecHTML(p);
+
+        const mc = gEl('specModalCompany');
+        if (mc) {
+            mc.textContent = p.company || '';
+            mc.style.display = p.company ? '' : 'none';
+        }
+
         gEl('specModalBackdrop').classList.add('open');
         document.body.style.overflow = 'hidden';
     }
@@ -1517,6 +1531,7 @@ function renderProducts(list) {
         <div class="pcard ${hasFilter ? 'highlight-filter' : ''}" id="pc-${p.id}"
              onclick="openDrawer(${p.id},event)" style="cursor:pointer">
             <div class="pimg">
+                ${p.company ? `<span class="pcompany">${p.company}</span>` : ''}
                 ${stockLabel(p.stock ?? 99)}
                 ${p.img && p.img.trim()
                 ? `<img src="${p.img}" alt="${p.name}"
@@ -1527,11 +1542,12 @@ function renderProducts(list) {
        </div>`}
             </div>
             <div class="pbody">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px">
-                    <div class="pcode">${p.code}</div>
-                    <div class="pname" style="font-size:10.5px;font-weight:700;color:var(--primary);
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;min-width:0">
+                    <div class="pcode" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.code}</div>
+                    <div class="pname" title="${p.brand}" style="font-size:10.5px;font-weight:700;color:var(--primary);
                          background:var(--primary-light);border-radius:20px;padding:1px 8px;
-                         white-space:nowrap;flex-shrink:0">${p.brand}</div>
+                         white-space:nowrap;flex:0 1 auto;min-width:0;max-width:55%;
+                         overflow:hidden;text-overflow:ellipsis">${p.brand}</div>
                 </div>
                 <div class="pname" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.name}</div>
                 ${p.carModel ? `
@@ -2918,6 +2934,7 @@ async function ajaxCallApiService(url, params) {
 
 /* ═══════════LOADING FILTER SELECTOR ═══════════════════ */
 $(document).ready(function () {
+    initCompanySelection();
     GetProductGroup();
     GetBrandS();
     GetProductionLine();
@@ -2954,8 +2971,8 @@ function RenderBrands(brands) {
             .attr('data-id', brand.id)
             .attr('data-name', brand.name)
             .attr('data-filter', 'filterProductBrandId')
-            .attr('data-flag', brand.flag || '')
-            .attr('data-seq', brand.seqNo ?? 999)
+            //.attr('data-flag', brand.flag || '')
+            //.attr('data-seq', brand.seqNo ?? 999)
             .toggleClass('br-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
             .attr('onclick', `toggleChk(this,'br','${brand.name}');`);
@@ -2979,17 +2996,20 @@ function GetProductGroup() {
     $.ajax({
         url: urls.getProductGroups,
         method: 'GET',
-        // ✅ ไม่ส่ง prodgrpid เลย ให้ API ตัดสินใจเอง
+        data: { company: getActiveCompanies() },   // ✅
+        traditional: true,                          // ✅
         success: function (result) {
             if (result.IsSuccess) {
                 const apiGroups = (result.Data || []).map(function (g) {
-                    return {
-                        id: g.prodgrpid,
-                        icon: 'bi-tag',
-                        label: g.prodgrpname
-                    };
+                    return { id: g.prodgrpid, icon: 'bi-tag', label: g.prodgrpname };
                 });
                 GROUPS = [...FIXED_GROUPS, ...apiGroups];
+
+                // ✅ ถ้ากลุ่มที่เลือกอยู่ไม่มีใน company ใหม่ ให้กลับไป "ทั้งหมด"
+                if (!GROUPS.some(g => String(g.id) === String(activeGroup))) {
+                    activeGroup = '0';
+                    window.selectedGroupId = '0';
+                }
                 renderBottomBar();
             } else {
                 console.error("API Error:", result.Message);
@@ -3008,6 +3028,8 @@ function GetProductionLine() {
     $.ajax({
         url: urls.getProductline,
         method: 'GET',
+        data: { company: getActiveCompanies() },
+        traditional: true,
         success: function (res) {
             const ok = res.IsSuccess === true || res.statusCode === 200;
             const data = res.Data || res.result || [];
@@ -3038,8 +3060,8 @@ function RenderProductionLines(lines) {
             .attr('data-id', line.prodlineid)
             .attr('data-name', line.prodlinename)
             .attr('data-filter', 'filterProductLineId')
-            .attr('data-flag', line.flag || '')
-            .attr('data-seq', line.seqNo ?? 999)
+            //.attr('data-flag', line.flag || '')
+            //.attr('data-seq', line.seqNo ?? 999)
             .toggleClass('pl-extra', isExtra)
             .css('display', isExtra ? 'none' : '')
             .attr('onclick', `toggleChk(this,'pl','${line.prodlinename}');`);
@@ -3191,17 +3213,24 @@ function toggleSec(hd, targetId) {
 }
 
 // ✅ เพิ่มไว้ใกล้ๆ HELPERS ด้านบนของไฟล์
+// function _sortByTopFlag($items) {
+//     return $items.sort((a, b) => {
+//         const aTop = $(a).attr('data-flag') === 'TOP' ? 0 : 1;
+//         const bTop = $(b).attr('data-flag') === 'TOP' ? 0 : 1;
+//         if (aTop !== bTop) return aTop - bTop;
+//         const aSeq = parseInt($(a).attr('data-seq') || '999');
+//         const bSeq = parseInt($(b).attr('data-seq') || '999');
+//         if (aSeq !== bSeq) return aSeq - bSeq;  ✅ เรียงตาม seqNo จาก API
+//         return (parseInt($(b).find('.chk-count').text()) || 0) -
+//             (parseInt($(a).find('.chk-count').text()) || 0);
+//     });
+// }
+
 function _sortByTopFlag($items) {
-    return $items.sort((a, b) => {
-        const aTop = $(a).attr('data-flag') === 'TOP' ? 0 : 1;
-        const bTop = $(b).attr('data-flag') === 'TOP' ? 0 : 1;
-        if (aTop !== bTop) return aTop - bTop;
-        const aSeq = parseInt($(a).attr('data-seq') || '999');
-        const bSeq = parseInt($(b).attr('data-seq') || '999');
-        if (aSeq !== bSeq) return aSeq - bSeq;  // ✅ เรียงตาม seqNo จาก API
-        return (parseInt($(b).find('.chk-count').text()) || 0) -
-            (parseInt($(a).find('.chk-count').text()) || 0);
-    });
+    return $items.sort((a, b) =>
+        (parseInt($(b).find('.chk-count').text()) || 0) -
+        (parseInt($(a).find('.chk-count').text()) || 0)
+    );
 }
 
 function _showTopFlagged($items) {
@@ -3737,6 +3766,10 @@ function getActiveCompanies() {
 // ฟังก์ชันบันทึกและจัดการการคลิก
 function toggleCompany(btn) {
     const isCurrentlyPressed = btn.getAttribute('aria-pressed') === 'true';
+    if (isCurrentlyPressed && getActiveCompanies().length === 1) {
+        toast('⚠️ ต้องเลือกอย่างน้อย 1 บริษัท', 'warn');
+        return;
+    }
     btn.setAttribute('aria-pressed', isCurrentlyPressed ? 'false' : 'true');
     const selected = getActiveCompanies();
     if (!window.APP_SESSION) window.APP_SESSION = {};
@@ -3744,6 +3777,8 @@ function toggleCompany(btn) {
     window.APP_SESSION.company = selected.length > 0 ? selected[0] : 'TAC';
     sessionStorage.setItem('selected_company', getActiveCompanies().join(','));
     updateCompanyHint();
+    GetProductGroup();        // ✅
+    GetProductionLine(); 
     const selectedSlm = document.getElementById('salesmanId')?.value;
     const currentCus = document.getElementById('customerId')?.value || ''; // ✅ เก็บค่าปัจจุบัน
     if (selectedSlm) {
@@ -3759,15 +3794,16 @@ function toggleCompany(btn) {
 // ✅ ฟังก์ชันดึงค่าที่เคยเลือกไว้กลับมาแสดง (เรียกใช้ตอนโหลดหน้าเว็บ)
 function initCompanySelection() {
     if (!window.APP_SESSION) window.APP_SESSION = {};
-    const saved = sessionStorage.getItem('selected_company') || 'TAC'; // ← default TAC อย่างเดียว
+    const saved = sessionStorage.getItem('selected_company') || 'TAC';
     const savedList = saved.split(',').filter(Boolean);
-    window.APP_SESSION.company = savedList[0] || 'TAC';
+    window.APP_SESSION.company = savedList[0] || 'TAC';           // ✅ เดิม || 'TAC'
     window.APP_SESSION.companies = savedList;
     document.querySelectorAll('.company-btn').forEach(btn => {
         btn.setAttribute('aria-pressed',
             savedList.includes(btn.dataset.company) ? 'true' : 'false'
         );
     });
+    updateCompanyHint();
 }
 
 // เรียกทำงานทันทีเมื่อโหลด DOM เสร็จสิ้น
@@ -3859,7 +3895,8 @@ function _syncSessionFromUI() {
             $.ajax({
                 url: urls.getMatchProductionGroup,
                 method: 'GET',
-                data: { prodgrpid: groupId },
+                data: { prodgrpid: groupId, company: getActiveCompanies() },
+                traditional: true,
                 success: function (res) {
                     var allowedIds = [];
                     if (res && res.IsSuccess && res.Data && res.Data.length > 0) {
@@ -3877,7 +3914,7 @@ function _syncSessionFromUI() {
                         _plAll = [...(MASTER_PRODUCT_LINES || [])];
                     }
 
-                    _brAll = [...(MASTER_BRANDS || [])];
+                    _brAll = [];
 
                     // ✅ render PL ก่อนได้เลย ไม่ต้องรอ brand
                     renderPlList();
@@ -4042,7 +4079,7 @@ function _syncSessionFromUI() {
                 '</label>';
         });
 
-        dst.innerHTML = html || '<div class="pgm-empty">ไม่มียี่ห้อ</div>';
+        dst.innerHTML = html || '<div class="pgm-empty">ไม่มียี่ห้อใน PL นี้ ระบบจะค้นหาทุกสินค้าในหมวดหมู่ย่อยที่เลือก</div>';
         syncBrAll();
     }
 
@@ -4114,7 +4151,8 @@ function _syncSessionFromUI() {
             url: urls.getBrandsByProductLine,
             method: 'GET',
             cache: false,
-            data: { prodLineIds: selectedPlIds.join(',') },
+            data: { prodLineIds: selectedPlIds.join(','), company: getActiveCompanies() },   // ✅
+            traditional: true,        
             success: function (res) {
                 if (myVer !== _brReqVer) return;
 
@@ -4222,12 +4260,12 @@ function _syncSessionFromUI() {
         var sum = document.getElementById('pgmSum');
         if (sum) {
             sum.innerHTML = plOn
-                ? 'หมวดหมู่ย่อย <b>' + plOn + '</b> · ยี่ห้อ <b>' + brOn + '/' + brTot + '</b>'
+                ? 'หมวดหมู่ย่อย <b>' + plOn + '</b> · ยี่ห้อ <b>' + (brTot ? brOn + '/' + brTot : 'ทั้งหมด') + '</b>'
                 : 'ยังไม่ได้เลือกหมวดหมู่ย่อย';
         }
 
         var btn = document.getElementById('pgmConfirm');
-        if (btn) btn.disabled = !(plOn && brOn);
+        if (btn) btn.disabled = !(plOn && (brOn || brTot === 0));
 
         var s2 = document.getElementById('pgmStep2');
         var s3 = document.getElementById('pgmStep3');
@@ -4239,13 +4277,15 @@ function _syncSessionFromUI() {
     window.pgmConfirm = function () {
         chkState.pl = {};
         Object.keys(_plSel).forEach(function (name) {
-            var master = MASTER_PRODUCT_LINES.find(function (x) { return x.prodlinename === name; });
+            var master = _plAll.find(function (x) { return x.prodlinename === name; })
+                || MASTER_PRODUCT_LINES.find(function (x) { return x.prodlinename === name; });
             chkState.pl[name] = master ? String(master.prodlineid) : null;
         });
 
         chkState.br = {};
         Object.keys(_brSel).forEach(function (name) {
-            var master = MASTER_BRANDS.find(function (x) { return x.name === name; });
+            var master = _brAll.find(function (x) { return x.name === name; })
+                || MASTER_BRANDS.find(function (x) { return x.name === name; });
             chkState.br[name] = master ? String(master.id) : null;
         });
 

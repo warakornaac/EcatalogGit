@@ -230,7 +230,7 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> GetProductGroups(string prodgrpid)
+        public async Task<ActionResult> GetProductGroups(string prodgrpid, string[] company) 
         {
             // ❌ ลบ fallback "All" ออก เพราะ API ไม่รู้จัก
             // if (string.IsNullOrWhiteSpace(prodgrpid)) prodgrpid = "All";
@@ -240,7 +240,7 @@ namespace Ecatalog.Controllers
                 var result = await Utils.CallApiAsyncMemory<ModelProductionGroupFilterModel>(
                     "Ecatalog/GetProductGroup",
                     "GET",
-                    new { prodgrpid },   // ส่งค่าว่างตามที่รับมา
+                    new { prodgrpid, company},   // ส่งค่าว่างตามที่รับมา
                     false,               // ยังคงปิด cache ไว้ก่อน
                     10);
 
@@ -258,7 +258,7 @@ namespace Ecatalog.Controllers
             }
         }
 
-        public async Task<ActionResult> GetProductLines(string prodlineid)
+        public async Task<ActionResult> GetProductLines(string prodlineid, string[] company)
         {
             try
             {
@@ -268,7 +268,7 @@ namespace Ecatalog.Controllers
                     "GET",
                     new
                     {
-                        prodlineid
+                        prodlineid, company
                     },
                     true,
                     10);
@@ -293,7 +293,7 @@ namespace Ecatalog.Controllers
                 JsonRequestBehavior.AllowGet);
             }
         }
-        public async Task<ActionResult> GetMatchProductionGroup(string prodgrpid = "")
+        public async Task<ActionResult> GetMatchProductionGroup(string prodgrpid, string[] company)
         {
             try
             {
@@ -303,7 +303,7 @@ namespace Ecatalog.Controllers
                     "GET",
                     new
                     {
-                        prodgrpid
+                        prodgrpid, company
                     },
                     true,
                     10);
@@ -478,13 +478,17 @@ namespace Ecatalog.Controllers
             }
         }
         [HttpGet]
-        public JsonResult GetBrandsByProductLine(string prodLineIds)
+        public JsonResult GetBrandsByProductLine(string prodLineIds, string[] company)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(prodLineIds))
                     return Json(new { IsSuccess = false, Data = new List<object>() },
                                 JsonRequestBehavior.AllowGet);
+
+                var companyCsv = string.Join(",", (company ?? new string[0])
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Select(c => c.Trim().ToUpper()));
 
                 var list = new List<object>();
                 string connStr = ConfigurationManager.AppSettings["ECatalogDB"];
@@ -494,6 +498,7 @@ namespace Ecatalog.Controllers
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@inProdLineIds", prodLineIds);
+                    cmd.Parameters.AddWithValue("@inCompany", companyCsv);
                     conn.Open();
 
                     using (var reader = cmd.ExecuteReader())
@@ -501,11 +506,10 @@ namespace Ecatalog.Controllers
                         while (reader.Read())
                         {
                             list.Add(new
-                            {   company = reader["company"].ToString(),
+                            {
+                                company = reader["company"].ToString(),
                                 id = reader["id"].ToString(),
-                                name = reader["name"].ToString(),
-                                flag = reader["flag"] == DBNull.Value ? "" : reader["flag"].ToString(),
-                                seqNo = reader["seqNo"] == DBNull.Value ? 999 : Convert.ToInt32(reader["seqNo"])
+                                name = reader["name"].ToString()
                             });
                         }
                     }
@@ -515,16 +519,10 @@ namespace Ecatalog.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    IsSuccess = false,
-                    Message = ex.Message,
-                    Data = new List<object>()
-                },
-                JsonRequestBehavior.AllowGet);
+                return Json(new { IsSuccess = false, Message = ex.Message, Data = new List<object>() },
+                            JsonRequestBehavior.AllowGet);
             }
         }
-
         [HttpPost]
         public async Task<ActionResult> GetAutocompleteEcat(AutocompleteRequestModel request)
         {

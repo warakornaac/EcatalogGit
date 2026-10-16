@@ -3,6 +3,7 @@
     <div class="spec-modal" role="dialog" aria-modal="true" aria-label="Product specification">
         <div class="spec-modal-header">
             <span style="font-size:13px;font-weight:600;color:var(--text-2)">Product Specification</span>
+            <span id="specModalCompany" class="pcompany" style="display:none"></span>
             <button class="spec-modal-close" onclick="closeSpecModal()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="spec-modal-body" id="specModalContent"></div>
@@ -14,6 +15,7 @@
 <div class="spec-drawer" id="specDrawer">
     <div class="dr-header">
         <button class="dr-close" onclick="closeDrawer()"><i class="bi bi-x-lg"></i></button>
+        <span id="drCompany" class="pcompany" style="display:none"></span>
         @*<div>
             <div class="dr-title" id="drTitle">Product Specification</div>
             <div class="dr-code-lbl" id="drCode">—</div>

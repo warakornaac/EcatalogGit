@@ -5287,3 +5287,31 @@ body.theme-blue .dealer-price {
     color: #c62231;
 }
 /* โหมดน้ำเงิน */
+
+.pcompany {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-light);
+    border-radius: 20px;
+    padding: 1px 9px;
+    white-space: nowrap;
+}
+
+.pimg .pcompany {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 2;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--primary);
+    background: none;
+    padding: 0;
+    border-radius: 0;
+}
+@media (max-width: 575px) {
+    #companyHint {
+        display: none !important;
+    }
+}
