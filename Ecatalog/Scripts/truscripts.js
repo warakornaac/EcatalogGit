@@ -1102,18 +1102,12 @@ function buildSpecHTML(p) {
 
     return `
     <div class="spec-hero">
-        ${p.img
-                ? `<div class="spec-img-wrap" id="img-wrap-${p.id}">
-            <img src="${p.img}" alt="${p.name}"
-                onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">
-        </div>`
-                : `<div class="no-image">
-            <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
-            <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
-        </div>`}
-        <div class="spec-hero-meta flex-grow-1">
-            <h5>${p.name}</h5>
-            <p>${p.code}</p>
+    <div class="spec-img-wrap" id="img-wrap-${p.id}">
+        ${productImgHtml(p)}
+    </div>
+    <div class="spec-hero-meta flex-grow-1">
+        <h5>${p.name}</h5>
+        <p>${p.code}</p>
             <p style="font-size:12px;color:var(--text-3);margin-top:3px">${p.brand}</p>
 
             <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -1200,7 +1194,7 @@ async function addCartFromSpecModal(productId, clickEvent) {
 
     // ใช้ราคาตาม tier ที่ตรงกับจำนวน
     const tier = _tierFor(tiers, qty);
-    _saveImg(p.code, p.img);
+    _saveImg(p.code, p.img, p.brand);
     await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
@@ -1239,29 +1233,7 @@ async function openDrawer(productId, clickEvent) {
 
         const drImg = gEl('drImg');
         const drImgPh = gEl('drImgPh');
-
-        if (p.img) {
-            drImg.src = p.img;
-            drImg.style.cssText = `
-        display:block;
-        width:120px;
-        height:120px;
-        object-fit:contain;
-        background:var(--surface);
-        border-radius:var(--r);
-        padding:8px;
-        flex-shrink:0;
-        box-shadow:var(--sh-sm)
-    `;
-            if (drImgPh) drImgPh.style.display = 'none';
-            drImg.onerror = () => {
-                drImg.style.display = 'none';
-                if (drImgPh) drImgPh.style.display = 'flex';
-            };
-        } else {
-            if (drImg) drImg.style.display = 'none';
-            if (drImgPh) drImgPh.style.display = 'flex';
-        }
+        _setDrawerImg(drImg, drImgPh, p);
 
         const drBoRow = gEl('drBoRow');
         if (drBoRow) drBoRow.style.display = (p.stock ?? 99) === 0 ? '' : 'none';
@@ -1387,7 +1359,7 @@ async function addCartFromDrawer(e) {
     const btn = document.getElementById('drAddBtn');
 
     const tier = _tierFor(tiers, qty);
-    _saveImg(p.code, p.img);
+    _saveImg(p.code, p.img, p.brand);
     await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
@@ -1533,13 +1505,7 @@ function renderProducts(list) {
             <div class="pimg">
                 ${p.company ? `<span class="pcompany">${p.company}</span>` : ''}
                 ${stockLabel(p.stock ?? 99)}
-                ${p.img && p.img.trim()
-                ? `<img src="${p.img}" alt="${p.name}"
-            onerror="this.parentElement.innerHTML='<div class=&quot;no-image&quot;><i class=&quot;bi bi-image&quot; style=&quot;font-size:28px;color:var(--text-3)&quot;></i><span style=&quot;font-size:10px;color:var(--text-3);margin-top:4px&quot;>No image</span></div>'">`
-                : `<div class="no-image">
-           <i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i>
-           <span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span>
-       </div>`}
+                ${productImgHtml(p)}
             </div>
             <div class="pbody">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px;min-width:0">
@@ -2046,7 +2012,7 @@ async function addCart(productId, clickEvent) {
 
     // ราคาตาม tier ที่ตรงกับจำนวน
     const tier = _tierFor(tiers, qty);
-    _saveImg(p.code, p.img);
+    _saveImg(p.code, p.img, p.brand);
     await _callAddToCartAPI({ ...p, price: tier.price, moq: tier.moq }, qty, btn);
 }
 
@@ -2177,10 +2143,7 @@ function updateCart() {
 
     cpBody.innerHTML = cart.map(c => `
         <div class="cart-row" id="cr-${c.id}">
-            ${c.img
-            ? `<img src="${c.img}" alt="${c.name}"
-                        onerror="this.outerHTML='<div class=\\'no-imagecart\\'><i class=\\'bi bi-image\\'></i></div>'">`
-            : `<div class="no-imagecart"><i class="bi bi-image"></i></div>`}
+            ${cartImgHtml(c, 'cart', '')}
             <div class="cr-info">
                 <div class="cr-name">
                     ${c.name}
@@ -2594,9 +2557,7 @@ function renderOrderSummary() {
                        onchange="updateOsSelection()">
                 <span class="os-chk-box"></span>
             </label>
-            <img class="os-thumb" src="${c.img}" alt="${c.name}"
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-            <div class="os-thumb-ph" style="display:none">🔧</div>
+            ${cartImgHtml(c, 'os', 'os-thumb')}
             <div class="os-info">
                 <div class="os-name">
                     ${c.name}
@@ -3260,12 +3221,19 @@ function _readTiers(stkcod) {
 }
 
 /* เก็บรูปสินค้าไว้ตอน Add (คงอยู่แม้ refresh หน้า) */
-function _saveImg(stkcod, img) {
-    if (!stkcod || !img) return;
+function _saveImg(stkcod, img, brand) {
+    if (!stkcod) return;
     try {
-        const store = JSON.parse(localStorage.getItem('imgStore') || '{}');
-        store[stkcod] = img;
-        localStorage.setItem('imgStore', JSON.stringify(store));
+        if (img) {
+            const store = JSON.parse(localStorage.getItem('imgStore') || '{}');
+            store[stkcod] = img;
+            localStorage.setItem('imgStore', JSON.stringify(store));
+        }
+        if (_hasBrand(brand)) {
+            const bs = JSON.parse(localStorage.getItem('brandStore') || '{}');
+            bs[stkcod] = String(brand).trim();
+            localStorage.setItem('brandStore', JSON.stringify(bs));
+        }
     } catch (e) { /* ignore */ }
 }
 
@@ -3273,6 +3241,13 @@ function _readImg(stkcod) {
     try {
         const store = JSON.parse(localStorage.getItem('imgStore') || '{}');
         return store[stkcod] || '';
+    } catch (e) { return ''; }
+}
+
+function _readBrand(stkcod) {
+    try {
+        const bs = JSON.parse(localStorage.getItem('brandStore') || '{}');
+        return bs[stkcod] || '';
     } catch (e) { return ''; }
 }
 
@@ -3285,6 +3260,7 @@ function _mapCartItem(item) {
         price: parseFloat(item.price) || 0,
         qty: parseInt(item.qty) || 1,
         img: item.imagePath || _readImg(item.stkcod) || '',
+        logoBrand: _readBrand(item.stkcod),
         brand: item.stkgrp || '—',
         isBO: item.backOrder === '1',
         uom: item.uom || '',
@@ -4397,4 +4373,114 @@ function updateCompanyHint() {
     el.textContent = companies.length
         ? ' สินค้าที่แสดงอยู่ภายใต้ ' + companies.join(', ')
         : ' สินค้าที่แสดงอยู่ภายใต้ ทุกบริษัท';
+}
+
+/* ═════ BRAND LOGO FALLBACK ═════
+ลำดับ: imagePath → โลโก้แบรนด์ (/Images/Brandlogo/{BRAND}.{ext}) → No image */
+const BRAND_LOGO_EXTS = ['jpg'];
+
+const NO_IMAGE_HTML = `<div class="no-image"><i class="bi bi-image" style="font-size:28px;color:var(--text-3)"></i><span style="font-size:10px;color:var(--text-3);margin-top:4px">No image</span></div>`;
+
+const _hasBrand = b => !!b && String(b).trim() !== '' && String(b).trim() !== '—';
+const _escAttr = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+function brandLogoUrl(brand, extIdx = 0) {
+    return BRAND_LOGO_BASE + encodeURIComponent(String(brand).trim()) + '.' + BRAND_LOGO_EXTS[extIdx];
+}
+
+/* onerror กลาง: รูปหลักพัง → ลองโลโก้ไล่นามสกุล → No image */
+const _logoMissing = new Set();   // แบรนด์ที่ไม่มีไฟล์โลโก้เลย
+
+function _phHtml(ph) {
+    if (ph === 'cart') return `<div class="no-imagecart"><i class="bi bi-image"></i></div>`;
+    if (ph === 'os') return `<div class="os-thumb-ph" style="display:flex">🔧</div>`;
+    return NO_IMAGE_HTML;
+}
+
+function _imgFallback(img) {
+    const brand = img.dataset.brand || '';
+    const stage = img.dataset.stage || 'main';
+    if (_hasBrand(brand) && !_logoMissing.has(brand)) {
+        const next = stage === 'main' ? 0 : (parseInt(img.dataset.ext, 10) || 0) + 1;
+        if (next < BRAND_LOGO_EXTS.length) {
+            img.dataset.stage = 'logo';
+            img.dataset.ext = next;
+            img.classList.add('is-brand-logo');
+            img.src = brandLogoUrl(brand, next);
+            return;
+        }
+        _logoMissing.add(brand);
+    }
+    img.onerror = null;
+    img.outerHTML = _phHtml(img.dataset.ph);
+}
+
+/* ใช้ใน cart panel (ph='cart') และ order summary (ph='os') */
+function cartImgHtml(c, ph, cls) {
+    const brand = c.logoBrand;
+    const baseCls = cls || '';
+    if (c.img && c.img.trim()) {
+        return `<img class="${baseCls}" src="${_escAttr(c.img)}" alt="${_escAttr(c.name)}"
+                     data-brand="${_escAttr(brand)}" data-stage="main" data-ph="${ph}"
+                     onerror="_imgFallback(this)">`;
+    }
+    if (_hasBrand(brand) && !_logoMissing.has(brand)) {
+        return `<img class="${baseCls} is-brand-logo" src="${brandLogoUrl(brand, 0)}" alt="${_escAttr(brand)}"
+                     data-brand="${_escAttr(brand)}" data-stage="logo" data-ext="0" data-ph="${ph}"
+                     onerror="_imgFallback(this)">`;
+    }
+    return _phHtml(ph);
+}
+
+function productImgHtml(p) {
+    const hasImg = p.img && p.img.trim();
+    if (hasImg) {
+        return `<img src="${_escAttr(p.img)}" alt="${_escAttr(p.name)}"
+                     data-brand="${_escAttr(p.brand)}" data-stage="main"
+                     onerror="_imgFallback(this)">`;
+    }
+    if (_hasBrand(p.brand) && !_logoMissing.has(p.brand)) {
+        return `<img class="is-brand-logo" src="${brandLogoUrl(p.brand, 0)}" alt="${_escAttr(p.brand)}"
+                     data-brand="${_escAttr(p.brand)}" data-stage="logo" data-ext="0"
+                     onerror="_imgFallback(this)">`;
+    }
+    return NO_IMAGE_HTML;
+}
+
+/* ใช้ใน mobile drawer */
+function _setDrawerImg(drImg, drImgPh, p) {
+    if (!drImg) return;
+    const sources = [];
+    if (p.img && p.img.trim()) sources.push(p.img.trim());
+    if (_hasBrand(p.brand) && !_logoMissing.has(p.brand)) {
+        BRAND_LOGO_EXTS.forEach((_, i) => sources.push(brandLogoUrl(p.brand, i)));
+    }
+
+    let idx = 0;
+    const tryNext = () => {
+        if (idx >= sources.length) {
+            if (_hasBrand(p.brand) && sources.length > (p.img && p.img.trim() ? 1 : 0)) {
+                _logoMissing.add(p.brand);
+            }
+            drImg.style.display = 'none';
+            if (drImgPh) drImgPh.style.display = 'flex';
+            return;
+        }
+        drImg.src = sources[idx++];
+    };
+
+    drImg.style.cssText = `
+        display:block;
+        width:120px;
+        height:120px;
+        object-fit:contain;
+        background:var(--surface);
+        border-radius:var(--r);
+        padding:8px;
+        flex-shrink:0;
+        box-shadow:var(--sh-sm)
+    `;
+    if (drImgPh) drImgPh.style.display = 'none';
+    drImg.onerror = tryNext;
+    tryNext();
 }

@@ -5315,3 +5315,16 @@ body.theme-blue .dealer-price {
         display: none !important;
     }
 }
+
+.pimg img.is-brand-logo,
+.spec-img-wrap img.is-brand-logo {
+    object-fit: contain;
+    padding: 18px;
+    background: #fff;
+}
+.cart-row img.is-brand-logo,
+.os-thumb.is-brand-logo {
+    object-fit: contain;
+    padding: 6px;
+    background: #fff;
+}
